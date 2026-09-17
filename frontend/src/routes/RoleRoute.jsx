@@ -4,6 +4,7 @@ import useAuth from '../hooks/useAuth';
 const ROLE_HOME = {
   student: '/student/dashboard',
   teacher: '/teacher/dashboard',
+  duty_teacher: '/duty/dashboard',
   admin: '/admin/dashboard',
 };
 

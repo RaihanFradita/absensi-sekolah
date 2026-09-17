@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+
 import ProtectedRoute from './ProtectedRoute';
 import RoleRoute from './RoleRoute';
 import AppLayout from '../components/layout/AppLayout';
@@ -11,9 +12,14 @@ import AttendanceHistory from '../pages/student/AttendanceHistory';
 import StudentProfile from '../pages/student/StudentProfile';
 
 import TeacherDashboard from '../pages/teacher/TeacherDashboard';
+import TeacherProfile from '../pages/teacher/TeacherProfile';
 import CreateAttendanceSession from '../pages/teacher/CreateAttendanceSession';
 import AttendanceSession from '../pages/teacher/AttendanceSession';
 import AttendanceMonitor from '../pages/teacher/AttendanceMonitor';
+
+import DutyDashboard from '../pages/duty/DutyDashboard';
+import NotScanned from '../pages/duty/NotScanned';
+import DutyRecap from '../pages/duty/DutyRecap';
 
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import Students from '../pages/admin/Students';
@@ -22,53 +28,208 @@ import Classes from '../pages/admin/Classes';
 import Subjects from '../pages/admin/Subjects';
 import Schedules from '../pages/admin/Schedules';
 import AttendanceReports from '../pages/admin/AttendanceReports';
+import DutySchedules from '../pages/admin/DutySchedules';
+import UserRoles from '../pages/admin/UserRoles';
+import AttendanceSessions from '../pages/admin/AttendanceSessions';
 
 import { ROLES } from '../utils/constants';
 import useAuth from '../hooks/useAuth';
 
 function RootRedirect() {
   const { isAuthenticated, role } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  const home = { student: '/student/dashboard', teacher: '/teacher/dashboard', admin: '/admin/dashboard' };
-  return <Navigate to={home[role] || '/login'} replace />;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const home = {
+    student: '/student/dashboard',
+    teacher: '/teacher/dashboard',
+    duty_teacher: '/duty/dashboard',
+    admin: '/admin/dashboard',
+  };
+
+  return (
+    <Navigate
+      to={home[role] || '/login'}
+      replace
+    />
+  );
 }
 
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={<RootRedirect />} />
+      {/* Authentication */}
+      <Route
+        path="/login"
+        element={<Login />}
+      />
 
-      {/* Semua route di bawah ini butuh login (ProtectedRoute), lalu dibatasi per role (RoleRoute). */}
+      {/* Root */}
+      <Route
+        path="/"
+        element={<RootRedirect />}
+      />
+
+      {/* Protected Application */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route element={<RoleRoute allowedRoles={[ROLES.STUDENT]} />}>
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/scan" element={<ScanAttendance />} />
-            <Route path="/student/history" element={<AttendanceHistory />} />
-            <Route path="/student/profile" element={<StudentProfile />} />
+
+          {/* ==================== SISWA ==================== */}
+          <Route
+            element={
+              <RoleRoute
+                allowedRoles={[ROLES.STUDENT]}
+              />
+            }
+          >
+            <Route
+              path="/student/dashboard"
+              element={<StudentDashboard />}
+            />
+
+            <Route
+              path="/student/scan"
+              element={<ScanAttendance />}
+            />
+
+            <Route
+              path="/student/history"
+              element={<AttendanceHistory />}
+            />
+
+            <Route
+              path="/student/profile"
+              element={<StudentProfile />}
+            />
           </Route>
 
-          <Route element={<RoleRoute allowedRoles={[ROLES.TEACHER]} />}>
-            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-            <Route path="/teacher/sessions/create" element={<CreateAttendanceSession />} />
-            <Route path="/teacher/sessions/:sessionId" element={<AttendanceSession />} />
-            <Route path="/teacher/monitor" element={<AttendanceMonitor />} />
+          {/* ==================== GURU KELAS ==================== */}
+          <Route
+            element={
+              <RoleRoute
+                allowedRoles={[ROLES.TEACHER]}
+              />
+            }
+          >
+            <Route
+              path="/teacher/dashboard"
+              element={<TeacherDashboard />}
+            />
+
+            <Route
+              path="/teacher/profile"
+              element={<TeacherProfile />}
+            />
+
+            <Route
+              path="/teacher/sessions/create"
+              element={<CreateAttendanceSession />}
+            />
+
+            <Route
+              path="/teacher/sessions/:sessionId"
+              element={<AttendanceSession />}
+            />
+
+            <Route
+              path="/teacher/monitor"
+              element={<AttendanceMonitor />}
+            />
           </Route>
 
-          <Route element={<RoleRoute allowedRoles={[ROLES.ADMIN]} />}>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/students" element={<Students />} />
-            <Route path="/admin/teachers" element={<Teachers />} />
-            <Route path="/admin/classes" element={<Classes />} />
-            <Route path="/admin/subjects" element={<Subjects />} />
-            <Route path="/admin/schedules" element={<Schedules />} />
-            <Route path="/admin/reports" element={<AttendanceReports />} />
+          {/* ==================== GURU PIKET ==================== */}
+          <Route
+            element={
+              <RoleRoute
+                allowedRoles={[ROLES.DUTY_TEACHER]}
+              />
+            }
+          >
+            <Route
+              path="/duty/dashboard"
+              element={<DutyDashboard />}
+            />
+
+            <Route
+              path="/duty/not-scanned"
+              element={<NotScanned />}
+            />
+
+            <Route
+              path="/duty/recap"
+              element={<DutyRecap />}
+            />
           </Route>
+
+          {/* ==================== ADMIN ==================== */}
+          <Route
+            element={
+              <RoleRoute
+                allowedRoles={[ROLES.ADMIN]}
+              />
+            }
+          >
+            <Route
+              path="/admin/dashboard"
+              element={<AdminDashboard />}
+            />
+
+            <Route
+              path="/admin/students"
+              element={<Students />}
+            />
+
+            <Route
+              path="/admin/teachers"
+              element={<Teachers />}
+            />
+
+            <Route
+              path="/admin/classes"
+              element={<Classes />}
+            />
+
+            <Route
+              path="/admin/user-roles"
+              element={<UserRoles />}
+            />
+
+            <Route
+              path="/admin/duty-schedules"
+              element={<DutySchedules />}
+            />
+
+            <Route
+              path="/admin/attendance-sessions"
+              element={<AttendanceSessions />}
+            />
+
+            <Route
+              path="/admin/subjects"
+              element={<Subjects />}
+            />
+
+            <Route
+              path="/admin/schedules"
+              element={<Schedules />}
+            />
+
+            <Route
+              path="/admin/reports"
+              element={<AttendanceReports />}
+            />
+          </Route>
+
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Unknown Route */}
+      <Route
+        path="*"
+        element={<Navigate to="/" replace />}
+      />
     </Routes>
   );
 }

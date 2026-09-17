@@ -1,153 +1,66 @@
 import api from './api';
 import {
-  isMockMode,
-  mockDelay,
-  getMockStudentDashboard,
-  getMockStudentProfile,
-  getMockAttendanceHistory,
-  getMockTeacherDashboard,
-  getMockActiveSession,
-  getMockAttendanceMonitor,
-  MOCK_USERS,
+  isMockMode, mockDelay, getMockStudentDashboard, getMockStudentProfile,
+  getMockAttendanceHistory, getMockTeacherDashboard, getMockDutyDashboard,
+  getMockActiveSession, getMockAttendanceMonitor, getMockAttendanceRows,
+  updateMockAttendanceStatus, MOCK_USERS, MOCK_DUTY_SCHEDULES,
 } from './mockData';
 import { ATTENDANCE_STATUS, ROLES } from '../utils/constants';
 
-// Endpoint placeholder — mudah diubah menyesuaikan kontrak backend.
 const ENDPOINTS = {
-  STUDENT_DASHBOARD: '/student/dashboard',
-  STUDENT_PROFILE: '/student/profile',
-  SCAN_ATTENDANCE: '/attendance/scan',
-  ATTENDANCE_HISTORY: '/student/attendance-history',
-
-  TEACHER_DASHBOARD: '/teacher/dashboard',
-  CREATE_SESSION: '/attendance/sessions',
-  ACTIVE_SESSION: '/attendance/sessions/active',
-  END_SESSION: (sessionId) => `/attendance/sessions/${sessionId}/end`,
-  ATTENDANCE_MONITOR: (sessionId) => `/attendance/sessions/${sessionId}/monitor`,
+  STUDENT_DASHBOARD: '/student/dashboard', STUDENT_PROFILE: '/student/profile',
+  SCAN_ATTENDANCE: '/attendance/scan', ATTENDANCE_HISTORY: '/student/attendance-history',
+  TEACHER_DASHBOARD: '/teacher/dashboard', DUTY_DASHBOARD: '/duty/dashboard',
+  ATTENDANCE_DAILY: '/attendance/daily', UPDATE_STATUS: (id) => `/attendance/${id}/status`,
+  EXPORT_EXCEL: '/attendance/export.xlsx',
+  CREATE_SESSION: '/attendance/sessions', ACTIVE_SESSION: '/attendance/sessions/active',
+  END_SESSION: (id) => `/attendance/sessions/${id}/end`, MONITOR: (id) => `/attendance/sessions/${id}/monitor`,
+  DUTY_SCHEDULES: '/duty-schedules',
 };
 
-// ---------- Student ----------
+async function getStudentDashboard(){ if(isMockMode()){await mockDelay();return getMockStudentDashboard();} return (await api.get(ENDPOINTS.STUDENT_DASHBOARD)).data; }
+async function getStudentProfile(){ if(isMockMode()){await mockDelay();return getMockStudentProfile();} return (await api.get(ENDPOINTS.STUDENT_PROFILE)).data; }
+async function getAttendanceHistory(params={}){ if(isMockMode()){await mockDelay();return getMockAttendanceHistory(params);} return (await api.get(ENDPOINTS.ATTENDANCE_HISTORY,{params})).data; }
 
-async function getStudentDashboard() {
-  if (isMockMode()) {
-    await mockDelay();
-    return getMockStudentDashboard();
+async function scanAttendance({sessionToken}){
+  if(isMockMode()){
+    await mockDelay(650);
+    const session=getMockActiveSession();
+    if(new Date() > new Date(session.endsAt)) throw new Error('Sesi absensi sudah berakhir.');
+    if(sessionToken && sessionToken !== session.qrToken) throw new Error('QR Code tidak valid atau sudah kedaluwarsa.');
+    const today=new Date().toISOString().slice(0,10); const key=`schoolattend_daily_scan_${MOCK_USERS[ROLES.STUDENT].id}_${today}`;
+    if(localStorage.getItem(key)){ const e=new Error('Anda sudah melakukan absensi hari ini.'); e.raw={response:{data:{reason:'already_scanned'}}}; throw e; }
+    const scannedAt=new Date().toISOString(); localStorage.setItem(key,scannedAt);
+    return {status:ATTENDANCE_STATUS.PRESENT,initialStatus:ATTENDANCE_STATUS.PRESENT,currentStatus:ATTENDANCE_STATUS.PRESENT,studentName:MOCK_USERS.student.name,className:MOCK_USERS.student.className,scannedAt};
   }
-  const { data } = await api.get(ENDPOINTS.STUDENT_DASHBOARD);
-  return data;
+  return (await api.post(ENDPOINTS.SCAN_ATTENDANCE,{sessionToken})).data;
 }
 
-/**
- * Kirim hasil scan QR ke backend.
- * QR hanya membawa session token; identitas siswa diambil dari sesi login
- * (backend yang menentukan dari token Authorization), BUKAN dari body request.
- */
-async function scanAttendance({ sessionToken }) {
-  if (isMockMode()) {
-    await mockDelay(800);
-    // Di mode pratinjau, QR apa pun dianggap valid supaya alur bisa dicoba
-    // end-to-end tanpa backend sungguhan.
-    return {
-      status: ATTENDANCE_STATUS.PRESENT,
-      studentName: MOCK_USERS[ROLES.STUDENT].name,
-      className: 'VIII-A',
-      subject: 'Matematika',
-      scannedAt: new Date().toISOString(),
-      sessionToken,
-    };
+async function getTeacherDashboard(params={}){ if(isMockMode()){await mockDelay();return getMockTeacherDashboard();} return (await api.get(ENDPOINTS.TEACHER_DASHBOARD,{params})).data; }
+async function getDutyDashboard(params={}){ if(isMockMode()){await mockDelay();return getMockDutyDashboard();} return (await api.get(ENDPOINTS.DUTY_DASHBOARD,{params})).data; }
+async function getDailyAttendance(params={}){ if(isMockMode()){await mockDelay();return {rows:getMockAttendanceRows(params)};} return (await api.get(ENDPOINTS.ATTENDANCE_DAILY,{params})).data; }
+async function updateAttendanceStatus(id,payload){ if(isMockMode()){await mockDelay(300);return updateMockAttendanceStatus(id,payload);} return (await api.patch(ENDPOINTS.UPDATE_STATUS(id),payload)).data; }
+
+async function exportAttendanceExcel(params={}){
+  if(isMockMode()){
+    await mockDelay(250);
+    const rows=getMockAttendanceRows(params);
+    const header=['No','NIS/NISN','Nama siswa','Kelas','Tanggal absensi','Jam scan','Status akhir','Keterangan','Diubah oleh','Waktu perubahan'];
+    const body=rows.map((r,i)=>[i+1,`${r.student.nis}/${r.student.nisn}`,r.student.name,r.student.className,r.date,r.scanTimeLabel,r.currentStatus,r.note||'',r.changedBy||'',r.changedAt||'']);
+    const text='\ufeff'+[header,...body].map(x=>x.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\r\n');
+    return { blob:new Blob([text],{type:'text/csv;charset=utf-8'}), fileName:`Rekap_Absensi_${new Date().toLocaleDateString('id-ID').replaceAll('/','-')}.csv`, previewFallback:true };
   }
-  const { data } = await api.post(ENDPOINTS.SCAN_ATTENDANCE, { sessionToken });
-  return data;
+  const response=await api.get(ENDPOINTS.EXPORT_EXCEL,{params,responseType:'blob'});
+  const disposition=response.headers?.['content-disposition']||''; const m=disposition.match(/filename="?([^";]+)"?/i);
+  return {blob:response.data,fileName:m?.[1]||`Rekap_Absensi_${new Date().toLocaleDateString('id-ID').replaceAll('/','-')}.xlsx`,previewFallback:false};
 }
+function downloadBlob({blob,fileName}){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url); }
 
-// Bentuk data yang diharapkan dari GET /student/profile:
-// {
-//   student: { name, nisn, className },
-//   subjectRecap: [{ id, subject, present, late, absent, total }]
-// }
-async function getStudentProfile() {
-  if (isMockMode()) {
-    await mockDelay();
-    return getMockStudentProfile();
-  }
-  const { data } = await api.get(ENDPOINTS.STUDENT_PROFILE);
-  return data;
-}
+async function createAttendanceSession(payload){ if(isMockMode()){await mockDelay();return getMockActiveSession();} return (await api.post(ENDPOINTS.CREATE_SESSION,payload)).data; }
+async function getActiveSession(){ if(isMockMode()){await mockDelay();return getMockActiveSession();} return (await api.get(ENDPOINTS.ACTIVE_SESSION)).data; }
+async function endAttendanceSession(id){ if(isMockMode()){await mockDelay();return {id,endedAt:new Date().toISOString()};} return (await api.post(ENDPOINTS.END_SESSION(id))).data; }
+async function getAttendanceMonitor(id){ if(isMockMode()){await mockDelay();return getMockAttendanceMonitor(id);} return (await api.get(ENDPOINTS.MONITOR(id))).data; }
+async function getDutySchedules(params={}){ if(isMockMode()){await mockDelay();return {rows:MOCK_DUTY_SCHEDULES};} return (await api.get(ENDPOINTS.DUTY_SCHEDULES,{params})).data; }
+async function saveDutySchedule(payload){ if(isMockMode()){await mockDelay();return {id:`d-${Date.now()}`,...payload};} return (await api.post(ENDPOINTS.DUTY_SCHEDULES,payload)).data; }
 
-async function getAttendanceHistory({ page = 1, pageSize = 10, date, subject, status } = {}) {
-  if (isMockMode()) {
-    await mockDelay();
-    return getMockAttendanceHistory({ page, pageSize, date, subject, status });
-  }
-  const { data } = await api.get(ENDPOINTS.ATTENDANCE_HISTORY, {
-    params: { page, pageSize, date, subject, status },
-  });
-  return data;
-}
-
-// ---------- Teacher ----------
-
-async function getTeacherDashboard() {
-  if (isMockMode()) {
-    await mockDelay();
-    return getMockTeacherDashboard();
-  }
-  const { data } = await api.get(ENDPOINTS.TEACHER_DASHBOARD);
-  return data;
-}
-
-async function createAttendanceSession({ classId, subjectId, scheduleId, durationMinutes, lateThresholdMinutes }) {
-  if (isMockMode()) {
-    await mockDelay(600);
-    return getMockActiveSession();
-  }
-  const { data } = await api.post(ENDPOINTS.CREATE_SESSION, {
-    classId,
-    subjectId,
-    scheduleId,
-    durationMinutes,
-    lateThresholdMinutes,
-  });
-  return data;
-}
-
-async function getActiveSession() {
-  if (isMockMode()) {
-    await mockDelay();
-    return getMockActiveSession();
-  }
-  const { data } = await api.get(ENDPOINTS.ACTIVE_SESSION);
-  return data;
-}
-
-async function endAttendanceSession(sessionId) {
-  if (isMockMode()) {
-    await mockDelay(500);
-    return { id: sessionId, endedAt: new Date().toISOString() };
-  }
-  const { data } = await api.post(ENDPOINTS.END_SESSION(sessionId));
-  return data;
-}
-
-async function getAttendanceMonitor(sessionId) {
-  if (isMockMode()) {
-    await mockDelay();
-    return getMockAttendanceMonitor(sessionId);
-  }
-  const { data } = await api.get(ENDPOINTS.ATTENDANCE_MONITOR(sessionId));
-  return data;
-}
-
-const attendanceService = {
-  getStudentDashboard,
-  getStudentProfile,
-  scanAttendance,
-  getAttendanceHistory,
-  getTeacherDashboard,
-  createAttendanceSession,
-  getActiveSession,
-  endAttendanceSession,
-  getAttendanceMonitor,
-};
-
-export default attendanceService;
+export default {getStudentDashboard,getStudentProfile,scanAttendance,getAttendanceHistory,getTeacherDashboard,getDutyDashboard,getDailyAttendance,updateAttendanceStatus,exportAttendanceExcel,downloadBlob,createAttendanceSession,getActiveSession,endAttendanceSession,getAttendanceMonitor,getDutySchedules,saveDutySchedule};
