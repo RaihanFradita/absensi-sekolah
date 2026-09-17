@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Maximize, Minimize, Square, RefreshCw, School, User, Clock } from 'lucide-react';
+import { Maximize, Minimize, Square, RefreshCw, CalendarDays, User, Clock } from 'lucide-react';
 import PageContainer from '../../components/layout/PageContainer';
 import Button from '../../components/ui/Button';
 import Loading from '../../components/ui/Loading';
@@ -13,11 +13,7 @@ import useWebSocket from '../../hooks/useWebSocket';
 import attendanceService from '../../services/attendanceService';
 import { formatCountdown, formatTimeShort, getSecondsUntil } from '../../utils/formatTime';
 
-// Bentuk data yang diharapkan dari GET /attendance/sessions/active:
-// {
-//   id, subject, className, teacherName, startsAt, endsAt, qrToken,
-//   presentCount, lateCount, notYetCount
-// }
+// Satu sesi = QR kehadiran harian sekolah. Tidak terkait mata pelajaran.
 export default function AttendanceSession() {
   // Route menyediakan :sessionId agar URL sesi bisa dibagikan/di-bookmark,
   // namun data diambil lewat getActiveSession() (endpoint di services spec)
@@ -119,7 +115,7 @@ export default function AttendanceSession() {
   }
 
   return (
-    <PageContainer title={data.subject} description={`Kelas ${data.className}`}>
+    <PageContainer title="QR Kehadiran Harian" description="Gunakan QR ini untuk absensi siswa saat masuk sekolah">
       <div
         ref={containerRef}
         className="rounded-2xl bg-white p-4 dark:bg-slate-950 sm:p-8"
@@ -131,8 +127,8 @@ export default function AttendanceSession() {
               {data.teacherName}
             </span>
             <span className="flex items-center gap-1.5">
-              <School className="h-4 w-4" aria-hidden="true" />
-              {data.className}
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              {data.attendanceDate || 'Hari ini'}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" aria-hidden="true" />
@@ -157,7 +153,7 @@ export default function AttendanceSession() {
           <QRDisplay value={data.qrToken} size={280} />
 
           <div className="mt-5 text-center">
-            <p className="text-xs uppercase tracking-wide text-slate-400">Sisa Waktu QR</p>
+            <p className="text-xs uppercase tracking-wide text-slate-400">QR aktif selama jendela absensi</p>
             <p className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
               {formatCountdown(secondsLeft)}
             </p>
@@ -184,7 +180,7 @@ export default function AttendanceSession() {
           {isFullscreen ? 'Keluar Fullscreen' : 'Fullscreen'}
         </Button>
         <Button variant="danger" icon={Square} onClick={() => setIsEndDialogOpen(true)}>
-          Akhiri Sesi
+          Tutup QR
         </Button>
       </div>
 
@@ -194,9 +190,9 @@ export default function AttendanceSession() {
 
       <ConfirmDialog
         open={isEndDialogOpen}
-        title="Akhiri sesi absensi?"
-        description="Siswa tidak akan bisa melakukan scan lagi setelah sesi diakhiri. Tindakan ini tidak dapat dibatalkan."
-        confirmLabel="Ya, Akhiri Sesi"
+        title="Tutup QR kehadiran hari ini?"
+        description="Siswa tidak akan bisa melakukan scan lagi setelah QR ditutup. Tindakan ini tidak dapat dibatalkan."
+        confirmLabel="Ya, Tutup QR"
         isLoading={isEnding}
         onConfirm={handleEndSession}
         onCancel={() => setIsEndDialogOpen(false)}

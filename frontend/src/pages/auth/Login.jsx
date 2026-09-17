@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, IdCard, Lock, AlertCircle, FlaskConical, GraduationCap, Users, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, IdCard, Lock, AlertCircle, FlaskConical, GraduationCap, Users, ShieldCheck, ClipboardCheck } from 'lucide-react';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import useAuth from '../../hooks/useAuth';
@@ -10,6 +10,7 @@ import schoolLogo from '../../assets/logo-sekolah.png';
 const ROLE_HOME = {
   [ROLES.STUDENT]: '/student/dashboard',
   [ROLES.TEACHER]: '/teacher/dashboard',
+  [ROLES.DUTY_TEACHER]: '/duty/dashboard',
   [ROLES.ADMIN]: '/admin/dashboard',
 };
 
@@ -18,7 +19,8 @@ const ROLE_HOME = {
 // siswa/guru sungguhan setelah di-deploy.
 const MOCK_ROLE_OPTIONS = [
   { role: ROLES.STUDENT, label: 'Siswa', icon: GraduationCap },
-  { role: ROLES.TEACHER, label: 'Guru', icon: Users },
+  { role: ROLES.TEACHER, label: 'Guru Kelas', icon: Users },
+  { role: ROLES.DUTY_TEACHER, label: 'Guru Piket', icon: ClipboardCheck },
   { role: ROLES.ADMIN, label: 'Admin', icon: ShieldCheck },
 ];
 
@@ -141,7 +143,7 @@ export default function Login() {
               Lihat tampilan tiap role tanpa backend, pakai data contoh. Bagian ini tidak
               ikut ter-build ke production.
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {MOCK_ROLE_OPTIONS.map(({ role, label, icon: Icon }) => (
                 <Button
                   key={role}
