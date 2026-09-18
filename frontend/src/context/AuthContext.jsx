@@ -1,6 +1,12 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import authService from '../services/authService';
-import { registerUnauthorizedHandler } from '../services/api';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import authService from "../services/authService";
+import { registerUnauthorizedHandler } from "../services/api";
 
 export const AuthContext = createContext(null);
 
@@ -39,12 +45,15 @@ export function AuthProvider({ children }) {
     setIsAuthenticating(true);
     setAuthError(null);
     try {
-      const { user: loggedInUser } = await authService.login({ identifier, password });
+      const { user: loggedInUser } = await authService.login({
+        identifier,
+        password,
+      });
       // Role SELALU berasal dari respons backend, bukan dari form login.
       setUser(loggedInUser);
       return loggedInUser;
     } catch (error) {
-      const message = error?.message || 'Username/NIS atau password salah.';
+      const message = error?.message || "Username/NIS atau password salah.";
       setAuthError(message);
       throw error;
     } finally {
@@ -80,7 +89,7 @@ export function AuthProvider({ children }) {
       loginAsMock,
       logout,
     }),
-    [user, isAuthenticating, authError, login, loginAsMock, logout]
+    [user, isAuthenticating, authError, login, loginAsMock, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
