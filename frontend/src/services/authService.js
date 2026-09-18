@@ -1,12 +1,12 @@
-import api from './api';
-import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from '../utils/constants';
-import { MOCK_USERS, isMockMode, setMockMode, mockDelay } from './mockData';
+import api from "./api";
+import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from "../utils/constants";
+import { MOCK_USERS, isMockMode, setMockMode, mockDelay } from "./mockData";
 
 // Endpoint placeholder — sesuaikan dengan kontrak backend yang sebenarnya.
 const ENDPOINTS = {
-  LOGIN: '/auth/login',
-  LOGOUT: '/auth/logout',
-  ME: '/auth/me',
+  LOGIN: "/auth/login",
+  LOGOUT: "/auth/logout",
+  ME: "/auth/me",
 };
 
 /**
@@ -52,7 +52,7 @@ async function login({ identifier, password }) {
 async function loginMock(role) {
   await mockDelay(400);
   const user = MOCK_USERS[role];
-  if (!user) throw new Error('Role pratinjau tidak dikenali.');
+  if (!user) throw new Error("Role pratinjau tidak dikenali.");
 
   setMockMode(true);
   localStorage.setItem(AUTH_TOKEN_KEY, `mock-token-${role}`);
