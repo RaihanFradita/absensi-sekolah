@@ -2,27 +2,31 @@
 // Menerima Date object atau string ISO dari backend.
 
 export function formatDate(value, options) {
-  if (!value) return '-';
+  if (!value) return "-";
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
+  if (Number.isNaN(date.getTime())) return "-";
 
-  return date.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
     ...options,
   });
 }
 
 export function formatDateShort(value) {
-  return formatDate(value, { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return formatDate(value, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export function formatDateInputValue(value) {
   // Format YYYY-MM-DD untuk value input[type=date]
-  if (!value) return '';
+  if (!value) return "";
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
+  if (Number.isNaN(date.getTime())) return "";
   return date.toISOString().slice(0, 10);
 }
 

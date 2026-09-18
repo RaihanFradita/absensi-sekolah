@@ -13,31 +13,31 @@ import {
   ClipboardCheck,
   UserCog,
   CalendarDays,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { ROLES } from './constants';
+import { ROLES } from "./constants";
 
 export const NAV_ITEMS = {
   // ==================== SISWA ====================
   [ROLES.STUDENT]: [
     {
-      to: '/student/dashboard',
-      label: 'Beranda',
+      to: "/student/dashboard",
+      label: "Beranda",
       icon: LayoutDashboard,
     },
     {
-      to: '/student/scan',
-      label: 'Scan QR',
+      to: "/student/scan",
+      label: "Scan QR",
       icon: QrCode,
     },
     {
-      to: '/student/history',
-      label: 'Riwayat',
+      to: "/student/history",
+      label: "Riwayat",
       icon: History,
     },
     {
-      to: '/student/profile',
-      label: 'Profil',
+      to: "/student/profile",
+      label: "Profil",
       icon: UserCircle,
     },
   ],
@@ -45,23 +45,23 @@ export const NAV_ITEMS = {
   // ==================== GURU KELAS ====================
   [ROLES.TEACHER]: [
     {
-      to: '/teacher/dashboard',
-      label: 'Rekap Kelas',
+      to: "/teacher/dashboard",
+      label: "Rekap Kelas",
       icon: LayoutDashboard,
     },
     {
-      to: '/teacher/monitor',
-      label: 'Data Kehadiran',
+      to: "/teacher/monitor",
+      label: "Data Kehadiran",
       icon: ClipboardCheck,
     },
     {
-      to: '/teacher/sessions/create',
-      label: 'QR Kehadiran',
+      to: "/teacher/sessions/create",
+      label: "QR Kehadiran",
       icon: CalendarPlus,
     },
     {
-      to: '/teacher/profile',
-      label: 'Profil Guru',
+      to: "/teacher/profile",
+      label: "Profil Guru",
       icon: UserCircle,
     },
   ],
@@ -69,18 +69,18 @@ export const NAV_ITEMS = {
   // ==================== GURU PIKET ====================
   [ROLES.DUTY_TEACHER]: [
     {
-      to: '/duty/dashboard',
-      label: 'Piket Hari Ini',
+      to: "/duty/dashboard",
+      label: "Piket Hari Ini",
       icon: LayoutDashboard,
     },
     {
-      to: '/duty/not-scanned',
-      label: 'Belum Scan',
+      to: "/duty/not-scanned",
+      label: "Belum Scan",
       icon: Users,
     },
     {
-      to: '/duty/recap',
-      label: 'Rekap Harian',
+      to: "/duty/recap",
+      label: "Rekap Harian",
       icon: FileBarChart,
     },
   ],
@@ -88,53 +88,53 @@ export const NAV_ITEMS = {
   // ==================== ADMIN ====================
   [ROLES.ADMIN]: [
     {
-      to: '/admin/dashboard',
-      label: 'Beranda',
+      to: "/admin/dashboard",
+      label: "Beranda",
       icon: LayoutDashboard,
     },
     {
-      to: '/admin/students',
-      label: 'Siswa',
+      to: "/admin/students",
+      label: "Siswa",
       icon: Users,
     },
     {
-      to: '/admin/teachers',
-      label: 'Guru',
+      to: "/admin/teachers",
+      label: "Guru",
       icon: GraduationCap,
     },
     {
-      to: '/admin/classes',
-      label: 'Kelas',
+      to: "/admin/classes",
+      label: "Kelas",
       icon: School,
     },
     {
-      to: '/admin/user-roles',
-      label: 'Akun & Role',
+      to: "/admin/user-roles",
+      label: "Akun & Role",
       icon: UserCog,
     },
     {
-      to: '/admin/duty-schedules',
-      label: 'Jadwal Piket',
+      to: "/admin/duty-schedules",
+      label: "Jadwal Piket",
       icon: CalendarDays,
     },
     {
-      to: '/admin/attendance-sessions',
-      label: 'Sesi & QR',
+      to: "/admin/attendance-sessions",
+      label: "Sesi & QR",
       icon: QrCode,
     },
     {
-      to: '/admin/reports',
-      label: 'Data Absensi',
+      to: "/admin/reports",
+      label: "Data Absensi",
       icon: FileBarChart,
     },
     {
-      to: '/admin/subjects',
-      label: 'Mapel',
+      to: "/admin/subjects",
+      label: "Mapel",
       icon: BookOpen,
     },
     {
-      to: '/admin/schedules',
-      label: 'Jadwal Akademik',
+      to: "/admin/schedules",
+      label: "Jadwal Akademik",
       icon: CalendarClock,
     },
   ],
