@@ -1,17 +1,17 @@
-import { useMemo, useState } from 'react';
-import { Download, Search, Save, X, History } from 'lucide-react';
-import Card, { CardHeader } from '../ui/Card';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
-import AttendanceStats from './AttendanceStats';
-import AttendanceStatus from './AttendanceStatus';
+import { useMemo, useState } from "react";
+import { Download, Search, Save, X, History } from "lucide-react";
+import Card, { CardHeader } from "../ui/Card";
+import Button from "../ui/Button";
+import Input from "../ui/Input";
+import AttendanceStats from "./AttendanceStats";
+import AttendanceStatus from "./AttendanceStatus";
 import {
   ATTENDANCE_STATUS,
   ATTENDANCE_STATUS_LABEL,
-} from '../../utils/constants';
+} from "../../utils/constants";
 
 const selectClass =
-  'h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
+  "h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
 
 const EDITABLE = [
   ATTENDANCE_STATUS.PRESENT,
@@ -23,13 +23,13 @@ const EDITABLE = [
 ];
 
 export default function DailyAttendanceManager({
-  title = 'Rekap Kehadiran',
+  title = "Rekap Kehadiran",
   subtitle,
   rows = [],
   date,
   setDate,
   classes = [],
-  className = '',
+  className = "",
   setClassName,
   canEdit = false,
   onUpdate,
@@ -37,20 +37,19 @@ export default function DailyAttendanceManager({
   exporting = false,
   currentUserName,
 }) {
-  const [activeStatus, setActiveStatus] = useState('total');
-  const [search, setSearch] = useState('');
+  const [activeStatus, setActiveStatus] = useState("total");
+  const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({
-    status: '',
-    note: '',
+    status: "",
+    note: "",
   });
 
   const filtered = useMemo(
     () =>
       rows.filter((r) => {
         const statusOk =
-          activeStatus === 'total' ||
-          r.currentStatus === activeStatus;
+          activeStatus === "total" || r.currentStatus === activeStatus;
 
         const q = search.trim().toLowerCase();
 
@@ -61,7 +60,7 @@ export default function DailyAttendanceManager({
 
         return statusOk && searchOk;
       }),
-    [rows, activeStatus, search]
+    [rows, activeStatus, search],
   );
 
   const count = (status) =>
@@ -69,33 +68,33 @@ export default function DailyAttendanceManager({
 
   const stats = [
     {
-      key: 'total',
-      label: 'Total Siswa',
+      key: "total",
+      label: "Total Siswa",
       value: rows.length,
     },
     {
-      key: 'present',
-      label: 'Hadir',
+      key: "present",
+      label: "Hadir",
       value: count(ATTENDANCE_STATUS.PRESENT),
     },
     {
-      key: 'absent',
-      label: 'Tidak Hadir',
+      key: "absent",
+      label: "Tidak Hadir",
       value: count(ATTENDANCE_STATUS.ABSENT),
     },
     {
-      key: 'late',
-      label: 'Terlambat',
+      key: "late",
+      label: "Terlambat",
       value: count(ATTENDANCE_STATUS.LATE),
     },
     {
-      key: 'excused',
-      label: 'Izin',
+      key: "excused",
+      label: "Izin",
       value: count(ATTENDANCE_STATUS.EXCUSED),
     },
     {
-      key: 'sick',
-      label: 'Sakit',
+      key: "sick",
+      label: "Sakit",
       value: count(ATTENDANCE_STATUS.SICK),
     },
   ];
@@ -105,7 +104,7 @@ export default function DailyAttendanceManager({
 
     setDraft({
       status: row.currentStatus,
-      note: row.note || '',
+      note: row.note || "",
     });
   }
 
@@ -155,19 +154,12 @@ export default function DailyAttendanceManager({
               <select
                 className={`${selectClass} w-full`}
                 value={className}
-                onChange={(e) =>
-                  setClassName?.(e.target.value)
-                }
+                onChange={(e) => setClassName?.(e.target.value)}
               >
-                {classes.length > 1 && (
-                  <option value="">Semua kelas</option>
-                )}
+                {classes.length > 1 && <option value="">Semua kelas</option>}
 
                 {classes.map((classItem) => (
-                  <option
-                    key={classItem}
-                    value={classItem}
-                  >
+                  <option key={classItem} value={classItem}>
                     {classItem}
                   </option>
                 ))}
@@ -180,9 +172,7 @@ export default function DailyAttendanceManager({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Nama atau NIS"
-            startAdornment={
-              <Search className="h-4 w-4" />
-            }
+            startAdornment={<Search className="h-4 w-4" />}
           />
         </div>
       </Card>
@@ -198,9 +188,9 @@ export default function DailyAttendanceManager({
       <Card padding="p-0">
         <div className="border-b border-slate-200 px-5 py-4 dark:border-slate-800">
           <h3 className="font-semibold text-slate-900 dark:text-slate-100">
-            Daftar{' '}
-            {activeStatus === 'total'
-              ? 'Semua Siswa'
+            Daftar{" "}
+            {activeStatus === "total"
+              ? "Semua Siswa"
               : ATTENDANCE_STATUS_LABEL[activeStatus]}
           </h3>
 
@@ -213,36 +203,20 @@ export default function DailyAttendanceManager({
           <table className="w-full min-w-[850px] text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-950">
               <tr>
-                <th className="px-4 py-3">
-                  NIS/NISN
-                </th>
+                <th className="px-4 py-3">NIS/NISN</th>
 
-                <th className="px-4 py-3">
-                  Nama
-                </th>
+                <th className="px-4 py-3">Nama</th>
 
-                <th className="px-4 py-3">
-                  Kelas
-                </th>
+                <th className="px-4 py-3">Kelas</th>
 
-                <th className="px-4 py-3">
-                  Jam Scan
-                </th>
+                <th className="px-4 py-3">Jam Scan</th>
 
                 {/* Hanya satu kolom Status */}
-                <th className="px-4 py-3">
-                  Status
-                </th>
+                <th className="px-4 py-3">Status</th>
 
-                <th className="px-4 py-3">
-                  Keterangan
-                </th>
+                <th className="px-4 py-3">Keterangan</th>
 
-                {canEdit && (
-                  <th className="px-4 py-3">
-                    Aksi
-                  </th>
-                )}
+                {canEdit && <th className="px-4 py-3">Aksi</th>}
               </tr>
             </thead>
 
@@ -268,24 +242,18 @@ export default function DailyAttendanceManager({
 
                       {row.changedBy && (
                         <div className="mt-1 flex items-center gap-1 text-[11px] font-normal text-slate-400">
-                          <History
-                            className="h-3 w-3"
-                            aria-hidden="true"
-                          />
-
+                          <History className="h-3 w-3" aria-hidden="true" />
                           Diubah {row.changedBy}
                         </div>
                       )}
                     </td>
 
                     {/* Kelas */}
-                    <td className="px-4 py-3">
-                      {row.student?.className}
-                    </td>
+                    <td className="px-4 py-3">{row.student?.className}</td>
 
                     {/* Jam Scan */}
                     <td className="px-4 py-3 font-mono">
-                      {row.scanTimeLabel || '-'}
+                      {row.scanTimeLabel || "-"}
                     </td>
 
                     {/* STATUS */}
@@ -302,18 +270,13 @@ export default function DailyAttendanceManager({
                           }
                         >
                           {EDITABLE.map((status) => (
-                            <option
-                              key={status}
-                              value={status}
-                            >
+                            <option key={status} value={status}>
                               {ATTENDANCE_STATUS_LABEL[status]}
                             </option>
                           ))}
                         </select>
                       ) : (
-                        <AttendanceStatus
-                          status={row.currentStatus}
-                        />
+                        <AttendanceStatus status={row.currentStatus} />
                       )}
                     </td>
 
@@ -333,7 +296,7 @@ export default function DailyAttendanceManager({
                         />
                       ) : (
                         <span className="text-slate-600 dark:text-slate-300">
-                          {row.note || '-'}
+                          {row.note || "-"}
                         </span>
                       )}
                     </td>
@@ -355,9 +318,7 @@ export default function DailyAttendanceManager({
                               size="sm"
                               variant="ghost"
                               icon={X}
-                              onClick={() =>
-                                setEditingId(null)
-                              }
+                              onClick={() => setEditingId(null)}
                             >
                               Batal
                             </Button>

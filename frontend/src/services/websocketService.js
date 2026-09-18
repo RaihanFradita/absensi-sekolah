@@ -1,7 +1,8 @@
-import { AUTH_TOKEN_KEY } from '../utils/constants';
+import { AUTH_TOKEN_KEY } from "../utils/constants";
 
 // Base URL WebSocket diambil dari environment variable.
-const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8000/ws';
+const WS_BASE_URL =
+  import.meta.env.VITE_WS_BASE_URL || "ws://localhost:8000/ws";
 
 const RECONNECT_DELAY_MS = 3000;
 const MAX_RECONNECT_ATTEMPTS = 10;
@@ -18,7 +19,7 @@ class WebSocketService {
     this.reconnectAttempts = 0;
     this.reconnectTimer = null;
     this.manuallyClosed = false;
-    this.path = '';
+    this.path = "";
   }
 
   connect(path) {
@@ -29,21 +30,21 @@ class WebSocketService {
 
   _open() {
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    const url = `${WS_BASE_URL}${this.path}${token ? `?token=${token}` : ''}`;
+    const url = `${WS_BASE_URL}${this.path}${token ? `?token=${token}` : ""}`;
 
-    this._setStatus('connecting');
+    this._setStatus("connecting");
 
     try {
       this.socket = new WebSocket(url);
     } catch {
-      this._setStatus('error');
+      this._setStatus("error");
       this._scheduleReconnect();
       return;
     }
 
     this.socket.onopen = () => {
       this.reconnectAttempts = 0;
-      this._setStatus('connected');
+      this._setStatus("connected");
     };
 
     this.socket.onmessage = (event) => {
@@ -51,14 +52,14 @@ class WebSocketService {
     };
 
     this.socket.onclose = () => {
-      this._setStatus('disconnected');
+      this._setStatus("disconnected");
       if (!this.manuallyClosed) {
         this._scheduleReconnect();
       }
     };
 
     this.socket.onerror = () => {
-      this._setStatus('error');
+      this._setStatus("error");
     };
   }
 
@@ -88,11 +89,11 @@ class WebSocketService {
 
   _scheduleReconnect() {
     if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      this._setStatus('failed');
+      this._setStatus("failed");
       return;
     }
     this.reconnectAttempts += 1;
-    this._setStatus('reconnecting');
+    this._setStatus("reconnecting");
     this.reconnectTimer = setTimeout(() => this._open(), RECONNECT_DELAY_MS);
   }
 

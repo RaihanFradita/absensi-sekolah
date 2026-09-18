@@ -1,20 +1,29 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { CheckCircle2, XCircle, Info, X } from 'lucide-react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
+import { CheckCircle2, XCircle, Info, X } from "lucide-react";
 
 const ToastContext = createContext(null);
 
 const TONE_STYLES = {
   success: {
     icon: CheckCircle2,
-    className: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300',
+    className:
+      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300",
   },
   error: {
     icon: XCircle,
-    className: 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300',
+    className:
+      "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300",
   },
   info: {
     icon: Info,
-    className: 'border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+    className:
+      "border-slate-200 bg-white text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
   },
 };
 
@@ -28,7 +37,7 @@ export function ToastProvider({ children }) {
   }, []);
 
   const showToast = useCallback(
-    (message, { tone = 'success', duration = 3500 } = {}) => {
+    (message, { tone = "success", duration = 3500 } = {}) => {
       const id = ++idCounter;
       setToasts((current) => [...current, { id, message, tone }]);
       if (duration) {
@@ -36,7 +45,7 @@ export function ToastProvider({ children }) {
       }
       return id;
     },
-    [dismiss]
+    [dismiss],
   );
 
   const value = useMemo(() => ({ showToast, dismiss }), [showToast, dismiss]);
@@ -46,7 +55,8 @@ export function ToastProvider({ children }) {
       {children}
       <div className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6">
         {toasts.map((toast) => {
-          const { icon: Icon, className } = TONE_STYLES[toast.tone] || TONE_STYLES.info;
+          const { icon: Icon, className } =
+            TONE_STYLES[toast.tone] || TONE_STYLES.info;
           return (
             <div
               key={toast.id}
@@ -73,7 +83,7 @@ export function ToastProvider({ children }) {
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast harus dipakai di dalam <ToastProvider>');
+    throw new Error("useToast harus dipakai di dalam <ToastProvider>");
   }
   return context;
 }

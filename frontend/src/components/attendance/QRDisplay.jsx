@@ -1,10 +1,10 @@
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG } from "qrcode.react";
 
 /**
  * Menampilkan QR Code besar dari token QR kehadiran harian yang dibuat backend.
  * Frontend TIDAK membuat/mengubah token — hanya merender apa yang diterima.
  */
-export default function QRDisplay({ value, size = 280, className = '' }) {
+export default function QRDisplay({ value, size = 280, className = "" }) {
   if (!value) return null;
 
   return (

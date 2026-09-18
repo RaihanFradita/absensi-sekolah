@@ -1,6 +1,6 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
-export default function Spinner({ size = 20, className = '' }) {
+export default function Spinner({ size = 20, className = "" }) {
   return (
     <Loader2
       className={`animate-spin text-brand-600 dark:text-brand-400 ${className}`}
