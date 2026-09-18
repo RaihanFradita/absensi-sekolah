@@ -1,13 +1,13 @@
-import { UserCircle, GraduationCap, School, BadgeCheck } from 'lucide-react';
-import PageContainer from '../../components/layout/PageContainer';
-import Card, { CardHeader } from '../../components/ui/Card';
-import useAuth from '../../hooks/useAuth';
+import { UserCircle, GraduationCap, School, BadgeCheck } from "lucide-react";
+import PageContainer from "../../components/layout/PageContainer";
+import Card, { CardHeader } from "../../components/ui/Card";
+import useAuth from "../../hooks/useAuth";
 
 export default function TeacherProfile() {
   const { user } = useAuth();
 
-  const fullName = user?.fullName || user?.name || 'Guru';
-  const homeroomClass = user?.homeroomClass || '-';
+  const fullName = user?.fullName || user?.name || "Guru";
+  const homeroomClass = user?.homeroomClass || "-";
 
   return (
     <PageContainer
@@ -47,27 +47,15 @@ export default function TeacherProfile() {
           />
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <InfoItem
-              icon={UserCircle}
-              label="Nama Lengkap"
-              value={fullName}
-            />
+            <InfoItem icon={UserCircle} label="Nama Lengkap" value={fullName} />
 
             <InfoItem
               icon={School}
               label="Wali Kelas"
-              value={
-                homeroomClass === '-'
-                  ? '-'
-                  : `Kelas ${homeroomClass}`
-              }
+              value={homeroomClass === "-" ? "-" : `Kelas ${homeroomClass}`}
             />
 
-            <InfoItem
-              icon={GraduationCap}
-              label="Role"
-              value="Guru Kelas"
-            />
+            <InfoItem icon={GraduationCap} label="Role" value="Guru Kelas" />
           </div>
         </Card>
       </div>
