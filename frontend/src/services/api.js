@@ -1,14 +1,16 @@
-import axios from 'axios';
-import { AUTH_TOKEN_KEY } from '../utils/constants';
+import axios from "axios";
+import { AUTH_TOKEN_KEY } from "../utils/constants";
 
 // Base URL diambil dari environment variable, lihat .env.example
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const baseURL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
 
 const api = axios.create({
   baseURL,
   timeout: 15000,
+  withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -41,15 +43,15 @@ api.interceptors.response.use(
     // Jangan tampilkan detail error internal backend (stack trace, query, dsb) ke user.
     const safeMessage =
       status && status < 500
-        ? error?.response?.data?.message || 'Permintaan tidak dapat diproses.'
-        : 'Terjadi kesalahan pada server. Silakan coba lagi.';
+        ? error?.response?.data?.message || "Permintaan tidak dapat diproses."
+        : "Terjadi kesalahan pada server. Silakan coba lagi.";
 
     return Promise.reject({
       status,
       message: safeMessage,
       raw: import.meta.env.DEV ? error : undefined,
     });
-  }
+  },
 );
 
 export default api;

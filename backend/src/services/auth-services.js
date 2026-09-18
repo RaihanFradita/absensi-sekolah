@@ -3,34 +3,56 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const signIn = async (data) => {
-  const [user] = await pool.query("SELECT * FROM users WHERE username = ?", [
-    data.username,
-  ]);
+  const identifier = data.username || data.identifier;
 
-  if (user.length === 0) {
+  if (!identifier || !data.password) {
     return {
       success: false,
-      message: "username atau password salah",
+      message: "Username/NIS dan password wajib diisi",
     };
   }
 
-  // const isPassword = await bcrypt.compare(data.password, user[0].password);
-  const isPassword = data.password === user[0].password;
+  const [user] = await pool.query("SELECT * FROM users WHERE username = ?", [
+    identifier,
+  ]);
+
+  if (!user || user.length === 0) {
+    return {
+      success: false,
+      message: "Username/NIS atau password salah",
+    };
+  }
+
+  const currentUser = user[0];
+  let isPassword = false;
+
+  if (currentUser.password) {
+    if (
+      currentUser.password.startsWith("$2a$") ||
+      currentUser.password.startsWith("$2b$")
+    ) {
+      isPassword = await bcrypt.compare(data.password, currentUser.password);
+    } else {
+      isPassword = data.password === currentUser.password;
+    }
+  }
 
   if (!isPassword) {
     return {
       success: false,
-      message: "username atau password salah",
+      message: "Username/NIS atau password salah",
     };
   }
 
   const payload = {
-    id: user[0].id_user,
-    username: user[0].username,
-    role: user[0].role,
+    id: currentUser.id_user || currentUser.id,
+    username: currentUser.username,
+    name: currentUser.nama || currentUser.name || currentUser.username,
+    role: currentUser.role,
   };
 
-  const accessToken = jwt.sign(payload, process.env.SECRET_KEY, {
+  const secretKey = process.env.SECRET_KEY || "default_secret_key";
+  const accessToken = jwt.sign(payload, secretKey, {
     expiresIn: "7d",
   });
 
