@@ -43,9 +43,9 @@ function RootRedirect() {
   }
 
   const home = {
-    student: '/student/dashboard',
-    teacher: '/teacher/dashboard',
-    duty_teacher: '/duty/dashboard',
+    siswa: '/student/dashboard',
+    guru: '/teacher/dashboard',
+    guru_piket: '/duty/dashboard',
     admin: '/admin/dashboard',
   };
 
