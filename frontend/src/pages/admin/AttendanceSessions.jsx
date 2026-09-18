@@ -1,7 +1,56 @@
-import { useEffect, useState } from 'react';
-import { QrCode, Clock3 } from 'lucide-react';
-import PageContainer from '../../components/layout/PageContainer';
-import Card, { CardHeader } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import attendanceService from '../../services/attendanceService';
-export default function AttendanceSessions(){const [session,setSession]=useState(null);useEffect(()=>{attendanceService.getActiveSession().then(setSession).catch(()=>{});},[]);return <PageContainer title="Sesi Absensi & QR" description="Kelola sesi absensi masuk sekolah, batas waktu, dan QR Code."><Card><CardHeader title="Sesi Hari Ini" subtitle="QR bukan per mata pelajaran. Satu sesi digunakan untuk kehadiran masuk sekolah."/>{session?<div className="grid gap-3 sm:grid-cols-3"><div><p className="text-xs text-slate-500">Tanggal</p><p className="font-semibold">{session.attendanceDate}</p></div><div><p className="text-xs text-slate-500">Jam aktif</p><p className="font-semibold">{session.startTime} - {session.endTime}</p></div><div><p className="text-xs text-slate-500">Batas terlambat</p><p className="font-semibold">{session.lateAfter||'-'}</p></div></div>:<p className="text-sm text-slate-500">Belum ada sesi aktif.</p>}<div className="mt-5 flex gap-2"><Button as="a" href="/teacher/sessions/create" icon={QrCode}>Buat / Atur QR</Button><Button variant="secondary" icon={Clock3}>Atur Batas Waktu</Button></div></Card></PageContainer>}
+import { useEffect, useState } from "react";
+import { QrCode, Clock3 } from "lucide-react";
+import PageContainer from "../../components/layout/PageContainer";
+import Card, { CardHeader } from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import attendanceService from "../../services/attendanceService";
+export default function AttendanceSessions() {
+  const [session, setSession] = useState(null);
+  useEffect(() => {
+    attendanceService
+      .getActiveSession()
+      .then(setSession)
+      .catch(() => {});
+  }, []);
+  return (
+    <PageContainer
+      title="Sesi Absensi & QR"
+      description="Kelola sesi absensi masuk sekolah, batas waktu, dan QR Code."
+    >
+      <Card>
+        <CardHeader
+          title="Sesi Hari Ini"
+          subtitle="QR bukan per mata pelajaran. Satu sesi digunakan untuk kehadiran masuk sekolah."
+        />
+        {session ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <p className="text-xs text-slate-500">Tanggal</p>
+              <p className="font-semibold">{session.attendanceDate}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Jam aktif</p>
+              <p className="font-semibold">
+                {session.startTime} - {session.endTime}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Batas terlambat</p>
+              <p className="font-semibold">{session.lateAfter || "-"}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">Belum ada sesi aktif.</p>
+        )}
+        <div className="mt-5 flex gap-2">
+          <Button as="a" href="/teacher/sessions/create" icon={QrCode}>
+            Buat / Atur QR
+          </Button>
+          <Button variant="secondary" icon={Clock3}>
+            Atur Batas Waktu
+          </Button>
+        </div>
+      </Card>
+    </PageContainer>
+  );
+}
