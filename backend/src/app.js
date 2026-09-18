@@ -3,7 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { auth } from "./routes/auth-routes.js";
-
+import { students } from "./routes/student-routes.js";
 export const app = express();
 
 app.use(morgan("dev"));
@@ -17,3 +17,4 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/api/auth", auth);
+app.use("/api/students", students);
