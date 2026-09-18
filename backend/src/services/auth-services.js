@@ -1,8 +1,9 @@
 import { pool } from "../config/database.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export const signIn = async (data) => {
-  const [user] = pool.query("SELECT * FROM users WHERE username = ?", [
+  const [user] = await pool.query("SELECT * FROM users WHERE username = ?", [
     data.username,
   ]);
 
@@ -13,7 +14,8 @@ export const signIn = async (data) => {
     };
   }
 
-  const isPassword = await bcrypt.compare(data.password, user[0].password);
+  // const isPassword = await bcrypt.compare(data.password, user[0].password);
+  const isPassword = data.password === user[0].password;
 
   if (!isPassword) {
     return {
@@ -22,8 +24,20 @@ export const signIn = async (data) => {
     };
   }
 
+  const payload = {
+    id: user[0].id_user,
+    username: user[0].username,
+    role: user[0].role,
+  };
+
+  const accessToken = jwt.sign(payload, process.env.SECRET_KEY, {
+    expiresIn: "7d",
+  });
+
   return {
     success: true,
     message: "Login berhasil",
+    user: payload,
+    accessToken,
   };
 };
