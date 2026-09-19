@@ -128,24 +128,23 @@ export const updateTeacherById = async (data) => {
 export const softDeleteTeacher = async (data) => {
   const connection = await pool.getConnection();
 
-  await connection.query(
-    `UPDATE usesr SET status_aktif = ? WHERE id_user = ?`,
-    [0, data.id_user],
-  );
-  await connection.query(`UPDATE guru SET status_aktif = ? WHERE id_guru = ?`, [
-    0,
-    data.id_guru,
-  ]);
-
-  await connection.commit();
-
-  return {
-    success: true,
-    message: "update berhasil",
-  };
-
   try {
     await connection.beginTransaction();
+    await connection.query(
+      `UPDATE users SET status_aktif = ? WHERE id_user = ?`,
+      [0, data.id_user],
+    );
+    await connection.query(
+      `UPDATE guru SET status_aktif = ? WHERE id_guru = ?`,
+      [0, data.id_guru],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: "update berhasil",
+    };
   } catch (error) {
     await connection.rollback();
   } finally {
