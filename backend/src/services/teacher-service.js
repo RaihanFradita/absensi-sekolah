@@ -81,3 +81,93 @@ export const findAllTeacher = async () => {
     data: teachers,
   };
 };
+
+export const findTeacherById = async (id_guru) => {
+  const [[teacher]] = await pool.query(
+    `
+      SELECT 
+        g.id_guru, g.nip, g.nama_guru, g.status_aktif,
+        u.username, u.role
+        FROM guru g JOIN 
+        users u ON u.id_user = g.id_user
+        WHERE g.id_guru = ?;
+    `,
+    [id_guru],
+  );
+
+  return {
+    success: true,
+    message: "data berhasil diambil",
+    data: teacher,
+  };
+};
+
+export const updateTeacherById = async (data) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [updateUser] = await connection.query(
+      `
+            UPDATE users SET username = ?
+            WHERE id_user = ?
+        `,
+      [data.username, data.id_user],
+    );
+
+    if (updateUser.affectedRows === 0) {
+      return {
+        success: false,
+        message: "gagal mengubah data",
+      };
+    }
+
+    await connection.query(
+      `
+      UPDATE guru SET nip = ?, nama_guru = ?
+      WHERE id_guru = ?
+      `,
+      [data.nip, data.nama_guru, data.id_guru],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: "Update berhasil",
+    };
+  } catch (error) {
+    await connection.rollback();
+
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
+export const softDeleteTeacher = async (data) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    await connection.query(
+      `UPDATE users SET status_aktif = ? WHERE id_user = ?`,
+      [0, data.id_user],
+    );
+    await connection.query(
+      `UPDATE guru SET status_aktif = ? WHERE id_guru = ?`,
+      [0, data.id_guru],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: "update berhasil",
+    };
+  } catch (error) {
+    await connection.rollback();
+  } finally {
+    connection.release();
+  }
+};
