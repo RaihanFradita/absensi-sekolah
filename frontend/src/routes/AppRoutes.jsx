@@ -31,6 +31,8 @@ import AttendanceReports from '../pages/admin/AttendanceReports';
 import DutySchedules from '../pages/admin/DutySchedules';
 import UserRoles from '../pages/admin/UserRoles';
 import AttendanceSessions from '../pages/admin/AttendanceSessions';
+import StudentAccounts from '../pages/admin/StudentAccounts';
+import TeacherAccounts from '../pages/admin/TeacherAccounts';
 
 import { ROLES } from '../utils/constants';
 import useAuth from '../hooks/useAuth';
@@ -60,23 +62,28 @@ function RootRedirect() {
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Authentication */}
+
+      {/* ==================== AUTHENTICATION ==================== */}
+
       <Route
         path="/login"
         element={<Login />}
       />
 
-      {/* Root */}
+      {/* ==================== ROOT ==================== */}
+
       <Route
         path="/"
         element={<RootRedirect />}
       />
 
-      {/* Protected Application */}
+      {/* ==================== PROTECTED APPLICATION ==================== */}
+
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
 
           {/* ==================== SISWA ==================== */}
+
           <Route
             element={
               <RoleRoute
@@ -106,6 +113,7 @@ export default function AppRoutes() {
           </Route>
 
           {/* ==================== GURU KELAS ==================== */}
+
           <Route
             element={
               <RoleRoute
@@ -140,6 +148,7 @@ export default function AppRoutes() {
           </Route>
 
           {/* ==================== GURU PIKET ==================== */}
+
           <Route
             element={
               <RoleRoute
@@ -164,6 +173,7 @@ export default function AppRoutes() {
           </Route>
 
           {/* ==================== ADMIN ==================== */}
+
           <Route
             element={
               <RoleRoute
@@ -196,6 +206,25 @@ export default function AppRoutes() {
               element={<UserRoles />}
             />
 
+            {/* ==================== AKUN & ROLE ==================== */}
+
+            <Route
+              path="/admin/accounts"
+              element={<UserRoles />}
+            />
+
+            <Route
+              path="/admin/accounts/students"
+              element={<StudentAccounts />}
+            />
+
+            <Route
+              path="/admin/accounts/teachers"
+              element={<TeacherAccounts />}
+            />
+
+            {/* ==================== ADMIN LAINNYA ==================== */}
+
             <Route
               path="/admin/duty-schedules"
               element={<DutySchedules />}
@@ -225,11 +254,13 @@ export default function AppRoutes() {
         </Route>
       </Route>
 
-      {/* Unknown Route */}
+      {/* ==================== UNKNOWN ROUTE ==================== */}
+
       <Route
         path="*"
         element={<Navigate to="/" replace />}
       />
+
     </Routes>
   );
 }

@@ -7,7 +7,7 @@ const items=[
   {to:'/admin/students',label:'Data Siswa',desc:'Kelola identitas siswa dan kelas.',icon:Users},
   {to:'/admin/teachers',label:'Data Guru',desc:'Kelola data guru sekolah.',icon:GraduationCap},
   {to:'/admin/classes',label:'Data Kelas',desc:'Kelola kelas dan wali kelas.',icon:School},
-  {to:'/admin/user-roles',label:'Akun & Role',desc:'Atur hak akses siswa, guru kelas, guru piket, admin.',icon:UserCog},
+  {to:'/admin/user-roles',label:'Kelola Akun Pengguna',desc:'Atur hak akses siswa, guru kelas, guru piket, admin.',icon:UserCog},
   {to:'/admin/duty-schedules',label:'Jadwal Guru Piket',desc:'Atur assignment piket per tanggal/bulan tanpa membuat akun ulang.',icon:CalendarDays},
   {to:'/admin/attendance-sessions',label:'Sesi & QR',desc:'Kelola QR absensi masuk sekolah dan batas waktunya.',icon:QrCode},
   {to:'/admin/reports',label:'Data Absensi',desc:'Lihat, koreksi, dan ekspor rekap kehadiran harian.',icon:FileBarChart},

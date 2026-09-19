@@ -109,7 +109,7 @@ export const NAV_ITEMS = {
     },
     {
       to: '/admin/user-roles',
-      label: 'Akun & Role',
+      label: 'Kelola Akun',
       icon: UserCog,
     },
     {
