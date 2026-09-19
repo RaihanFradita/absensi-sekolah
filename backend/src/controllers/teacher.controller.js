@@ -1,0 +1,41 @@
+import { findAllTeacher, insertTeacher } from "../services/teacher-service.js";
+
+export const createTeacher = async (req, res) => {
+  const { username, password, nip, nama_guru } = req.body;
+
+  if (!username || !password || !nip || !nama_guru) {
+    return res.status(400).json({
+      success: false,
+      message: "Semua field wajib diisi!",
+    });
+  }
+
+  try {
+    const result = await insertTeacher({ username, password, nip, nama_guru });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.status(201).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+    });
+  }
+};
+
+export const getAllTeachers = async (req, res) => {
+  try {
+    const result = await findAllTeacher();
+
+    return res.json(result);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+    });
+  }
+};
