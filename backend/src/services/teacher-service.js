@@ -81,3 +81,46 @@ export const findAllTeacher = async () => {
     data: teachers,
   };
 };
+
+export const updateTeacherById = async (data) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [updateUser] = await connection.query(
+      `
+            UPDATE users SET username = ?
+            WHERE id_user = ?
+        `,
+      [data.username, data.id_user],
+    );
+
+    if (updateUser.affectedRows === 0) {
+      return {
+        success: false,
+        message: "gagal mengubah data",
+      };
+    }
+
+    await connection.query(
+      `
+      UPDATE guru SET nip = ?, nama_guru = ?
+      WHERE id_guru = ?
+      `,
+      [data.nip, data.nama_guru, data.id_guru],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: "Update berhasil",
+    };
+  } catch (error) {
+    await connection.rollback();
+
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
