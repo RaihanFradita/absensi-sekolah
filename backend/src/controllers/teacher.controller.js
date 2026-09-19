@@ -1,6 +1,7 @@
 import {
   findAllTeacher,
   insertTeacher,
+  softDeleteTeacher,
   updateTeacherById,
 } from "../services/teacher-service.js";
 
@@ -70,6 +71,33 @@ export const editTeacher = async (req, res) => {
       nip,
       nama_guru,
     });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.status(201).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+    });
+  }
+};
+
+export const deleteTeacher = async (req, res) => {
+  const { id_guru } = req.params;
+  const { id_user } = req.body;
+
+  if (!id_guru || !id_user) {
+    return res.status(400).json({
+      success: false,
+      message: "id tidak ditemukan",
+    });
+  }
+
+  try {
+    const result = await softDeleteTeacher({ id_guru, id_user });
 
     if (!result.success) {
       return res.status(400).json(result);

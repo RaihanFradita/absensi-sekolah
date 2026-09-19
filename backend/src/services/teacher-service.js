@@ -124,3 +124,31 @@ export const updateTeacherById = async (data) => {
     connection.release();
   }
 };
+
+export const softDeleteTeacher = async (data) => {
+  const connection = await pool.getConnection();
+
+  await connection.query(
+    `UPDATE usesr SET status_aktif = ? WHERE id_user = ?`,
+    [0, data.id_user],
+  );
+  await connection.query(`UPDATE guru SET status_aktif = ? WHERE id_guru = ?`, [
+    0,
+    data.id_guru,
+  ]);
+
+  await connection.commit();
+
+  return {
+    success: true,
+    message: "update berhasil",
+  };
+
+  try {
+    await connection.beginTransaction();
+  } catch (error) {
+    await connection.rollback();
+  } finally {
+    connection.release();
+  }
+};
