@@ -103,7 +103,7 @@ export const deleteTeacher = async (req, res) => {
       return res.status(400).json(result);
     }
 
-    res.status(201).json(result);
+    res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({
       success: false,
