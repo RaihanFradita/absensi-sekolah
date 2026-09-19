@@ -82,6 +82,26 @@ export const findAllTeacher = async () => {
   };
 };
 
+export const findTeacherById = async (id_guru) => {
+  const [[teacher]] = await pool.query(
+    `
+      SELECT 
+        g.id_guru, g.nip, g.nama_guru, g.status_aktif,
+        u.username, u.role
+        FROM guru g JOIN 
+        users u ON u.id_user = g.id_user
+        WHERE g.id_guru = ?;
+    `,
+    [id_guru],
+  );
+
+  return {
+    success: true,
+    message: "data berhasil diambil",
+    data: teacher,
+  };
+};
+
 export const updateTeacherById = async (data) => {
   const connection = await pool.getConnection();
   try {
