@@ -16,9 +16,14 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.7.0",
+<<<<<<< HEAD
+=======
+>>>>>>> 97728a2b2866d6607111761f23e291b52ff9799e
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.24.4",
     "nodemon": "^3.1.14"
+  },
+  "devDependencies": {
+    "morgan": "^1.12.1"
   }
 }

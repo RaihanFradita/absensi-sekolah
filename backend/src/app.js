@@ -1,12 +1,24 @@
-import express from 'express';
-import cors from 'cors';
-import rateLimit from 'express-rate-limit';
-import kelasRoutes from './routes/kelasRoutes.js';
-import siswaRoutes from './routes/siswaRoutes.js'; // <-- Tambahkan ini
+import express from "express";
 
 export const app = express();
 
+app.use(morgan("dev"));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:3000",
+    ],
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use(express.json());
+
+app.use("/api/auth", auth);
+app.use("/api/students", students);
+app.use("/api/teacher", teacher);
 
 app.use(cors({
   origin: "http://localhost:5173",

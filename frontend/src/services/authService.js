@@ -15,11 +15,20 @@ const ENDPOINTS = {
  * respons backend agar tidak bisa dimanipulasi dari sisi client.
  */
 async function login({ identifier, password }) {
-  const { data } = await api.post(ENDPOINTS.LOGIN, { identifier, password });
+  const { data } = await api.post(ENDPOINTS.LOGIN, {
+    username: identifier,
+    identifier,
+    password,
+  });
 
-  // Bentuk respons yang diharapkan dari backend:
-  // { token: string, user: { id, name, role, ... } }
-  const { token, user } = data;
+  // Bentuk respons dari backend:
+  // { success: true, message: string, token: string, user: { id, username, name, role } }
+  const token =
+    data.token ||
+    data.accessToken ||
+    data.data?.token ||
+    data.data?.accessToken;
+  const user = data.user || data.data?.user;
 
   if (token) {
     localStorage.setItem(AUTH_TOKEN_KEY, token);
@@ -27,6 +36,9 @@ async function login({ identifier, password }) {
   if (user) {
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
   }
+
+  // Nonaktifkan mock mode ketika login sungguhan berhasil
+  setMockMode(false);
 
   return { token, user };
 }
