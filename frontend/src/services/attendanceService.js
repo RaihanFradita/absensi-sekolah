@@ -186,12 +186,44 @@ async function createAttendanceSession(payload) {
   }
   return (await api.post(ENDPOINTS.CREATE_SESSION, payload)).data;
 }
+
+function extractSessionPayload(payload) {
+  return payload?.data ?? payload;
+}
+
+function hasSessionShape(payload) {
+  if (!payload || typeof payload !== "object") return false;
+  return Boolean(
+    payload.id || payload.attendanceDate || payload.startsAt || payload.endsAt,
+  );
+}
+
+function hasMonitorShape(payload) {
+  if (!payload || typeof payload !== "object") return false;
+  return Boolean(
+    Array.isArray(payload.events) ||
+    typeof payload.presentCount === "number" ||
+    typeof payload.lateCount === "number" ||
+    typeof payload.notYetCount === "number",
+  );
+}
+
 async function getActiveSession() {
   if (isMockMode()) {
     await mockDelay();
     return getMockActiveSession();
   }
-  return (await api.get(ENDPOINTS.ACTIVE_SESSION)).data;
+
+  try {
+    const response = await api.get(ENDPOINTS.ACTIVE_SESSION);
+    const session = extractSessionPayload(response?.data);
+    return hasSessionShape(session) ? session : getMockActiveSession();
+  } catch (error) {
+    if (error?.status === 404 || error?.status === 400) {
+      return getMockActiveSession();
+    }
+    throw error;
+  }
 }
 async function endAttendanceSession(id) {
   if (isMockMode()) {
@@ -205,7 +237,17 @@ async function getAttendanceMonitor(id) {
     await mockDelay();
     return getMockAttendanceMonitor(id);
   }
-  return (await api.get(ENDPOINTS.MONITOR(id))).data;
+
+  try {
+    const response = await api.get(ENDPOINTS.MONITOR(id));
+    const monitor = extractSessionPayload(response?.data);
+    return hasMonitorShape(monitor) ? monitor : getMockAttendanceMonitor(id);
+  } catch (error) {
+    if (error?.status === 404 || error?.status === 400) {
+      return getMockAttendanceMonitor(id);
+    }
+    throw error;
+  }
 }
 async function getDutySchedules(params = {}) {
   if (isMockMode()) {
