@@ -1,4 +1,4 @@
-import { signIn } from "../services/auth-services.js";
+import { signIn } from "../../services/auth/auth-services.js";
 
 export const login = async (req, res) => {
   const { username, identifier, password } = req.body;
@@ -71,4 +71,3 @@ export const getMe = async (req, res) => {
     });
   }
 };
-

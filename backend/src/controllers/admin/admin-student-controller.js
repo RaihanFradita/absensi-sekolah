@@ -2,7 +2,7 @@ import {
   findAllStudents,
   findStudentById,
   findAllClasses,
-} from "../services/student-service.js";
+} from "../../services/admin/admin-student-service.js";
 
 export async function getStudents(req, res) {
   try {

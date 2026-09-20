@@ -4,7 +4,7 @@ import {
   insertTeacher,
   softDeleteTeacher,
   updateTeacherById,
-} from "../services/teacher-service.js";
+} from "../../services/admin/admin-teacher-service.js";
 
 export const createTeacher = async (req, res) => {
   const { username, password, nip, nama_guru } = req.body;
