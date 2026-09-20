@@ -1,4 +1,4 @@
-import { pool } from "../config/database.js";
+import { pool } from "../../config/database.js";
 import bcrypt from "bcrypt";
 
 export const insertTeacher = async (data) => {

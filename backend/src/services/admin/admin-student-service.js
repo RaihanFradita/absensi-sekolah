@@ -1,4 +1,4 @@
-import { pool } from "../config/database.js";
+import { pool } from "../../config/database.js";
 
 export async function findAllStudents() {
   const [rows] = await pool.query(`
@@ -33,7 +33,7 @@ export async function findStudentById(id) {
       INNER JOIN kelas k ON s.id_kelas = k.id_kelas
       WHERE s.id_siswa = ?
     `,
-    [id]
+    [id],
   );
 
   return rows[0];
