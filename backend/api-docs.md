@@ -13,16 +13,16 @@ Dokumentasi resmi untuk Endpoint REST API Sistem Absensi Sekolah.
    - [POST /api/auth/login](#post-apiauthlogin)
    - [POST /api/auth/logout](#post-apiauthlogout)
    - [GET /api/auth/me](#get-apiauthme)
-2. [Student API (`/api/students`)](#2-student-api-apistudents)
-   - [GET /api/students](#get-apistudents)
-   - [GET /api/students/classes/list](#get-apistudentsclasseslist)
-   - [GET /api/students/:id](#get-apistudentsid)
-3. [Teacher API (`/api/teacher`)](#3-teacher-api-apiteacher)
-   - [GET /api/teacher](#get-apiteacher)
-   - [GET /api/teacher/:id_guru](#get-apiteacherid_guru)
-   - [POST /api/teacher/add](#post-apiteacheradd)
-   - [PUT /api/teacher/edit/:id_guru](#put-apiteachereditid_guru)
-   - [PATCH /api/teacher/:id_guru/deactivate](#patch-apiteacherid_gurudeactivate)
+2. [Student API (`/api/admin/student`)](#2-student-api-apiadminstudent)
+   - [GET /api/admin/student](#get-apiadminstudent)
+   - [GET /api/admin/student/classes/list](#get-apiadminstudentclasseslist)
+   - [GET /api/admin/student/:id](#get-apiadminstudentid)
+3. [Teacher API (`/api/admin/teacher`)](#3-teacher-api-apiadminteacher)
+   - [GET /api/admin/teacher](#get-apiadminteacher)
+   - [GET /api/admin/teacher/:id_guru](#get-apiadminteacherid_guru)
+   - [POST /api/admin/teacher/add](#post-apiadminteacheradd)
+   - [PUT /api/admin/teacher/edit/:id_guru](#put-apiadminteachereditid_guru)
+   - [PATCH /api/admin/teacher/:id_guru/deactivate](#patch-apiadminteacherid_gurudeactivate)
 
 ---
 
@@ -149,14 +149,14 @@ Digunakan untuk mengecek profil user yang sedang login berdasarkan token JWT.
 
 ---
 
-## 2. Student API (`/api/students`)
+## 2. Student API (`/api/admin/student`)
 
-### GET /api/students
+### GET /api/admin/student
 
 Mengambil daftar seluruh siswa beserta informasi kelasnya.
 
 * **Method**: `GET`
-* **Endpoint**: `/api/students`
+* **Endpoint**: `/api/admin/student`
 * **Request**:
   * **Headers**: `Content-Type: application/json`
 * **Response**:
@@ -187,12 +187,12 @@ Mengambil daftar seluruh siswa beserta informasi kelasnya.
 
 ---
 
-### GET /api/students/classes/list
+### GET /api/admin/student/classes/list
 
 Mengambil daftar seluruh kelas yang aktif.
 
 * **Method**: `GET`
-* **Endpoint**: `/api/students/classes/list`
+* **Endpoint**: `/api/admin/student/classes/list`
 * **Request**:
   * **Headers**: `Content-Type: application/json`
 * **Response**:
@@ -220,12 +220,12 @@ Mengambil daftar seluruh kelas yang aktif.
 
 ---
 
-### GET /api/students/:id
+### GET /api/admin/student/:id
 
 Mengambil detail data siswa berdasarkan ID Siswa.
 
 * **Method**: `GET`
-* **Endpoint**: `/api/students/:id`
+* **Endpoint**: `/api/admin/student/:id`
 * **Request**:
   * **URL Parameters**:
     * `id` (integer/string, required): ID unik siswa (`id_siswa`)
@@ -262,14 +262,14 @@ Mengambil detail data siswa berdasarkan ID Siswa.
 
 ---
 
-## 3. Teacher API (`/api/teacher`)
+## 3. Teacher API (`/api/admin/teacher`)
 
-### GET /api/teacher
+### GET /api/admin/teacher
 
 Mengambil daftar semua data guru.
 
 * **Method**: `GET`
-* **Endpoint**: `/api/teacher`
+* **Endpoint**: `/api/admin/teacher`
 * **Request**:
   * **Headers**: `Content-Type: application/json`
 * **Response**:
@@ -300,12 +300,12 @@ Mengambil daftar semua data guru.
 
 ---
 
-### GET /api/teacher/:id_guru
+### GET /api/admin/teacher/:id_guru
 
 Mengambil detail data guru berdasarkan ID Guru.
 
 * **Method**: `GET`
-* **Endpoint**: `/api/teacher/:id_guru`
+* **Endpoint**: `/api/admin/teacher/:id_guru`
 * **Request**:
   * **URL Parameters**:
     * `id_guru` (integer/string, required): ID unik guru (`id_guru`)
@@ -342,12 +342,12 @@ Mengambil detail data guru berdasarkan ID Guru.
 
 ---
 
-### POST /api/teacher/add
+### POST /api/admin/teacher/add
 
 Menambahkan data guru baru beserta akun user-nya.
 
 * **Method**: `POST`
-* **Endpoint**: `/api/teacher/add`
+* **Endpoint**: `/api/admin/teacher/add`
 * **Request**:
   * **Headers**: `Content-Type: application/json`
   * **Body Parameters**:
@@ -391,12 +391,12 @@ Menambahkan data guru baru beserta akun user-nya.
 
 ---
 
-### PUT /api/teacher/edit/:id_guru
+### PUT /api/admin/teacher/edit/:id_guru
 
 Mengubah data profil guru dan username akun user.
 
 * **Method**: `PUT`
-* **Endpoint**: `/api/teacher/edit/:id_guru`
+* **Endpoint**: `/api/admin/teacher/edit/:id_guru`
 * **Request**:
   * **URL Parameters**:
     * `id_guru` (integer/string, required): ID unik guru (`id_guru`)
@@ -441,12 +441,12 @@ Mengubah data profil guru dan username akun user.
 
 ---
 
-### PATCH /api/teacher/:id_guru/deactivate
+### PATCH /api/admin/teacher/:id_guru/deactivate
 
 Nonaktifkan data guru dan akun user (Soft Delete).
 
 * **Method**: `PATCH`
-* **Endpoint**: `/api/teacher/:id_guru/deactivate`
+* **Endpoint**: `/api/admin/teacher/:id_guru/deactivate`
 * **Request**:
   * **URL Parameters**:
     * `id_guru` (integer/string, required): ID unik guru (`id_guru`)
