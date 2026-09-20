@@ -11,6 +11,13 @@ import {
   getStudent,
   getClasses,
 } from "../controllers/admin/admin-student-controller.js";
+import {
+  createClass,
+  editClassById,
+  getAllClass,
+  getClassById,
+  softDeleteClass,
+} from "../controllers/admin/admin-class-controller.js";
 
 export const admin = express.Router();
 
@@ -25,3 +32,10 @@ admin.patch("/teacher/:id_guru/deactivate", deleteTeacher);
 admin.get("/student/", getStudents);
 admin.get("/student/classes/list", getClasses);
 admin.get("/student/:id", getStudent);
+
+// route kelas
+admin.post("/class/add", createClass);
+admin.get("/class", getAllClass);
+admin.get("/class/:id_kelas", getClassById);
+admin.put("/class/:id_kelas", editClassById);
+admin.patch("/class/:id_guru/deactivate", softDeleteClass);
