@@ -7,49 +7,66 @@ export const insertTeacher = async (data) => {
   try {
     await connection.beginTransaction();
 
-    // ambil data user
-    const [user] = await connection.query(
-      "SELECT * FROM users WHERE username = ?",
+    // Cek apakah username sudah digunakan
+    const [existingUser] = await connection.query(
+      `
+        SELECT id_user
+        FROM users
+        WHERE username = ?
+        LIMIT 1
+      `,
       [data.username],
     );
 
-    //   jika user ada
-    if (user.length > 0) {
+    if (existingUser.length > 0) {
+      await connection.rollback();
+
       return {
         success: false,
         message: "Username sudah digunakan",
       };
     }
 
-    //   hash pasword
+    // Hash password
     const passwordHash = await bcrypt.hash(data.password, 10);
 
-    //   tambahkan data user
+    // Tambahkan user
     const [insertUser] = await connection.query(
-      "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+      `
+        INSERT INTO users (
+          username,
+          password,
+          role
+        )
+        VALUES (?, ?, ?)
+      `,
       [data.username, passwordHash, "guru"],
     );
 
-    //   jika gagal menambahkan data
     if (insertUser.affectedRows === 0) {
+      await connection.rollback();
+
       return {
         success: false,
-        message: "gagal menambahkan data",
+        message: "Gagal menambahkan user",
       };
     }
 
-    //   ambil id yang baru dibuat
     const idUser = insertUser.insertId;
 
-    //   insert data guru
+    // Tambahkan data guru
     await connection.query(
       `
-    INSERT INTO guru (id_user, nip, nama_guru) VALUES (?, ?, ?)
-    `,
-      [idUser, data.nip, data.nama_guru],
+        INSERT INTO guru (
+          id_user,
+          nama_guru
+        )
+        VALUES (?, ?)
+      `,
+      [idUser, data.nama_guru],
     );
 
-    // semua berhasil
+    // Simpan semua perubahan
     await connection.commit();
 
     return {
@@ -57,8 +74,9 @@ export const insertTeacher = async (data) => {
       message: "Data guru berhasil ditambahkan",
     };
   } catch (error) {
-    // kalau terjadi error, batalkan semua
     await connection.rollback();
+
+    console.error("insertTeacher:", error);
 
     throw error;
   } finally {
@@ -68,16 +86,22 @@ export const insertTeacher = async (data) => {
 
 export const findAllTeacher = async () => {
   const [teachers] = await pool.query(`
-        SELECT 
-        g.id_guru, g.id_user, g.nip, g.nama_guru, g.status_aktif,
-        u.username, u.role
-        FROM guru g JOIN 
-        users u ON u.id_user = g.id_user;
-        `);
+    SELECT
+      g.id_guru,
+      g.id_user,
+      g.nama_guru,
+      g.status_aktif,
+      u.username,
+      u.role
+    FROM guru g
+    INNER JOIN users u
+      ON u.id_user = g.id_user
+    ORDER BY g.nama_guru ASC
+  `);
 
   return {
     success: true,
-    message: "data berhasil diambil",
+    message: "Data guru berhasil diambil",
     data: teachers,
   };
 };
@@ -85,59 +109,90 @@ export const findAllTeacher = async () => {
 export const findTeacherById = async (id_guru) => {
   const [[teacher]] = await pool.query(
     `
-      SELECT 
-        g.id_guru, g.id_user, g.nip, g.nama_guru, g.status_aktif,
-        u.username, u.role
-        FROM guru g JOIN 
-        users u ON u.id_user = g.id_user
-        WHERE g.id_guru = ?;
+      SELECT
+        g.id_guru,
+        g.id_user,
+        g.nama_guru,
+        g.status_aktif,
+        u.username,
+        u.role
+      FROM guru g
+      INNER JOIN users u
+        ON u.id_user = g.id_user
+      WHERE g.id_guru = ?
+      LIMIT 1
     `,
     [id_guru],
   );
 
+  if (!teacher) {
+    return {
+      success: false,
+      message: "Data guru tidak ditemukan",
+    };
+  }
+
   return {
     success: true,
-    message: "data berhasil diambil",
+    message: "Data guru berhasil diambil",
     data: teacher,
   };
 };
 
 export const updateTeacherById = async (data) => {
   const connection = await pool.getConnection();
+
   try {
     await connection.beginTransaction();
 
+    // Update username
     const [updateUser] = await connection.query(
       `
-            UPDATE users SET username = ?
-            WHERE id_user = ?
-        `,
+        UPDATE users
+        SET username = ?
+        WHERE id_user = ?
+      `,
       [data.username, data.id_user],
     );
 
     if (updateUser.affectedRows === 0) {
+      await connection.rollback();
+
       return {
         success: false,
-        message: "gagal mengubah data",
+        message: "User guru tidak ditemukan",
       };
     }
 
-    await connection.query(
+    // Update nama guru
+    const [updateGuru] = await connection.query(
       `
-      UPDATE guru SET nip = ?, nama_guru = ?
-      WHERE id_guru = ?
+        UPDATE guru
+        SET nama_guru = ?
+        WHERE id_guru = ?
       `,
-      [data.nip, data.nama_guru, data.id_guru],
+      [data.nama_guru, data.id_guru],
     );
+
+    if (updateGuru.affectedRows === 0) {
+      await connection.rollback();
+
+      return {
+        success: false,
+        message: "Data guru tidak ditemukan",
+      };
+    }
 
     await connection.commit();
 
     return {
       success: true,
-      message: "Update berhasil",
+      message: "Data guru berhasil diperbarui",
     };
   } catch (error) {
     await connection.rollback();
+
+    console.error("updateTeacherById:", error);
 
     throw error;
   } finally {
@@ -150,12 +205,24 @@ export const softDeleteTeacher = async (data) => {
 
   try {
     await connection.beginTransaction();
+
+    // Nonaktifkan user
     await connection.query(
-      `UPDATE users SET status_aktif = ? WHERE id_user = ?`,
+      `
+        UPDATE users
+        SET status_aktif = ?
+        WHERE id_user = ?
+      `,
       [0, data.id_user],
     );
+
+    // Nonaktifkan guru
     await connection.query(
-      `UPDATE guru SET status_aktif = ? WHERE id_guru = ?`,
+      `
+        UPDATE guru
+        SET status_aktif = ?
+        WHERE id_guru = ?
+      `,
       [0, data.id_guru],
     );
 
@@ -163,10 +230,14 @@ export const softDeleteTeacher = async (data) => {
 
     return {
       success: true,
-      message: "update berhasil",
+      message: "Data guru berhasil dinonaktifkan",
     };
   } catch (error) {
     await connection.rollback();
+
+    console.error("softDeleteTeacher:", error);
+
+    throw error;
   } finally {
     connection.release();
   }

@@ -17,10 +17,10 @@ import {
 import { ATTENDANCE_STATUS, ROLES } from "../utils/constants";
 
 const ENDPOINTS = {
-  STUDENT_DASHBOARD: "/student/dashboard",
-  STUDENT_PROFILE: "/student/profile",
+  STUDENT_DASHBOARD: "/students/dashboard",
+  STUDENT_PROFILE: "/students/profile",
   SCAN_ATTENDANCE: "/attendance/scan",
-  ATTENDANCE_HISTORY: "/student/attendance-history",
+  ATTENDANCE_HISTORY: "/students/attendance-history",
   TEACHER_DASHBOARD: "/teacher/dashboard",
   DUTY_DASHBOARD: "/duty/dashboard",
   ATTENDANCE_DAILY: "/attendance/daily",

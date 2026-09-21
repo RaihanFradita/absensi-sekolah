@@ -28,4 +28,3 @@ export const adminTeacherServices = {
     return response.data;
   },
 };
-

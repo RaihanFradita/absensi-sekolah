@@ -7,9 +7,9 @@ import {
 } from "../../services/admin/admin-teacher-service.js";
 
 export const createTeacher = async (req, res) => {
-  const { username, password, nip, nama_guru } = req.body;
+  const { username, password, nama_guru } = req.body;
 
-  if (!username || !password || !nip || !nama_guru) {
+  if (!username || !password || !nama_guru) {
     return res.status(400).json({
       success: false,
       message: "Semua field wajib diisi!",
@@ -17,14 +17,20 @@ export const createTeacher = async (req, res) => {
   }
 
   try {
-    const result = await insertTeacher({ username, password, nip, nama_guru });
+    const result = await insertTeacher({
+      username,
+      password,
+      nama_guru,
+    });
 
     if (!result.success) {
       return res.status(400).json(result);
     }
 
-    res.status(201).json(result);
+    return res.status(201).json(result);
   } catch (error) {
+    console.error("createTeacher:", error);
+
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
@@ -38,7 +44,8 @@ export const getAllTeachers = async (req, res) => {
 
     return res.json(result);
   } catch (error) {
-    console.log(error);
+    console.error("getAllTeachers:", error);
+
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
@@ -52,15 +59,17 @@ export const getTeacherById = async (req, res) => {
   if (!id_guru) {
     return res.status(400).json({
       success: false,
-      message: "id tidak ditemukan",
+      message: "ID guru tidak ditemukan",
     });
   }
 
   try {
     const result = await findTeacherById(id_guru);
 
-    res.json(result);
+    return res.json(result);
   } catch (error) {
+    console.error("getTeacherById:", error);
+
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
@@ -70,16 +79,16 @@ export const getTeacherById = async (req, res) => {
 
 export const editTeacher = async (req, res) => {
   const { id_guru } = req.params;
-  const { id_user, username, nip, nama_guru } = req.body;
+  const { id_user, username, nama_guru } = req.body;
 
   if (!id_guru) {
     return res.status(400).json({
       success: false,
-      message: "id tidak ditemukan",
+      message: "ID guru tidak ditemukan",
     });
   }
 
-  if (!id_user || !username || !nip || !nama_guru) {
+  if (!id_user || !username || !nama_guru) {
     return res.status(400).json({
       success: false,
       message: "Semua field wajib diisi",
@@ -91,7 +100,6 @@ export const editTeacher = async (req, res) => {
       id_guru,
       id_user,
       username,
-      nip,
       nama_guru,
     });
 
@@ -99,8 +107,10 @@ export const editTeacher = async (req, res) => {
       return res.status(400).json(result);
     }
 
-    res.status(201).json(result);
+    return res.status(200).json(result);
   } catch (error) {
+    console.error("editTeacher:", error);
+
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
@@ -115,19 +125,24 @@ export const deleteTeacher = async (req, res) => {
   if (!id_guru || !id_user) {
     return res.status(400).json({
       success: false,
-      message: "id tidak ditemukan",
+      message: "ID guru atau ID user tidak ditemukan",
     });
   }
 
   try {
-    const result = await softDeleteTeacher({ id_guru, id_user });
+    const result = await softDeleteTeacher({
+      id_guru,
+      id_user,
+    });
 
     if (!result.success) {
       return res.status(400).json(result);
     }
 
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (error) {
+    console.error("deleteTeacher:", error);
+
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
