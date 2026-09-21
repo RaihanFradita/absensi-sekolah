@@ -46,7 +46,7 @@ export const findAllClass = async () => {
 export const findClassById = async (id_kelas) => {
   const [[rows]] = await pool.query(
     `
-        SELECT * FROM kelas WHERE id_kelas = ?
+        SELECT id_kelas, nama_kelas, tingkat, status_aktif FROM kelas WHERE id_kelas = ?
         `,
     [id_kelas],
   );
@@ -54,7 +54,7 @@ export const findClassById = async (id_kelas) => {
   return {
     success: true,
     message: "Berhasil mengambil data",
-    data: rows,
+    data: rows ?? {},
   };
 };
 
