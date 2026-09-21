@@ -32,7 +32,9 @@ export const insertClass = async (data) => {
 };
 
 export const findAllClass = async () => {
-  const [rows] = await pool.query("SELECT * FROM kelas");
+  const [rows] = await pool.query(
+    "SELECT id_kelas, nama_kelas, tingkat, status_aktif FROM kelas",
+  );
 
   return {
     success: true,
