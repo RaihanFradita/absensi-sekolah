@@ -4,6 +4,7 @@ export async function findAllStudents() {
   const [rows] = await pool.query(`
     SELECT
       s.id_siswa,
+      s.nis,
       s.nama_siswa,
       s.id_kelas,
       k.nama_kelas,
@@ -22,6 +23,7 @@ export async function findStudentById(id) {
     `
       SELECT
         s.id_siswa,
+        s.nis,
         s.nama_siswa,
         s.id_kelas,
         k.nama_kelas,

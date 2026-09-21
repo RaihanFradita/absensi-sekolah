@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Plus,
-  Search,
-  Pencil,
-  Trash2,
-  RefreshCw,
-  Users,
-} from "lucide-react";
+import { Plus, Search, Pencil, Trash2, RefreshCw, Users } from "lucide-react";
 
 import PageContainer from "../../components/layout/PageContainer";
 import Card, { CardHeader } from "../../components/ui/Card";
@@ -122,9 +115,7 @@ export default function Students() {
   }
 
   async function handleDelete(student) {
-    const confirmed = window.confirm(
-      `Hapus data siswa "${student.name}"?`,
-    );
+    const confirmed = window.confirm(`Hapus data siswa "${student.name}"?`);
 
     if (!confirmed) return;
 
@@ -163,6 +154,8 @@ export default function Students() {
     );
   });
 
+  console.log(students);
+
   return (
     <PageContainer
       title="Data Siswa"
@@ -195,10 +188,7 @@ export default function Students() {
             }
           />
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid gap-4 sm:grid-cols-2"
-          >
+          <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
             <Input
               label="NIS"
               name="nis"
@@ -241,11 +231,7 @@ export default function Students() {
               </Button>
 
               {editingId && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={resetForm}
-                >
+                <Button type="button" variant="secondary" onClick={resetForm}>
                   Batal
                 </Button>
               )}
@@ -297,27 +283,23 @@ export default function Students() {
                 <tbody>
                   {filteredStudents.map((student, index) => (
                     <tr
-                      key={student.id}
+                      key={student.id_siswa}
                       className="border-b border-slate-100 dark:border-slate-800"
                     >
-                      <td className="px-3 py-3 text-slate-500">
-                        {index + 1}
-                      </td>
+                      <td className="px-3 py-3 text-slate-500">{index + 1}</td>
 
                       <td className="px-3 py-3 font-medium">
                         {student.nis || "-"}
                       </td>
 
-                      <td className="px-3 py-3">
-                        {student.nisn || "-"}
-                      </td>
+                      <td className="px-3 py-3">{student.nisn || "-"}</td>
 
                       <td className="px-3 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                        {student.name || "-"}
+                        {student.nama_siswa || "-"}
                       </td>
 
                       <td className="px-3 py-3">
-                        {student.className || "-"}
+                        {`${student.tingkat}${student.nama_kelas}` || "-"}
                       </td>
 
                       <td className="px-3 py-3">
