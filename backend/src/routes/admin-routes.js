@@ -38,4 +38,4 @@ admin.post("/class/add", createClass);
 admin.get("/class", getAllClass);
 admin.get("/class/:id_kelas", getClassById);
 admin.put("/class/edit/:id_kelas", editClassById);
-admin.patch("/class/:id_guru/deactivate", softDeleteClass);
+admin.patch("/class/:id_kelas/deactivate", softDeleteClass);
