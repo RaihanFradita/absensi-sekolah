@@ -94,7 +94,7 @@ export const editClassById = async (req, res) => {
       id_kelas,
     });
 
-    if (!result) {
+    if (!result.success) {
       return res.status(400).json(result);
     }
 

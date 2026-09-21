@@ -59,7 +59,7 @@ export const findClassById = async (id_kelas) => {
 };
 
 export const updateClassById = async (data) => {
-  const [currentClass] = await pool(
+  const [currentClass] = await pool.query(
     `
         SELECT * FROM kelas WHERE id_kelas = ?
         `,
@@ -87,7 +87,7 @@ export const updateClassById = async (data) => {
 
   const [result] = await pool.query(
     "UPDATE kelas SET nama_kelas = ?, tingkat = ? WHERE id_kelas = ?",
-    [data.upperNamaKelas, data.tingkat, data.id_kelasd],
+    [data.upperNamaKelas, data.tingkat, data.id_kelas],
   );
 
   if (result.affectedRows === 0) {
