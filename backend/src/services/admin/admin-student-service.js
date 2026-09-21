@@ -8,7 +8,6 @@ export async function findAllStudents() {
       s.id_kelas,
       k.nama_kelas,
       k.tingkat,
-      k.tahun_ajaran,
       s.status_aktif
     FROM siswa s
     INNER JOIN kelas k ON s.id_kelas = k.id_kelas
@@ -27,7 +26,6 @@ export async function findStudentById(id) {
         s.id_kelas,
         k.nama_kelas,
         k.tingkat,
-        k.tahun_ajaran,
         s.status_aktif
       FROM siswa s
       INNER JOIN kelas k ON s.id_kelas = k.id_kelas
@@ -45,7 +43,6 @@ export async function findAllClasses() {
       id_kelas,
       nama_kelas,
       tingkat,
-      tahun_ajaran
     FROM kelas
     WHERE status_aktif = 1
     ORDER BY tingkat ASC, nama_kelas ASC
