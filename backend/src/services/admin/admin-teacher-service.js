@@ -69,7 +69,7 @@ export const insertTeacher = async (data) => {
 export const findAllTeacher = async () => {
   const [teachers] = await pool.query(`
         SELECT 
-        g.id_guru, g.nip, g.nama_guru, g.status_aktif,
+        g.id_guru, g.id_user, g.nip, g.nama_guru, g.status_aktif,
         u.username, u.role
         FROM guru g JOIN 
         users u ON u.id_user = g.id_user;
@@ -86,7 +86,7 @@ export const findTeacherById = async (id_guru) => {
   const [[teacher]] = await pool.query(
     `
       SELECT 
-        g.id_guru, g.nip, g.nama_guru, g.status_aktif,
+        g.id_guru, g.id_user, g.nip, g.nama_guru, g.status_aktif,
         u.username, u.role
         FROM guru g JOIN 
         users u ON u.id_user = g.id_user
