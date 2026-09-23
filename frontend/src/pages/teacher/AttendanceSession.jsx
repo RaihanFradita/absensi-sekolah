@@ -31,7 +31,6 @@ export default function AttendanceSession() {
   // namun data diambil lewat getActiveSession() (endpoint di services spec)
   // yang mengembalikan sesi aktif milik guru yang sedang login.
   const { sessionId } = useParams();
-  console.log(sessionId);
   const navigate = useNavigate();
   const containerRef = useRef(null);
 

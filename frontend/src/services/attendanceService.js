@@ -195,13 +195,13 @@ function hasSessionShape(payload) {
   if (!payload || typeof payload !== "object") return false;
   return Boolean(
     payload.id ||
-      payload.id_sesi ||
-      payload.attendanceDate ||
-      payload.tanggal ||
-      payload.startsAt ||
-      payload.waktu_buka ||
-      payload.endsAt ||
-      payload.waktu_tutup,
+    payload.id_sesi ||
+    payload.attendanceDate ||
+    payload.tanggal ||
+    payload.startsAt ||
+    payload.waktu_buka ||
+    payload.endsAt ||
+    payload.waktu_tutup,
   );
 }
 
@@ -209,9 +209,9 @@ function hasMonitorShape(payload) {
   if (!payload || typeof payload !== "object") return false;
   return Boolean(
     Array.isArray(payload.events) ||
-      typeof payload.presentCount === "number" ||
-      typeof payload.lateCount === "number" ||
-      typeof payload.notYetCount === "number",
+    typeof payload.presentCount === "number" ||
+    typeof payload.lateCount === "number" ||
+    typeof payload.notYetCount === "number",
   );
 }
 
@@ -223,7 +223,6 @@ async function getActiveSession(kode_qr) {
 
   try {
     const response = await api.get(`${ENDPOINTS.ACTIVE_SESSION}/${kode_qr}`);
-    console.log(response);
     const session = extractSessionPayload(response?.data);
     if (!hasSessionShape(session)) return getMockActiveSession();
 
