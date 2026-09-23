@@ -1,4 +1,7 @@
-import { createNewSession } from "../../services/attendance/attendance-services.js";
+import {
+  createNewSession,
+  findActiveSessionByTeacherId,
+} from "../../services/attendance/attendance-services.js";
 
 export const createSession = async (req, res, next) => {
   try {
@@ -37,6 +40,32 @@ export const createSession = async (req, res, next) => {
       success: false,
       message: "Tejadi kesalahan server",
       error: error.message,
+    });
+  }
+};
+
+export const getActiveSession = async (req, res) => {
+  const id_guru = req.user.id;
+  const { kode_qr } = req.params;
+
+  if (!kode_qr) {
+    return res.status(400).json({
+      success: false,
+      message: "data tidak ditemukan",
+    });
+  }
+
+  try {
+    const result = await findActiveSessionByTeacherId({ id_guru, kode_qr });
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
     });
   }
 };

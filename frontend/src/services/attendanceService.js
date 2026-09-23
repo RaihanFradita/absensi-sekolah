@@ -194,7 +194,14 @@ function extractSessionPayload(payload) {
 function hasSessionShape(payload) {
   if (!payload || typeof payload !== "object") return false;
   return Boolean(
-    payload.id || payload.attendanceDate || payload.startsAt || payload.endsAt,
+    payload.id ||
+      payload.id_sesi ||
+      payload.attendanceDate ||
+      payload.tanggal ||
+      payload.startsAt ||
+      payload.waktu_buka ||
+      payload.endsAt ||
+      payload.waktu_tutup,
   );
 }
 
@@ -202,24 +209,39 @@ function hasMonitorShape(payload) {
   if (!payload || typeof payload !== "object") return false;
   return Boolean(
     Array.isArray(payload.events) ||
-    typeof payload.presentCount === "number" ||
-    typeof payload.lateCount === "number" ||
-    typeof payload.notYetCount === "number",
+      typeof payload.presentCount === "number" ||
+      typeof payload.lateCount === "number" ||
+      typeof payload.notYetCount === "number",
   );
 }
 
-async function getActiveSession() {
+async function getActiveSession(kode_qr) {
   if (isMockMode()) {
     await mockDelay();
     return getMockActiveSession();
   }
 
   try {
-    const response = await api.get(ENDPOINTS.ACTIVE_SESSION);
+    const response = await api.get(`${ENDPOINTS.ACTIVE_SESSION}/${kode_qr}`);
+    console.log(response);
     const session = extractSessionPayload(response?.data);
-    return hasSessionShape(session) ? session : getMockActiveSession();
+    if (!hasSessionShape(session)) return getMockActiveSession();
+
+    return {
+      ...session,
+      id: session.id ?? session.id_sesi,
+      qrToken: session.qrToken ?? session.kode_qr,
+      startsAt: session.startsAt ?? session.waktu_buka,
+      endsAt: session.endsAt ?? session.waktu_tutup,
+      attendanceDate: session.attendanceDate ?? session.tanggal,
+      teacherName: session.teacherName ?? session.nama_guru ?? "Guru",
+      presentCount: session.presentCount ?? 0,
+      lateCount: session.lateCount ?? 0,
+      notYetCount: session.notYetCount ?? 0,
+    };
   } catch (error) {
-    if (error?.status === 404 || error?.status === 400) {
+    const statusCode = error?.response?.status || error?.status;
+    if (statusCode === 404 || statusCode === 400) {
       return getMockActiveSession();
     }
     throw error;

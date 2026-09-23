@@ -72,3 +72,25 @@ export const createNewSession = async ({ id_guru, id_kelas, durasi_menit }) => {
     connection.release();
   }
 };
+
+export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
+  const [result] = await pool.query(
+    `
+      SELECT * FROM sesi_absensi WHERE id_guru = ? AND kode_qr = ?
+    `,
+    [id_guru, kode_qr],
+  );
+
+  if (result.length === 0) {
+    return {
+      success: false,
+      message: "data tidak ditemukan",
+    };
+  }
+
+  return {
+    success: true,
+    message: "data berhasil diambil",
+    data: result[0],
+  };
+};
