@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import { auth } from "./routes/auth-routes.js";
 import { admin } from "./routes/admin-routes.js";
 import { student } from "./routes/student-routes.js";
+import { attandance } from "./routes/attendance-routes.js";
 
 export const app = express();
 
@@ -27,3 +28,4 @@ app.use(express.json());
 app.use("/api/auth", auth);
 app.use("/api/admin", admin);
 app.use("/api/students", student);
+app.use("/api/attendance", attandance);
