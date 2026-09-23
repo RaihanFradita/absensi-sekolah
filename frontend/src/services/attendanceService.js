@@ -26,7 +26,7 @@ const ENDPOINTS = {
   ATTENDANCE_DAILY: "/attendance/daily",
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
   EXPORT_EXCEL: "/attendance/export.xlsx",
-  CREATE_SESSION: "/attendance/sessions",
+  CREATE_SESSION: "/attendance/sessions/add",
   ACTIVE_SESSION: "/attendance/sessions/active",
   END_SESSION: (id) => `/attendance/sessions/${id}/end`,
   MONITOR: (id) => `/attendance/sessions/${id}/monitor`,
