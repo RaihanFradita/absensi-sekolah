@@ -12,6 +12,8 @@ import {
   User,
   Hash,
   School,
+  Lock,
+  AtSign,
 } from "lucide-react";
 
 import PageContainer from "../../components/layout/PageContainer";
@@ -27,18 +29,21 @@ import studentService from "../../services/studentService";
 
 const EMPTY_FORM = {
   id_siswa: null,
+  id_user: null,
   nis: "",
+  username: "",
   nama_siswa: "",
   id_kelas: "",
-  nama_kelas: "",
-  tingkat: "",
+  password: "",
 };
 
 export default function Students() {
   const { showToast } = useToast();
 
   const [students, setStudents] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingClasses, setLoadingClasses] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'active' | 'inactive'
 
@@ -48,6 +53,7 @@ export default function Students() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   // Soft delete confirm dialog state
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -76,15 +82,39 @@ export default function Students() {
     }
   };
 
+  const fetchClasses = async () => {
+    setLoadingClasses(true);
+    try {
+      const response = await studentService.getClasses();
+      if (response && response.success && response.classes) {
+        setClasses(response.classes);
+      } else if (response && response.data) {
+        setClasses(response.data);
+      } else if (Array.isArray(response)) {
+        setClasses(response);
+      } else if (response?.classes) {
+        setClasses(response.classes);
+      } else {
+        setClasses([]);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil data kelas:", error);
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
+    fetchClasses();
   }, []);
 
   // Filter & Search
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       const keyword = search.toLowerCase().trim();
-      const kelasString = `${student.tingkat || ""} ${student.nama_kelas || ""}`.trim();
+      const kelasString =
+        `${student.tingkat || ""} ${student.nama_kelas || ""}`.trim();
       const matchSearch =
         !keyword ||
         String(student.nama_siswa || "")
@@ -110,21 +140,56 @@ export default function Students() {
     setFormData(EMPTY_FORM);
     setFormError("");
     setIsModalOpen(true);
+    if (classes.length === 0) {
+      fetchClasses();
+    }
   };
 
   // Open modal for Edit
-  const handleOpenEdit = (student) => {
+  const handleOpenEdit = async (student) => {
+    const studentId = student.id_siswa || student.id;
     setIsEditMode(true);
-    setFormData({
-      id_siswa: student.id_siswa || student.id,
-      nis: student.nis || "",
-      nama_siswa: student.nama_siswa || student.name || "",
-      id_kelas: student.id_kelas || "",
-      nama_kelas: student.nama_kelas || student.className || "",
-      tingkat: student.tingkat || "",
-    });
     setFormError("");
     setIsModalOpen(true);
+
+    // Initial fallback values from table row
+    setFormData({
+      id_siswa: studentId,
+      id_user: student.id_user || null,
+      nis: student.nis || "",
+      username: student.username || student.nis || "",
+      nama_siswa: student.nama_siswa || student.name || "",
+      id_kelas: student.id_kelas || "",
+      password: "",
+    });
+
+    if (classes.length === 0) {
+      fetchClasses();
+    }
+
+    // Fetch detail from endpoint by ID
+    setIsLoadingDetail(true);
+    try {
+      const response = await studentService.getStudent(studentId);
+      const studentDetail = response?.student || response?.data || response;
+
+      if (studentDetail) {
+        setFormData({
+          id_siswa: studentDetail.id_siswa || studentId,
+          id_user: studentDetail.id_user || student.id_user || null,
+          nis: studentDetail.nis || "",
+          username: studentDetail.username || studentDetail.nis || "",
+          nama_siswa: studentDetail.nama_siswa || studentDetail.name || "",
+          id_kelas: studentDetail.id_kelas || "",
+          password: "",
+        });
+      }
+    } catch (error) {
+      console.error("Gagal mengambil detail siswa:", error);
+      showToast(error?.message || "Gagal memuat detail data siswa", { tone: "error" });
+    } finally {
+      setIsLoadingDetail(false);
+    }
   };
 
   // Close modal
@@ -132,15 +197,19 @@ export default function Students() {
     setIsModalOpen(false);
     setFormData(EMPTY_FORM);
     setFormError("");
+    setIsLoadingDetail(false);
   };
 
   // Form input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "nis" && (!prev.username || prev.username === prev.nis)) {
+        updated.username = value;
+      }
+      return updated;
+    });
   };
 
   // Submit Create / Edit
@@ -154,14 +223,34 @@ export default function Students() {
       return;
     }
 
+    if (!formData.username.trim()) {
+      setFormError("Username wajib diisi!");
+      return;
+    }
+
+    if (!formData.id_kelas) {
+      setFormError("Kelas wajib dipilih!");
+      return;
+    }
+
+    if (!isEditMode && !formData.password) {
+      setFormError("Password wajib diisi!");
+      return;
+    }
+
     setIsSaving(true);
     try {
       if (isEditMode) {
         if (studentService.updateStudent) {
           await studentService.updateStudent(formData.id_siswa, {
+            id_user: formData.id_user,
             nis: formData.nis,
+            username: formData.username,
             nama_siswa: formData.nama_siswa,
-            id_kelas: formData.id_kelas,
+            namaSiswa: formData.nama_siswa,
+            id_kelas: Number(formData.id_kelas),
+            idKelas: Number(formData.id_kelas),
+            password: formData.password || undefined,
           });
         }
         showToast("Data siswa berhasil diperbarui!", { tone: "success" });
@@ -169,8 +258,12 @@ export default function Students() {
         if (studentService.createStudent) {
           await studentService.createStudent({
             nis: formData.nis,
+            username: formData.username,
             nama_siswa: formData.nama_siswa,
-            id_kelas: formData.id_kelas,
+            namaSiswa: formData.nama_siswa,
+            id_kelas: Number(formData.id_kelas),
+            idKelas: Number(formData.id_kelas),
+            password: formData.password,
           });
         }
         showToast("Siswa baru berhasil ditambahkan!", { tone: "success" });
@@ -228,7 +321,10 @@ export default function Students() {
           <Button
             variant="secondary"
             icon={RefreshCw}
-            onClick={fetchStudents}
+            onClick={() => {
+              fetchStudents();
+              fetchClasses();
+            }}
             disabled={loading}
           >
             Refresh
@@ -346,7 +442,7 @@ export default function Students() {
                     {filteredStudents.map((student, index) => {
                       const isActive = Number(student.status_aktif ?? 1) === 1;
                       const kelasDisplay = student.tingkat
-                        ? `${student.tingkat} ${student.nama_kelas || ""}`.trim()
+                        ? `Kelas ${student.tingkat} - ${student.nama_kelas || ""}`.trim()
                         : student.nama_kelas || student.className || "-";
 
                       return (
@@ -466,7 +562,7 @@ export default function Students() {
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {isEditMode
-                      ? "Perbarui NIS, nama lengkap siswa, dan kelas."
+                      ? "Perbarui NIS, username, nama lengkap siswa, dan kelas."
                       : "Lengkapi data siswa ke dalam sistem absensi."}
                   </p>
                 </div>
@@ -488,60 +584,120 @@ export default function Students() {
             )}
 
             {/* Modal Form */}
-            <form onSubmit={handleSubmitForm} className="mt-4 space-y-4">
-              <Input
-                label="Nomor Induk Siswa (NIS)"
-                name="nis"
-                icon={Hash}
-                value={formData.nis}
-                onChange={handleInputChange}
-                placeholder="Contoh: 24251001"
-                required
-              />
-
-              <Input
-                label="Nama Lengkap Siswa"
-                name="nama_siswa"
-                icon={User}
-                value={formData.nama_siswa}
-                onChange={handleInputChange}
-                placeholder="Contoh: Ahmad Fadilah"
-                required
-              />
-
-              <Input
-                label="Kelas"
-                name="nama_kelas"
-                icon={School}
-                value={
-                  formData.tingkat
-                    ? `${formData.tingkat} ${formData.nama_kelas}`.trim()
-                    : formData.nama_kelas
-                }
-                onChange={handleInputChange}
-                placeholder="Contoh: 7 A atau VIII-B"
-              />
-
-              {/* Modal Actions */}
-              <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-slate-800">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCloseModal}
-                  disabled={isSaving}
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  icon={isEditMode ? Pencil : Plus}
-                  isLoading={isSaving}
-                >
-                  {isEditMode ? "Simpan Perubahan" : "Tambahkan Siswa"}
-                </Button>
+            {isLoadingDetail ? (
+              <div className="py-12">
+                <Loading label="Memuat data detail siswa..." />
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleSubmitForm} className="mt-4 space-y-4">
+                <Input
+                  label="Nomor Induk Siswa (NIS)"
+                  name="nis"
+                  icon={Hash}
+                  value={formData.nis}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: 24251001"
+                  required
+                />
+
+                <Input
+                  label="Nama Lengkap Siswa"
+                  name="nama_siswa"
+                  icon={User}
+                  value={formData.nama_siswa}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Ahmad Fadilah"
+                  required
+                />
+
+                <Input
+                  label="Username Akun"
+                  name="username"
+                  icon={AtSign}
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: ahmad_siswa (default: samakan dengan NIS)"
+                  required
+                />
+
+                <div>
+                  <label
+                    htmlFor="id_kelas"
+                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200"
+                  >
+                    Kelas <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <School
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                      aria-hidden="true"
+                    />
+                    <select
+                      id="id_kelas"
+                      name="id_kelas"
+                      value={formData.id_kelas}
+                      onChange={handleInputChange}
+                      required
+                      className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 transition-colors focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    >
+                      <option value="">
+                        {loadingClasses
+                          ? "Memuat daftar kelas..."
+                          : "-- Pilih Kelas --"}
+                      </option>
+                      {classes.map((kelasItem) => {
+                        const classLabel = kelasItem.tingkat
+                          ? `Kelas ${kelasItem.tingkat} - ${kelasItem.nama_kelas}`
+                          : kelasItem.nama_kelas;
+                        return (
+                          <option
+                            key={kelasItem.id_kelas}
+                            value={kelasItem.id_kelas}
+                          >
+                            {classLabel}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                </div>
+
+                <Input
+                  label={`Password ${isEditMode ? "(Opsional)" : ""}`}
+                  name="password"
+                  type="password"
+                  icon={Lock}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder={
+                    isEditMode
+                      ? "Kosongkan jika tidak ingin mengubah password"
+                      : "Masukkan password untuk akun siswa"
+                  }
+                  required={!isEditMode}
+                />
+
+                {/* Modal Actions */}
+                <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-slate-800">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleCloseModal}
+                    disabled={isSaving}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    icon={isEditMode ? Pencil : Plus}
+                    isLoading={isSaving}
+                  >
+                    {isEditMode ? "Simpan Perubahan" : "Tambahkan Siswa"}
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

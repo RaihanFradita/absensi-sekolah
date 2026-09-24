@@ -10,6 +10,8 @@ import {
   getStudents,
   getStudent,
   getClasses,
+  createStudent,
+  editStundent,
 } from "../controllers/admin/admin-student-controller.js";
 import {
   createClass,
@@ -29,9 +31,12 @@ admin.put("/teacher/edit/:id_guru", editTeacher);
 admin.patch("/teacher/:id_guru/deactivate", deleteTeacher);
 
 // route siswa
-admin.get("/student/", getStudents);
-admin.get("/student/classes/list", getClasses);
-admin.get("/student/:id", getStudent);
+admin.post("/students/add", createStudent);
+admin.get("/students/", getStudents);
+admin.get("/students/classes/list", getClasses);
+admin.get("/students/:id", getStudent);
+admin.put("/students/edit/:id_siswa", editStundent);
+admin.put("/students/:id_siswa", editStundent);
 
 // route kelas
 admin.post("/class/add", createClass);
