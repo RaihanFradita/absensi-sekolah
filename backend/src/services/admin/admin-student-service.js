@@ -44,7 +44,7 @@ export async function findAllClasses() {
     SELECT
       id_kelas,
       nama_kelas,
-      tingkat,
+      tingkat
     FROM kelas
     WHERE status_aktif = 1
     ORDER BY tingkat ASC, nama_kelas ASC
