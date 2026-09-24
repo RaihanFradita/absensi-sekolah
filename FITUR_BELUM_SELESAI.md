@@ -45,7 +45,7 @@
 ### A. Modul Siswa (Student Management API)
 
 - [x] **`POST /api/admin/student/add`** : Tambah siswa baru beserta pembuatan akun login (`users` + `siswa`).
-- [ ] **`PUT /api/admin/student/edit/:id`** : Edit data profil siswa & username akun.
+- [x] **`PUT /api/admin/student/edit/:id`** : Edit data profil siswa & username akun.
 - [ ] **`PATCH /api/admin/student/:id/deactivate`** : Nonaktifkan siswa & akun user (Soft delete).
 - [ ] **`POST /api/admin/student/:id/reset-password`** : Reset password akun siswa.
 
