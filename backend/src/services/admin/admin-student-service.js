@@ -1,4 +1,75 @@
 import { pool } from "../../config/database.js";
+import bcrypt from "bcrypt";
+
+export const insertStudents = async ({
+  nis,
+  namaSiswa,
+  idKelas,
+  username,
+  password,
+}) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // ambil data user
+    const [user] = await connection.query(
+      `
+      SELECT * FROM users WHERE username = ?
+      `,
+      [username],
+    );
+
+    if (user.length > 0) {
+      return {
+        success: false,
+        message: "Username sudah digunakan",
+      };
+    }
+
+    // hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // tambahkan data user
+    const [insertUser] = await connection.query(
+      `
+      INSERT INTO users (username, password, role) VALUES
+      (?, ?, ?)
+      `,
+      [username, passwordHash, "siswa"],
+    );
+
+    // jika gagal menambahkan data
+    if (insertUser.affectedRows === 0) {
+      return {
+        success: false,
+        message: "gagal menambahkan data",
+      };
+    }
+
+    // ambil id yang abru dibua
+    const idUser = insertUser.insertId;
+
+    // insert data siswa
+    await connection.query(
+      `
+      INSERT INTO siswa (id_user, nis, nama_siswa, id_kelas) VALUES
+      (?, ?, ?, ?)
+      `,
+      [idUser, nis, namaSiswa, idKelas],
+    );
+
+    // semua berhasil
+    await connection.commit();
+  } catch (error) {
+    // kalau terjadi error
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
 
 export async function findAllStudents() {
   const [rows] = await pool.query(`

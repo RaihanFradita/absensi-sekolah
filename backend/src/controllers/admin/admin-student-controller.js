@@ -2,7 +2,40 @@ import {
   findAllStudents,
   findStudentById,
   findAllClasses,
+  insertStudents,
 } from "../../services/admin/admin-student-service.js";
+
+export const createStudent = async (req, res) => {
+  const { nis, namaSiswa, idKelas, username, password } = req.body;
+
+  if (!nis || !namaSiswa || !idKelas || !username || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Semua field wajib diisi!",
+    });
+  }
+
+  try {
+    const result = await insertStudents({
+      nis,
+      namaSiswa,
+      idKelas,
+      username,
+      password,
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.status(201).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+    });
+  }
+};
 
 export async function getStudents(req, res) {
   try {
