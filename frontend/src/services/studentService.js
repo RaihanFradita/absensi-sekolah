@@ -22,7 +22,7 @@ const studentService = {
   },
 
   async updateStudent(id, data) {
-    const response = await api.put(`/admin/students/${id}`, data);
+    const response = await api.put(`/admin/students/edit/${id}`, data);
     return response.data;
   },
 

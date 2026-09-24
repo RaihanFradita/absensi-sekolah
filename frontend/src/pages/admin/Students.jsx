@@ -29,6 +29,7 @@ import studentService from "../../services/studentService";
 
 const EMPTY_FORM = {
   id_siswa: null,
+  id_user: null,
   nis: "",
   username: "",
   nama_siswa: "",
@@ -52,6 +53,7 @@ export default function Students() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   // Soft delete confirm dialog state
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -144,20 +146,49 @@ export default function Students() {
   };
 
   // Open modal for Edit
-  const handleOpenEdit = (student) => {
+  const handleOpenEdit = async (student) => {
+    const studentId = student.id_siswa || student.id;
     setIsEditMode(true);
+    setFormError("");
+    setIsModalOpen(true);
+
+    // Initial fallback values from table row
     setFormData({
-      id_siswa: student.id_siswa || student.id,
+      id_siswa: studentId,
+      id_user: student.id_user || null,
       nis: student.nis || "",
       username: student.username || student.nis || "",
       nama_siswa: student.nama_siswa || student.name || "",
       id_kelas: student.id_kelas || "",
       password: "",
     });
-    setFormError("");
-    setIsModalOpen(true);
+
     if (classes.length === 0) {
       fetchClasses();
+    }
+
+    // Fetch detail from endpoint by ID
+    setIsLoadingDetail(true);
+    try {
+      const response = await studentService.getStudent(studentId);
+      const studentDetail = response?.student || response?.data || response;
+
+      if (studentDetail) {
+        setFormData({
+          id_siswa: studentDetail.id_siswa || studentId,
+          id_user: studentDetail.id_user || student.id_user || null,
+          nis: studentDetail.nis || "",
+          username: studentDetail.username || studentDetail.nis || "",
+          nama_siswa: studentDetail.nama_siswa || studentDetail.name || "",
+          id_kelas: studentDetail.id_kelas || "",
+          password: "",
+        });
+      }
+    } catch (error) {
+      console.error("Gagal mengambil detail siswa:", error);
+      showToast(error?.message || "Gagal memuat detail data siswa", { tone: "error" });
+    } finally {
+      setIsLoadingDetail(false);
     }
   };
 
@@ -166,6 +197,7 @@ export default function Students() {
     setIsModalOpen(false);
     setFormData(EMPTY_FORM);
     setFormError("");
+    setIsLoadingDetail(false);
   };
 
   // Form input change
@@ -211,6 +243,7 @@ export default function Students() {
       if (isEditMode) {
         if (studentService.updateStudent) {
           await studentService.updateStudent(formData.id_siswa, {
+            id_user: formData.id_user,
             nis: formData.nis,
             username: formData.username,
             nama_siswa: formData.nama_siswa,
@@ -551,114 +584,120 @@ export default function Students() {
             )}
 
             {/* Modal Form */}
-            <form onSubmit={handleSubmitForm} className="mt-4 space-y-4">
-              <Input
-                label="Nomor Induk Siswa (NIS)"
-                name="nis"
-                icon={Hash}
-                value={formData.nis}
-                onChange={handleInputChange}
-                placeholder="Contoh: 24251001"
-                required
-              />
+            {isLoadingDetail ? (
+              <div className="py-12">
+                <Loading label="Memuat data detail siswa..." />
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitForm} className="mt-4 space-y-4">
+                <Input
+                  label="Nomor Induk Siswa (NIS)"
+                  name="nis"
+                  icon={Hash}
+                  value={formData.nis}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: 24251001"
+                  required
+                />
 
-              <Input
-                label="Nama Lengkap Siswa"
-                name="nama_siswa"
-                icon={User}
-                value={formData.nama_siswa}
-                onChange={handleInputChange}
-                placeholder="Contoh: Ahmad Fadilah"
-                required
-              />
+                <Input
+                  label="Nama Lengkap Siswa"
+                  name="nama_siswa"
+                  icon={User}
+                  value={formData.nama_siswa}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Ahmad Fadilah"
+                  required
+                />
 
-              <Input
-                label="Username Akun"
-                name="username"
-                icon={AtSign}
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Contoh: ahmad_siswa (default: samakan dengan NIS)"
-                required
-              />
+                <Input
+                  label="Username Akun"
+                  name="username"
+                  icon={AtSign}
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: ahmad_siswa (default: samakan dengan NIS)"
+                  required
+                />
 
-              <div>
-                <label
-                  htmlFor="id_kelas"
-                  className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200"
-                >
-                  Kelas <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <School
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                    aria-hidden="true"
-                  />
-                  <select
-                    id="id_kelas"
-                    name="id_kelas"
-                    value={formData.id_kelas}
-                    onChange={handleInputChange}
-                    required
-                    className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 transition-colors focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                <div>
+                  <label
+                    htmlFor="id_kelas"
+                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200"
                   >
-                    <option value="">
-                      {loadingClasses
-                        ? "Memuat daftar kelas..."
-                        : "-- Pilih Kelas --"}
-                    </option>
-                    {classes.map((kelasItem) => {
-                      const classLabel = kelasItem.tingkat
-                        ? `Kelas ${kelasItem.tingkat} - ${kelasItem.nama_kelas}`
-                        : kelasItem.nama_kelas;
-                      return (
-                        <option
-                          key={kelasItem.id_kelas}
-                          value={kelasItem.id_kelas}
-                        >
-                          {classLabel}
-                        </option>
-                      );
-                    })}
-                  </select>
+                    Kelas <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <School
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                      aria-hidden="true"
+                    />
+                    <select
+                      id="id_kelas"
+                      name="id_kelas"
+                      value={formData.id_kelas}
+                      onChange={handleInputChange}
+                      required
+                      className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 transition-colors focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    >
+                      <option value="">
+                        {loadingClasses
+                          ? "Memuat daftar kelas..."
+                          : "-- Pilih Kelas --"}
+                      </option>
+                      {classes.map((kelasItem) => {
+                        const classLabel = kelasItem.tingkat
+                          ? `Kelas ${kelasItem.tingkat} - ${kelasItem.nama_kelas}`
+                          : kelasItem.nama_kelas;
+                        return (
+                          <option
+                            key={kelasItem.id_kelas}
+                            value={kelasItem.id_kelas}
+                          >
+                            {classLabel}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              <Input
-                label={`Password ${isEditMode ? "(Opsional)" : ""}`}
-                name="password"
-                type="password"
-                icon={Lock}
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder={
-                  isEditMode
-                    ? "Kosongkan jika tidak ingin mengubah password"
-                    : "Masukkan password untuk akun siswa"
-                }
-                required={!isEditMode}
-              />
+                <Input
+                  label={`Password ${isEditMode ? "(Opsional)" : ""}`}
+                  name="password"
+                  type="password"
+                  icon={Lock}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder={
+                    isEditMode
+                      ? "Kosongkan jika tidak ingin mengubah password"
+                      : "Masukkan password untuk akun siswa"
+                  }
+                  required={!isEditMode}
+                />
 
-              {/* Modal Actions */}
-              <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-slate-800">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCloseModal}
-                  disabled={isSaving}
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  icon={isEditMode ? Pencil : Plus}
-                  isLoading={isSaving}
-                >
-                  {isEditMode ? "Simpan Perubahan" : "Tambahkan Siswa"}
-                </Button>
-              </div>
-            </form>
+                {/* Modal Actions */}
+                <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-slate-800">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleCloseModal}
+                    disabled={isSaving}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    icon={isEditMode ? Pencil : Plus}
+                    isLoading={isSaving}
+                  >
+                    {isEditMode ? "Simpan Perubahan" : "Tambahkan Siswa"}
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
