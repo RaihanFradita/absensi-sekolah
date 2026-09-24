@@ -22,9 +22,10 @@ export const insertStudents = async ({
     );
 
     if (user.length > 0) {
+      await connection.rollback();
       return {
         success: false,
-        message: "Username sudah digunakan",
+        message: "Username / NIS sudah digunakan",
       };
     }
 
@@ -42,13 +43,14 @@ export const insertStudents = async ({
 
     // jika gagal menambahkan data
     if (insertUser.affectedRows === 0) {
+      await connection.rollback();
       return {
         success: false,
-        message: "gagal menambahkan data",
+        message: "Gagal menambahkan data user",
       };
     }
 
-    // ambil id yang abru dibua
+    // ambil id yang baru dibuat
     const idUser = insertUser.insertId;
 
     // insert data siswa
@@ -62,6 +64,10 @@ export const insertStudents = async ({
 
     // semua berhasil
     await connection.commit();
+    return {
+      success: true,
+      message: "Data siswa berhasil ditambahkan",
+    };
   } catch (error) {
     // kalau terjadi error
     await connection.rollback();

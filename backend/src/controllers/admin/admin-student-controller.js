@@ -6,21 +6,25 @@ import {
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
-  const { nis, namaSiswa, idKelas, username, password } = req.body;
+  const { nis, namaSiswa, nama_siswa, idKelas, id_kelas, username, password } = req.body;
 
-  if (!nis || !namaSiswa || !idKelas || !username || !password) {
+  const finalNamaSiswa = namaSiswa || nama_siswa;
+  const finalIdKelas = idKelas || id_kelas;
+  const finalUsername = username || nis;
+
+  if (!nis || !finalNamaSiswa || !finalIdKelas || !password) {
     return res.status(400).json({
       success: false,
-      message: "Semua field wajib diisi!",
+      message: "Semua field (NIS, Nama Siswa, Kelas, Password) wajib diisi!",
     });
   }
 
   try {
     const result = await insertStudents({
       nis,
-      namaSiswa,
-      idKelas,
-      username,
+      namaSiswa: finalNamaSiswa,
+      idKelas: finalIdKelas,
+      username: finalUsername,
       password,
     });
 
@@ -32,7 +36,7 @@ export const createStudent = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Terjadi kesalahan server",
+      message: error?.message || "Terjadi kesalahan server",
     });
   }
 };
