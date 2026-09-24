@@ -29,9 +29,9 @@ admin.put("/teacher/edit/:id_guru", editTeacher);
 admin.patch("/teacher/:id_guru/deactivate", deleteTeacher);
 
 // route siswa
-admin.get("/student/", getStudents);
-admin.get("/student/classes/list", getClasses);
-admin.get("/student/:id", getStudent);
+admin.get("/students/", getStudents);
+admin.get("/students/classes/list", getClasses);
+admin.get("/students/:id", getStudent);
 
 // route kelas
 admin.post("/class/add", createClass);
