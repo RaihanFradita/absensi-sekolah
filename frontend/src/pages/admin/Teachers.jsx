@@ -1,16 +1,34 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
-  Pencil,
   Plus,
-  Trash2,
   Search,
-  Loader2,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  UserCheck,
   X,
+  CheckCircle2,
+  XCircle,
+  User,
+  Hash,
+  Lock,
+  AtSign,
 } from "lucide-react";
 
+import PageContainer from "../../components/layout/PageContainer";
+import Card from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import Badge from "../../components/ui/Badge";
+import Loading from "../../components/ui/Loading";
+import EmptyState from "../../components/ui/EmptyState";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import { useToast } from "../../components/ui/Toast";
 import { adminTeacherServices } from "../../services/adminServices/teacherServices";
 
 const EMPTY_FORM = {
+  id_guru: null,
+  id_user: null,
   nip: "",
   nama_guru: "",
   username: "",
@@ -18,680 +36,624 @@ const EMPTY_FORM = {
 };
 
 export default function Teachers() {
+  const { showToast } = useToast();
+
   const [teachers, setTeachers] = useState([]);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'active' | 'inactive'
 
-  const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving] = useState(false);
+  // Modal form state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [formError, setFormError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
-  const [form, setForm] = useState(EMPTY_FORM);
-
-  // null = tambah
-  // object = edit
-  const [editingTeacher, setEditingTeacher] = useState(null);
+  // Soft delete / deactivate confirm dialog state
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // ==============================
-  // GET DATA GURU
+  // FETCH DATA GURU
   // ==============================
-
-  const fetchDataTeachers = async () => {
+  const fetchTeachers = async () => {
     setLoading(true);
-
     try {
       const response = await adminTeacherServices.getTeachers();
-
-      console.log("RESPONSE DATA GURU:", response);
-
-      if (response.success) {
-        setTeachers(response.data || []);
+      if (response && response.success && response.data) {
+        setTeachers(response.data);
+      } else if (Array.isArray(response)) {
+        setTeachers(response);
+      } else if (response?.data && Array.isArray(response.data)) {
+        setTeachers(response.data);
       } else {
         setTeachers([]);
       }
     } catch (error) {
       console.error("Gagal mengambil data guru:", error);
-
-      setTeachers([]);
-      alert(error?.message || "Gagal mengambil data guru.");
+      showToast(error?.message || "Gagal memuat data guru", { tone: "error" });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDataTeachers();
+    fetchTeachers();
   }, []);
 
   // ==============================
-  // SEARCH
+  // FILTER & SEARCH
   // ==============================
+  const filteredTeachers = useMemo(() => {
+    return teachers.filter((teacher) => {
+      const keyword = search.toLowerCase().trim();
+      const matchSearch =
+        !keyword ||
+        String(teacher.nama_guru || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(teacher.nip || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(teacher.username || "")
+          .toLowerCase()
+          .includes(keyword);
 
-  const filteredTeachers = teachers.filter(
-    (teacher) =>
-      String(teacher.nama_guru || "")
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
-      String(teacher.nip || "")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-  );
+      const isActive = Number(teacher.status_aktif ?? 1) === 1;
+      let matchStatus = true;
+      if (statusFilter === "active") matchStatus = isActive;
+      if (statusFilter === "inactive") matchStatus = !isActive;
+
+      return matchSearch && matchStatus;
+    });
+  }, [teachers, search, statusFilter]);
 
   // ==============================
-  // BUKA MODAL TAMBAH
+  // MODAL HANDLERS
   // ==============================
+  const handleOpenCreate = () => {
+    setIsEditMode(false);
+    setFormData(EMPTY_FORM);
+    setFormError("");
+    setIsModalOpen(true);
+  };
 
-  const handleOpenAdd = () => {
-    setEditingTeacher(null);
+  const handleOpenEdit = async (teacher) => {
+    const teacherId = teacher.id_guru;
+    setIsEditMode(true);
+    setFormError("");
+    setIsModalOpen(true);
 
-    setForm({
-      nip: "",
-      nama_guru: "",
-      username: "",
+    // Initial fallback data from table row
+    setFormData({
+      id_guru: teacherId,
+      id_user: teacher.id_user || null,
+      nip: teacher.nip || "",
+      nama_guru: teacher.nama_guru || "",
+      username: teacher.username || "",
       password: "",
     });
 
-    setShowModal(true);
-  };
-
-  // ==============================
-  // BUKA MODAL EDIT
-  // ==============================
-
-  const handleOpenEdit = async (teacher) => {
+    setIsLoadingDetail(true);
     try {
-      setSaving(true);
+      const response = await adminTeacherServices.getTeacherById(teacherId);
+      const detail = response?.data || response;
 
-      console.log("EDIT GURU:", teacher);
-
-      const response =
-        await adminTeacherServices.getTeacherById(
-          teacher.id_guru
-        );
-
-      console.log("DETAIL GURU:", response);
-
-      if (!response.success) {
-        alert(
-          response.message ||
-            "Gagal mengambil data guru."
-        );
-        return;
+      if (detail) {
+        setFormData({
+          id_guru: detail.id_guru || teacherId,
+          id_user: detail.id_user || teacher.id_user || null,
+          nip: detail.nip || "",
+          nama_guru: detail.nama_guru || "",
+          username: detail.username || "",
+          password: "",
+        });
       }
-
-      const data = response.data;
-
-      setEditingTeacher(data);
-
-      setForm({
-        nip: data.nip || "",
-        nama_guru: data.nama_guru || "",
-        username: data.username || "",
-        password: "",
-      });
-
-      setShowModal(true);
     } catch (error) {
-      console.error(
-        "Gagal mengambil detail guru:",
-        error
-      );
-
-      alert(
-        error?.message ||
-          "Gagal mengambil detail guru."
-      );
+      console.error("Gagal mengambil detail data guru:", error);
+      showToast(error?.message || "Gagal memuat detail data guru", {
+        tone: "error",
+      });
     } finally {
-      setSaving(false);
+      setIsLoadingDetail(false);
     }
   };
 
-  // ==============================
-  // TUTUP MODAL
-  // ==============================
-
   const handleCloseModal = () => {
-    if (saving) return;
-
-    setShowModal(false);
-    setEditingTeacher(null);
-
-    setForm({
-      nip: "",
-      nama_guru: "",
-      username: "",
-      password: "",
-    });
+    if (isSaving) return;
+    setIsModalOpen(false);
+    setFormData(EMPTY_FORM);
+    setFormError("");
+    setIsLoadingDetail(false);
   };
 
-  // ==============================
-  // HANDLE INPUT
-  // ==============================
-
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   // ==============================
-  // TAMBAH / EDIT
+  // SUBMIT (TAMBAH / EDIT)
   // ==============================
-
-  const handleSubmit = async (e) => {
+  const handleSubmitForm = async (e) => {
     e.preventDefault();
+    setFormError("");
 
-    if (!form.nip.trim()) {
-      alert("NIP wajib diisi.");
+    if (!formData.nip.trim()) {
+      setFormError("NIP wajib diisi!");
       return;
     }
 
-    if (!form.nama_guru.trim()) {
-      alert("Nama guru wajib diisi.");
+    if (!formData.nama_guru.trim()) {
+      setFormError("Nama guru wajib diisi!");
       return;
     }
 
-    if (!form.username.trim()) {
-      alert("Username wajib diisi.");
+    if (!formData.username.trim()) {
+      setFormError("Username wajib diisi!");
       return;
     }
 
-    // Password hanya wajib ketika TAMBAH
-    if (!editingTeacher && !form.password.trim()) {
-      alert("Password wajib diisi.");
+    if (!isEditMode && !formData.password.trim()) {
+      setFormError("Password wajib diisi!");
       return;
     }
 
-    setSaving(true);
-
+    setIsSaving(true);
     try {
-      // ==================================
-      // MODE EDIT
-      // ==================================
+      if (isEditMode) {
+        const payload = {
+          id_user: formData.id_user,
+          nip: formData.nip.trim(),
+          username: formData.username.trim(),
+          nama_guru: formData.nama_guru.trim(),
+        };
 
-      if (editingTeacher) {
-        const response =
-          await adminTeacherServices.updateTeacher(
-            editingTeacher.id_guru,
-            {
-              id_user: editingTeacher.id_user,
-              nip: form.nip.trim(),
-              username: form.username.trim(),
-              nama_guru: form.nama_guru.trim(),
-            }
-          );
-
-        console.log(
-          "RESPONSE EDIT GURU:",
-          response
+        const response = await adminTeacherServices.updateTeacher(
+          formData.id_guru,
+          payload
         );
 
-        if (!response.success) {
-          alert(
-            response.message ||
-              "Gagal mengubah data guru."
-          );
+        if (response && response.success === false) {
+          setFormError(response.message || "Gagal memperbarui data guru.");
           return;
         }
 
-        alert("Data guru berhasil diubah.");
+        showToast("Data guru berhasil diperbarui!", { tone: "success" });
+      } else {
+        const payload = {
+          nip: formData.nip.trim(),
+          nama_guru: formData.nama_guru.trim(),
+          username: formData.username.trim(),
+          password: formData.password,
+        };
 
-        handleCloseModal();
+        const response = await adminTeacherServices.createTeacher(payload);
 
-        await fetchDataTeachers();
+        if (response && response.success === false) {
+          setFormError(response.message || "Gagal menambahkan guru.");
+          return;
+        }
 
-        return;
+        showToast("Guru baru berhasil ditambahkan!", { tone: "success" });
       }
-
-      // ==================================
-      // MODE TAMBAH
-      // ==================================
-
-      const response =
-        await adminTeacherServices.createTeacher({
-          nip: form.nip.trim(),
-          nama_guru: form.nama_guru.trim(),
-          username: form.username.trim(),
-          password: form.password,
-        });
-
-      console.log(
-        "RESPONSE TAMBAH GURU:",
-        response
-      );
-
-      if (!response.success) {
-        alert(
-          response.message ||
-            "Gagal menambahkan guru."
-        );
-        return;
-      }
-
-      alert("Guru berhasil ditambahkan.");
 
       handleCloseModal();
-
-      await fetchDataTeachers();
+      await fetchTeachers();
     } catch (error) {
-      console.error(
-        "Gagal menyimpan data guru:",
-        error
-      );
-
-      alert(
-        error?.message ||
-          "Terjadi kesalahan saat menyimpan data guru."
+      console.error("Gagal menyimpan data guru:", error);
+      setFormError(
+        error?.message || "Terjadi kesalahan saat menyimpan data guru."
       );
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
   };
 
   // ==============================
-  // HAPUS / NONAKTIFKAN GURU
+  // SOFT DELETE / DEACTIVATE
   // ==============================
+  const handlePromptDelete = (teacher) => {
+    setDeleteTarget(teacher);
+  };
 
-  const handleDelete = async (teacher) => {
-    const confirmed = window.confirm(
-      `Apakah kamu yakin ingin menonaktifkan guru "${teacher.nama_guru}"?`
-    );
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
 
-    if (!confirmed) return;
-
+    setIsDeleting(true);
     try {
-      setLoading(true);
-
-      console.log(
-        "HAPUS GURU:",
-        teacher.id_guru,
-        teacher.id_user
+      const response = await adminTeacherServices.deactivateTeacher(
+        deleteTarget.id_guru,
+        deleteTarget.id_user
       );
 
-      const response =
-        await adminTeacherServices.deactivateTeacher(
-          teacher.id_guru,
-          teacher.id_user
-        );
-
-      console.log(
-        "RESPONSE HAPUS GURU:",
-        response
-      );
-
-      if (!response.success) {
-        alert(
-          response.message ||
-            "Gagal menonaktifkan guru."
-        );
+      if (response && response.success === false) {
+        showToast(response.message || "Gagal menonaktifkan guru.", {
+          tone: "error",
+        });
         return;
       }
 
-      alert("Guru berhasil dinonaktifkan.");
-
-      await fetchDataTeachers();
+      showToast(
+        `Guru "${deleteTarget.nama_guru}" berhasil dinonaktifkan!`,
+        { tone: "success" }
+      );
+      setDeleteTarget(null);
+      await fetchTeachers();
     } catch (error) {
-      console.error(
-        "Gagal menonaktifkan guru:",
-        error
-      );
-
-      alert(
-        error?.message ||
-          "Terjadi kesalahan saat menonaktifkan guru."
-      );
+      console.error("Gagal menonaktifkan guru:", error);
+      showToast(error?.message || "Gagal menonaktifkan data guru.", {
+        tone: "error",
+      });
     } finally {
-      setLoading(false);
+      setIsDeleting(false);
     }
   };
 
   return (
-    <div className="p-6">
-      {/* ==============================
-          HEADER
-      ============================== */}
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Data Guru
-          </h1>
-
-          <p className="mt-1 text-sm text-gray-500">
-            Kelola data guru yang terdaftar di sistem.
-          </p>
+    <PageContainer
+      title="Data Guru"
+      description="Kelola informasi data guru, akun login, dan status keaktifan dalam sistem absensi."
+      action={
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="secondary"
+            icon={RefreshCw}
+            onClick={fetchTeachers}
+            disabled={loading}
+          >
+            Refresh
+          </Button>
+          <Button variant="primary" icon={Plus} onClick={handleOpenCreate}>
+            Tambah Guru
+          </Button>
         </div>
-
-        <button
-          type="button"
-          onClick={handleOpenAdd}
-          className="flex items-center gap-2 rounded-lg bg-[#126B3A] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#0F5A31]"
-        >
-          <Plus size={18} />
-          Tambah Guru
-        </button>
-      </div>
-
-      {/* ==============================
-          SEARCH
-      ============================== */}
-
-      <div className="mb-4">
-        <div className="relative max-w-md">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
-
-          <input
-            type="text"
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-            placeholder="Cari nama guru atau NIP..."
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#126B3A] focus:ring-2 focus:ring-[#126B3A]/10"
-          />
-        </div>
-      </div>
-
-      {/* ==============================
-          TABLE
-      ============================== */}
-
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        {loading ? (
-          <div className="flex min-h-[250px] items-center justify-center">
-            <div className="flex items-center gap-2 text-gray-500">
-              <Loader2
-                size={20}
-                className="animate-spin"
-              />
-
-              Memuat data guru...
-            </div>
-          </div>
-        ) : filteredTeachers.length === 0 ? (
-          <div className="flex min-h-[250px] items-center justify-center">
-            <div className="text-center">
-              <p className="font-medium text-gray-600">
-                Data guru tidak ditemukan
-              </p>
-
-              <p className="mt-1 text-sm text-gray-400">
-                Belum ada data guru yang tersedia.
+      }
+    >
+      <div className="space-y-6">
+        <Card padding="p-5">
+          {/* Header & Filter Bar */}
+          <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                Daftar Tenaga Pendidik
+              </h2>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                Menampilkan {filteredTeachers.length} dari total{" "}
+                {teachers.length} guru
               </p>
             </div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-200 bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 font-semibold text-gray-600">
-                    No
-                  </th>
 
-                  <th className="px-6 py-4 font-semibold text-gray-600">
-                    NIP
-                  </th>
-
-                  <th className="px-6 py-4 font-semibold text-gray-600">
-                    Nama Guru
-                  </th>
-
-                  <th className="px-6 py-4 font-semibold text-gray-600">
-                    Status
-                  </th>
-
-                  <th className="px-6 py-4 text-center font-semibold text-gray-600">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-gray-100">
-                {filteredTeachers.map(
-                  (teacher, index) => (
-                    <tr
-                      key={
-                        teacher.id_guru ?? index
-                      }
-                      className="transition hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4 text-gray-600">
-                        {index + 1}
-                      </td>
-
-                      <td className="px-6 py-4 font-medium text-gray-800">
-                        {teacher.nip || "-"}
-                      </td>
-
-                      <td className="px-6 py-4 font-medium text-gray-800">
-                        {teacher.nama_guru || "-"}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
-                            teacher.status_aktif
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {teacher.status_aktif
-                            ? "Aktif"
-                            : "Tidak Aktif"}
-                        </span>
-                      </td>
-
-                      {/* ==============================
-                          AKSI
-                      ============================== */}
-
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center gap-2">
-                          {/* EDIT */}
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleOpenEdit(
-                                teacher
-                              )
-                            }
-                            disabled={loading}
-                            className="rounded-lg p-2 text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            title="Edit Guru"
-                          >
-                            <Pencil size={17} />
-                          </button>
-
-                          {/* HAPUS */}
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleDelete(
-                                teacher
-                              )
-                            }
-                            disabled={
-                              loading ||
-                              !teacher.status_aktif
-                            }
-                            className="rounded-lg p-2 text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            title="Nonaktifkan Guru"
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* ==============================
-          MODAL TAMBAH / EDIT
-      ============================== */}
-
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
-            {/* HEADER MODAL */}
-
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">
-                  {editingTeacher
-                    ? "Edit Guru"
-                    : "Tambah Guru"}
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  {editingTeacher
-                    ? "Perbarui data guru."
-                    : "Tambahkan guru baru ke sistem."}
-                </p>
+            <div className="flex flex-wrap items-center gap-2.5">
+              {/* Filter Status */}
+              <div className="inline-flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("all")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    statusFilter === "all"
+                      ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  }`}
+                >
+                  Semua
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("active")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    statusFilter === "active"
+                      ? "bg-white text-emerald-700 shadow-sm dark:bg-slate-700 dark:text-emerald-400"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  }`}
+                >
+                  Aktif
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("inactive")}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                    statusFilter === "inactive"
+                      ? "bg-white text-red-700 shadow-sm dark:bg-slate-700 dark:text-red-400"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  }`}
+                >
+                  Nonaktif
+                </button>
               </div>
+            </div>
+          </div>
 
+          {/* Search Box */}
+          <div className="mt-4">
+            <Input
+              icon={Search}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari berdasarkan NIP, Nama Guru, atau Username..."
+            />
+          </div>
+
+          {/* Table Content */}
+          <div className="mt-4">
+            {loading ? (
+              <Loading label="Memuat data guru..." />
+            ) : filteredTeachers.length === 0 ? (
+              <EmptyState
+                icon={UserCheck}
+                title={
+                  search || statusFilter !== "all"
+                    ? "Guru tidak ditemukan"
+                    : "Belum ada data guru"
+                }
+                description={
+                  search || statusFilter !== "all"
+                    ? "Coba sesuaikan kata kunci pencarian atau ubah filter status."
+                    : "Tambahkan data guru baru dengan menekan tombol 'Tambah Guru' di atas."
+                }
+                action={
+                  !search && statusFilter === "all" ? (
+                    <Button icon={Plus} onClick={handleOpenCreate}>
+                      Tambah Guru Pertama
+                    </Button>
+                  ) : null
+                }
+              />
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-800">
+                <table className="w-full min-w-[700px] text-left text-sm">
+                  <thead>
+                    <tr className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+                      <th className="w-12 px-4 py-3.5 text-center">No</th>
+                      <th className="px-4 py-3.5">NIP</th>
+                      <th className="px-4 py-3.5">Nama Guru</th>
+                      <th className="px-4 py-3.5">Username</th>
+                      <th className="px-4 py-3.5 text-center">Status</th>
+                      <th className="w-28 px-4 py-3.5 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {filteredTeachers.map((teacher, index) => {
+                      const isActive = Number(teacher.status_aktif ?? 1) === 1;
+
+                      return (
+                        <tr
+                          key={teacher.id_guru || index}
+                          className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"
+                        >
+                          <td className="px-4 py-3.5 text-center font-medium text-slate-400">
+                            {index + 1}
+                          </td>
+
+                          <td className="px-4 py-3.5 font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
+                            {teacher.nip || "-"}
+                          </td>
+
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 font-semibold text-xs ring-1 ring-brand-200 dark:bg-brand-950 dark:text-brand-300 dark:ring-brand-900">
+                                {teacher.nama_guru
+                                  ? teacher.nama_guru.charAt(0).toUpperCase()
+                                  : "G"}
+                              </div>
+                              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                                {teacher.nama_guru || "-"}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                              @{teacher.username || "-"}
+                            </span>
+                          </td>
+
+                          <td className="px-4 py-3.5 text-center">
+                            {isActive ? (
+                              <Badge tone="success" className="gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Aktif
+                              </Badge>
+                            ) : (
+                              <Badge tone="danger" className="gap-1">
+                                <XCircle className="h-3 w-3" />
+                                Nonaktif
+                              </Badge>
+                            )}
+                          </td>
+
+                          <td className="px-4 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Tombol Edit Icon */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(teacher)}
+                                title="Edit Data Guru"
+                                className="group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-brand-700 dark:hover:bg-brand-950/60 dark:hover:text-brand-300"
+                                aria-label={`Edit ${teacher.nama_guru}`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+
+                              {/* Tombol Delete / Soft Delete Icon */}
+                              <button
+                                type="button"
+                                onClick={() => handlePromptDelete(teacher)}
+                                disabled={!isActive}
+                                title={
+                                  isActive
+                                    ? "Nonaktifkan Guru"
+                                    : "Guru sudah dinonaktifkan"
+                                }
+                                className={`group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border shadow-sm transition-all active:scale-95 ${
+                                  isActive
+                                    ? "border-slate-200 bg-white text-slate-600 hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-red-800 dark:hover:bg-red-950/60 dark:hover:text-red-400"
+                                    : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300 opacity-60 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-600"
+                                }`}
+                                aria-label={`Nonaktifkan ${teacher.nama_guru}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Modal Dialog Form Tambah / Edit Guru */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-slide-up dark:border-slate-800 dark:bg-slate-900"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-brand-100 dark:bg-brand-950 dark:text-brand-300 dark:ring-brand-900">
+                  {isEditMode ? (
+                    <Pencil className="h-5 w-5" />
+                  ) : (
+                    <UserCheck className="h-5 w-5" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {isEditMode ? "Edit Data Guru" : "Tambah Data Guru"}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {isEditMode
+                      ? "Perbarui NIP, nama lengkap, dan username akun guru."
+                      : "Lengkapi data guru baru ke dalam sistem absensi."}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={handleCloseModal}
-                disabled={saving}
-                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                disabled={isSaving}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 disabled:opacity-50"
               >
-                <X size={20} />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            {/* FORM */}
+            {/* Error Banner if any */}
+            {formError && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-300">
+                {formError}
+              </div>
+            )}
 
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4 px-6 py-5">
-                {/* NIP */}
+            {/* Modal Form */}
+            {isLoadingDetail ? (
+              <div className="py-12">
+                <Loading label="Memuat data detail guru..." />
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitForm} className="mt-4 space-y-4">
+                <Input
+                  label="Nomor Induk Pegawai (NIP)"
+                  name="nip"
+                  icon={Hash}
+                  value={formData.nip}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: 198507152010011002"
+                  required
+                />
 
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    NIP
-                  </label>
+                <Input
+                  label="Nama Lengkap Guru"
+                  name="nama_guru"
+                  icon={User}
+                  value={formData.nama_guru}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: Budi Santoso, S.Pd."
+                  required
+                />
 
-                  <input
-                    type="text"
-                    name="nip"
-                    value={form.nip}
-                    onChange={handleChange}
-                    placeholder="Masukkan NIP guru"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-[#126B3A] focus:ring-2 focus:ring-[#126B3A]/10"
-                  />
-                </div>
+                <Input
+                  label="Username Akun"
+                  name="username"
+                  icon={AtSign}
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Contoh: budi_santoso"
+                  required
+                />
 
-                {/* NAMA */}
+                <Input
+                  label={`Password ${isEditMode ? "(Opsional)" : ""}`}
+                  name="password"
+                  type="password"
+                  icon={Lock}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder={
+                    isEditMode
+                      ? "Kosongkan jika tidak ingin mengubah password"
+                      : "Masukkan password untuk akun guru"
+                  }
+                  required={!isEditMode}
+                />
 
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Nama Guru
-                  </label>
-
-                  <input
-                    type="text"
-                    name="nama_guru"
-                    value={form.nama_guru}
-                    onChange={handleChange}
-                    placeholder="Masukkan nama guru"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-[#126B3A] focus:ring-2 focus:ring-[#126B3A]/10"
-                  />
-                </div>
-
-                {/* USERNAME */}
-
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Username
-                  </label>
-
-                  <input
-                    type="text"
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    placeholder="Masukkan username"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-[#126B3A] focus:ring-2 focus:ring-[#126B3A]/10"
-                  />
-                </div>
-
-                {/* PASSWORD HANYA SAAT TAMBAH */}
-
-                {!editingTeacher && (
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Password
-                    </label>
-
-                    <input
-                      type="password"
-                      name="password"
-                      value={form.password}
-                      onChange={handleChange}
-                      placeholder="Masukkan password"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-[#126B3A] focus:ring-2 focus:ring-[#126B3A]/10"
-                    />
-                  </div>
+                {isEditMode && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    💡 Password akun guru tidak wajib diisi saat mode edit.
+                  </p>
                 )}
 
-                {/* INFO EDIT */}
-
-                {editingTeacher && (
-                  <div className="rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-700">
-                    Password tidak diubah melalui
-                    form edit ini.
-                  </div>
-                )}
-              </div>
-
-              {/* FOOTER */}
-
-              <div className="flex justify-end gap-3 border-t border-gray-200 px-6 py-4">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  disabled={saving}
-                  className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Batal
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex items-center gap-2 rounded-lg bg-[#126B3A] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#0F5A31] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving && (
-                    <Loader2
-                      size={17}
-                      className="animate-spin"
-                    />
-                  )}
-
-                  {saving
-                    ? "Menyimpan..."
-                    : editingTeacher
-                    ? "Simpan Perubahan"
-                    : "Simpan Guru"}
-                </button>
-              </div>
-            </form>
+                {/* Modal Actions */}
+                <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-4 dark:border-slate-800">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleCloseModal}
+                    disabled={isSaving}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    icon={isEditMode ? Pencil : Plus}
+                    isLoading={isSaving}
+                  >
+                    {isEditMode ? "Simpan Perubahan" : "Tambahkan Guru"}
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
-    </div>
+
+      {/* Dialog Konfirmasi Soft Delete / Deactivate */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Nonaktifkan Guru?"
+        description={`Apakah Anda yakin ingin menonaktifkan guru "${deleteTarget?.nama_guru}"?`}
+        confirmLabel="Ya, Nonaktifkan"
+        cancelLabel="Batal"
+        tone="danger"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </PageContainer>
   );
 }
