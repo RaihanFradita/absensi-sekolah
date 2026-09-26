@@ -7,9 +7,9 @@ import {
 } from "../../services/admin/admin-teacher-service.js";
 
 export const createTeacher = async (req, res) => {
-  const { username, password, nama_guru } = req.body;
+  const { username, password, nip, nama_guru } = req.body;
 
-  if (!username || !password || !nama_guru) {
+  if (!username || !password || !nip || !nama_guru) {
     return res.status(400).json({
       success: false,
       message: "Semua field wajib diisi!",
@@ -20,6 +20,7 @@ export const createTeacher = async (req, res) => {
     const result = await insertTeacher({
       username,
       password,
+      nip,
       nama_guru,
     });
 
@@ -29,8 +30,6 @@ export const createTeacher = async (req, res) => {
 
     return res.status(201).json(result);
   } catch (error) {
-    console.error("createTeacher:", error);
-
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
@@ -79,7 +78,7 @@ export const getTeacherById = async (req, res) => {
 
 export const editTeacher = async (req, res) => {
   const { id_guru } = req.params;
-  const { id_user, username, nama_guru } = req.body;
+  const { id_user, username, nip, nama_guru } = req.body;
 
   if (!id_guru) {
     return res.status(400).json({
@@ -100,6 +99,7 @@ export const editTeacher = async (req, res) => {
       id_guru,
       id_user,
       username,
+      nip,
       nama_guru,
     });
 

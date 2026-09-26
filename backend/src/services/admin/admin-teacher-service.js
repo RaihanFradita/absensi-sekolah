@@ -59,11 +59,12 @@ export const insertTeacher = async (data) => {
       `
         INSERT INTO guru (
           id_user,
+          nip,
           nama_guru
         )
-        VALUES (?, ?)
+        VALUES (?, ?, ?)
       `,
-      [idUser, data.nama_guru],
+      [idUser, data.nip, data.nama_guru],
     );
 
     // Simpan semua perubahan
@@ -89,6 +90,7 @@ export const findAllTeacher = async () => {
     SELECT
       g.id_guru,
       g.id_user,
+      g.nip,
       g.nama_guru,
       g.status_aktif,
       u.username,
@@ -168,10 +170,11 @@ export const updateTeacherById = async (data) => {
     const [updateGuru] = await connection.query(
       `
         UPDATE guru
-        SET nama_guru = ?
+        SET nama_guru = ?,
+        nip = ?
         WHERE id_guru = ?
       `,
-      [data.nama_guru, data.id_guru],
+      [data.nama_guru, data.nip, data.id_guru],
     );
 
     if (updateGuru.affectedRows === 0) {

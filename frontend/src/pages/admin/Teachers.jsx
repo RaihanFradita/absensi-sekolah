@@ -11,6 +11,7 @@ import {
 import { adminTeacherServices } from "../../services/adminServices/teacherServices";
 
 const EMPTY_FORM = {
+  nip: "",
   nama_guru: "",
   username: "",
   password: "",
@@ -66,10 +67,14 @@ export default function Teachers() {
   // SEARCH
   // ==============================
 
-  const filteredTeachers = teachers.filter((teacher) =>
-    String(teacher.nama_guru || "")
-      .toLowerCase()
-      .includes(search.toLowerCase())
+  const filteredTeachers = teachers.filter(
+    (teacher) =>
+      String(teacher.nama_guru || "")
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      String(teacher.nip || "")
+        .toLowerCase()
+        .includes(search.toLowerCase())
   );
 
   // ==============================
@@ -80,6 +85,7 @@ export default function Teachers() {
     setEditingTeacher(null);
 
     setForm({
+      nip: "",
       nama_guru: "",
       username: "",
       password: "",
@@ -118,6 +124,7 @@ export default function Teachers() {
       setEditingTeacher(data);
 
       setForm({
+        nip: data.nip || "",
         nama_guru: data.nama_guru || "",
         username: data.username || "",
         password: "",
@@ -150,6 +157,7 @@ export default function Teachers() {
     setEditingTeacher(null);
 
     setForm({
+      nip: "",
       nama_guru: "",
       username: "",
       password: "",
@@ -175,6 +183,11 @@ export default function Teachers() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!form.nip.trim()) {
+      alert("NIP wajib diisi.");
+      return;
+    }
 
     if (!form.nama_guru.trim()) {
       alert("Nama guru wajib diisi.");
@@ -205,6 +218,7 @@ export default function Teachers() {
             editingTeacher.id_guru,
             {
               id_user: editingTeacher.id_user,
+              nip: form.nip.trim(),
               username: form.username.trim(),
               nama_guru: form.nama_guru.trim(),
             }
@@ -238,6 +252,7 @@ export default function Teachers() {
 
       const response =
         await adminTeacherServices.createTeacher({
+          nip: form.nip.trim(),
           nama_guru: form.nama_guru.trim(),
           username: form.username.trim(),
           password: form.password,
@@ -377,7 +392,7 @@ export default function Teachers() {
             onChange={(e) =>
               setSearch(e.target.value)
             }
-            placeholder="Cari nama guru..."
+            placeholder="Cari nama guru atau NIP..."
             className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-[#126B3A] focus:ring-2 focus:ring-[#126B3A]/10"
           />
         </div>
@@ -421,6 +436,10 @@ export default function Teachers() {
                   </th>
 
                   <th className="px-6 py-4 font-semibold text-gray-600">
+                    NIP
+                  </th>
+
+                  <th className="px-6 py-4 font-semibold text-gray-600">
                     Nama Guru
                   </th>
 
@@ -445,6 +464,10 @@ export default function Teachers() {
                     >
                       <td className="px-6 py-4 text-gray-600">
                         {index + 1}
+                      </td>
+
+                      <td className="px-6 py-4 font-medium text-gray-800">
+                        {teacher.nip || "-"}
                       </td>
 
                       <td className="px-6 py-4 font-medium text-gray-800">
@@ -554,6 +577,23 @@ export default function Teachers() {
 
             <form onSubmit={handleSubmit}>
               <div className="space-y-4 px-6 py-5">
+                {/* NIP */}
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    NIP
+                  </label>
+
+                  <input
+                    type="text"
+                    name="nip"
+                    value={form.nip}
+                    onChange={handleChange}
+                    placeholder="Masukkan NIP guru"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none transition focus:border-[#126B3A] focus:ring-2 focus:ring-[#126B3A]/10"
+                  />
+                </div>
+
                 {/* NAMA */}
 
                 <div>
