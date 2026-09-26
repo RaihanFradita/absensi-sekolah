@@ -5,7 +5,7 @@ import {
 
 export const createSession = async (req, res, next) => {
   try {
-    const id_guru = req.user.id;
+    const id_guru = req.user.id_guru;
     const { id_kelas, durasi_menit } = req.body;
 
     if (!id_guru) {
@@ -45,7 +45,7 @@ export const createSession = async (req, res, next) => {
 };
 
 export const getActiveSession = async (req, res) => {
-  const id_guru = req.user.id;
+  const id_guru = req.user.id_guru;
   const { kode_qr } = req.params;
 
   if (!kode_qr) {
