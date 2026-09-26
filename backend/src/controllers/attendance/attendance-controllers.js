@@ -6,7 +6,7 @@ import {
 export const createSession = async (req, res, next) => {
   try {
     const id_guru = req.user.id_guru;
-    const { id_kelas, durasi_menit } = req.body;
+    const { id_kelas, durasi_menit, batas_terlambat_menit } = req.body;
 
     if (!id_guru) {
       return res.status(400).json({
@@ -14,14 +14,19 @@ export const createSession = async (req, res, next) => {
         message: "id tidak ditemukan!",
       });
     }
-    if (!id_kelas || !durasi_menit) {
+    if (!id_kelas || !durasi_menit || !batas_terlambat_menit) {
       return res.status(400).json({
         success: false,
         message: "Semua field wajib diisi!",
       });
     }
 
-    const result = await createNewSession({ id_guru, id_kelas, durasi_menit });
+    const result = await createNewSession({
+      id_guru,
+      id_kelas,
+      durasi_menit,
+      batas_terlambat_menit,
+    });
 
     if (!result.success) {
       return res.status(400).json(result);
