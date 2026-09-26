@@ -12,30 +12,20 @@ export const signIn = async (data) => {
     };
   }
 
-  const [user] = await pool.query("SELECT * FROM users WHERE username = ?", [
+  const [users] = await pool.query("SELECT * FROM users WHERE username = ?", [
     identifier,
   ]);
 
-  if (!user || user.length === 0) {
+  if (users.length === 0) {
     return {
       success: false,
       message: "Username/NIS atau password salah",
     };
   }
 
-  const currentUser = user[0];
-  let isPassword = false;
+  const currentUser = users[0];
 
-  if (currentUser.password) {
-    if (
-      currentUser.password.startsWith("$2a$") ||
-      currentUser.password.startsWith("$2b$")
-    ) {
-      isPassword = await bcrypt.compare(data.password, currentUser.password);
-    } else {
-      isPassword = data.password === currentUser.password;
-    }
-  }
+  const isPassword = await bcrypt.compare(data.password, currentUser.password);
 
   if (!isPassword) {
     return {
@@ -44,14 +34,72 @@ export const signIn = async (data) => {
     };
   }
 
-  const payload = {
-    id: currentUser.id_user || currentUser.id,
+  const userId = currentUser.id_user;
+
+  let payload = {
+    id_user: userId,
     username: currentUser.username,
-    name: currentUser.nama || currentUser.name || currentUser.username,
     role: currentUser.role,
   };
 
-  const secretKey = process.env.SECRET_KEY || "default_secret_key";
+  if (currentUser.role === "guru") {
+    const [guru] = await pool.query(
+      `SELECT id_guru, nama_guru
+       FROM guru
+       WHERE id_user = ?`,
+      [userId],
+    );
+
+    if (guru.length === 0) {
+      return {
+        success: false,
+        message: "Data guru tidak ditemukan",
+      };
+    }
+
+    payload = {
+      ...payload,
+      id_guru: guru[0].id_guru,
+      name: guru[0].nama_guru,
+    };
+  }
+
+  if (currentUser.role === "siswa") {
+    const [siswa] = await pool.query(
+      `SELECT id_siswa, nama_siswa
+       FROM siswa
+       WHERE id_user = ?`,
+      [userId],
+    );
+
+    if (siswa.length === 0) {
+      return {
+        success: false,
+        message: "Data siswa tidak ditemukan",
+      };
+    }
+
+    payload = {
+      ...payload,
+      id_siswa: siswa[0].id_siswa,
+      name: siswa[0].nama_siswa,
+    };
+  }
+
+  if (currentUser.role === "admin") {
+    payload.name = currentUser.username;
+  }
+
+  if (currentUser.role === "piket") {
+    payload.name = currentUser.username;
+  }
+
+  const secretKey = process.env.SECRET_KEY;
+
+  if (!secretKey) {
+    throw new Error("SECRET_KEY belum dikonfigurasi");
+  }
+
   const accessToken = jwt.sign(payload, secretKey, {
     expiresIn: "7d",
   });
