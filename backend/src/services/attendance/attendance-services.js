@@ -1,7 +1,12 @@
 import { pool } from "../../config/database.js";
 import crypto from "crypto";
 
-export const createNewSession = async ({ id_guru, id_kelas, durasi_menit }) => {
+export const createNewSession = async ({
+  id_guru,
+  id_kelas,
+  durasi_menit,
+  batas_terlambat_menit,
+}) => {
   const connection = await pool.getConnection();
 
   try {
@@ -31,14 +36,26 @@ export const createNewSession = async ({ id_guru, id_kelas, durasi_menit }) => {
     const randomBytes = crypto.randomBytes(32).toString("hex");
     const kode_qr = `QR-${Date.now()}-${randomBytes.substring(0, 30)}`;
 
-    // waktu buka dan tutup
+    // waktu buka, batas_terlambat dan tutup
     const waktu_buka = new Date();
+    const batas_terlambat = new Date(
+      waktu_buka.getTime() + batas_terlambat_menit * 60000,
+    );
     const waktu_tutup = new Date(waktu_buka.getTime() + durasi_menit * 60000);
+
+    // validasi batas terlambat tidak boleh melebihi waktu tutup
+    if (batas_terlambat > waktu_tutup) {
+      const error = new Error(
+        "Batas terlambat tidak boleh lebih besar dari durasi qr",
+      );
+      error.statusCode = 400;
+      throw error;
+    }
 
     // insert ke database sesi_absensi
     const insertQuery = `
-    INSERT INTO sesi_absensi (id_guru, id_kelas, tanggal, kode_qr, waktu_buka, waktu_tutup, status)
-    VALUES (?, ?, ?, ?, ?, ?, 'aktif')
+    INSERT INTO sesi_absensi (id_guru, id_kelas, tanggal, kode_qr, waktu_buka, batas_terlambat, waktu_tutup, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'aktif')
     `;
     const [result] = await connection.query(insertQuery, [
       id_guru,
@@ -46,6 +63,7 @@ export const createNewSession = async ({ id_guru, id_kelas, durasi_menit }) => {
       today,
       kode_qr,
       waktu_buka,
+      batas_terlambat,
       waktu_tutup,
     ]);
 
@@ -61,6 +79,7 @@ export const createNewSession = async ({ id_guru, id_kelas, durasi_menit }) => {
         tanggal: today,
         kode_qr,
         waktu_buka,
+        batas_terlambat,
         waktu_tutup,
         status: "aktif",
       },

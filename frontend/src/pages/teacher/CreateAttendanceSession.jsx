@@ -48,7 +48,7 @@ export default function CreateAttendanceSession() {
       const session = await attendanceService.createAttendanceSession({
         id_kelas: form.id_kelas,
         durasi_menit: Number(form.durationMinutes),
-        // lateThresholdMinutes: Number(form.lateThresholdMinutes),
+        batas_terlambat_menit: Number(form.lateThresholdMinutes),
       });
       console.log(session);
       navigate(`/teacher/sessions/${session.data.kode_qr}`);
