@@ -38,7 +38,7 @@ export const insertTeacher = async (data) => {
       };
     }
 
-    //   ambil id yang baru dibuat
+    //   Ambil id yang baru dibuat
     const idUser = insertUser.insertId;
 
     //   insert data guru
