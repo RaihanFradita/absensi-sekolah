@@ -3,6 +3,7 @@ import { verifyToken } from "../middleware/auth-middleware.js";
 import {
   createSession,
   getActiveSession,
+  getDailyRekap,
   scanAbsensi,
 } from "../controllers/attendance/attendance-controllers.js";
 
@@ -12,3 +13,4 @@ attandance.use(verifyToken);
 attandance.post("/sessions/add", createSession);
 attandance.get("/sessions/active/:kode_qr", getActiveSession);
 attandance.get("/sessions/scan", scanAbsensi);
+attandance.get("/daily", getDailyRekap);

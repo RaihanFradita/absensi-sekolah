@@ -1,6 +1,7 @@
 import {
   createNewSession,
   findActiveSessionByTeacherId,
+  getRekapHarian,
   scanQrAbsensi,
 } from "../../services/attendance/attendance-services.js";
 
@@ -114,6 +115,38 @@ export const scanAbsensi = async (req, res) => {
       success: false,
       message: "Tejadi kesalahan server",
       error: error.message,
+    });
+  }
+};
+
+export const getDailyRekap = async (req, res) => {
+  try {
+    const { id_kelas, tanggal } = req.query;
+
+    if (!id_kelas || !tanggal) {
+      return res.status(400).json({
+        success: false,
+        message: "Id dan tanggal tidak ditemukan!",
+      });
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
+      return res.status(400).json({
+        success: false,
+        message: "Format tanggal harus yyyy-mm-dd",
+      });
+    }
+
+    const result = await getRekapHarian({ id_kelas, tanggal });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
     });
   }
 };

@@ -207,3 +207,43 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
     connection.release();
   }
 };
+
+export const getRekapHarian = async ({ id_kelas, tanggal }) => {
+  const [rows] = await pool.query(
+    `
+    SELECT
+    s.id_siswa,
+    s.nis,
+    s.nama,
+    COALESCE(a.status, 'tanpa_keterangan') AS status,
+    a.waktu_scan
+FROM siswa s
+LEFT JOIN (
+    SELECT
+        a.id_siswa,
+        a.status,
+        a.waktu_scan
+    FROM absensi a
+    INNER JOIN sesi_absensi sa
+        ON sa.id_sesi = a.id_sesi
+    WHERE sa.id_kelas = ?
+      AND sa.tanggal = ?
+) a
+    ON a.id_siswa = s.id_siswa
+WHERE s.id_kelas = ?
+ORDER BY s.nama ASC;
+    `,
+    [id_kelas, tanggal, id_kelas],
+  );
+
+  // ringkasan jumlah per status, plus buat kartu summary di frontend
+  const summary = rows.reduce(
+    (acc, row) => {
+      acc[row.status] = (acc[row.status] || 0) + 1;
+      return acc;
+    },
+    { hadir: 0, terlambat: 0, sakit: 0, izin: 0, tanpa_keterangan: 0 },
+  );
+
+  return { id_kelas, tanggal, summary, siswa: rows };
+};
