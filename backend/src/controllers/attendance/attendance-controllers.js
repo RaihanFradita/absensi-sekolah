@@ -1,6 +1,7 @@
 import {
   createNewSession,
   findActiveSessionByTeacherId,
+  scanQrAbsensi,
 } from "../../services/attendance/attendance-services.js";
 
 export const createSession = async (req, res, next) => {
@@ -71,6 +72,48 @@ export const getActiveSession = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
+    });
+  }
+};
+
+export const scanAbsensi = async (req, res) => {
+  try {
+    const { kode_qr } = req.body;
+    const id_siswa = req.user.id_siswa;
+
+    if (!kode_qr) {
+      return res.status(400).json({
+        success: false,
+        message: "Kode QR tidak ditemukan!",
+      });
+    }
+
+    if (!id_siswa) {
+      return res.status(400).json({
+        success: false,
+        message: "id tidak ditemukan!",
+      });
+    }
+
+    const result = await scanQrAbsensi({ id_siswa, kode_qr });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Tejadi kesalahan server",
+      error: error.message,
     });
   }
 };
