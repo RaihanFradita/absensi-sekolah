@@ -12,5 +12,5 @@ export const attandance = express.Router();
 attandance.use(verifyToken);
 attandance.post("/sessions/add", createSession);
 attandance.get("/sessions/active/:kode_qr", getActiveSession);
-attandance.get("/sessions/scan", scanAbsensi);
+attandance.post("/sessions/scan", scanAbsensi);
 attandance.get("/daily", getDailyRekap);
