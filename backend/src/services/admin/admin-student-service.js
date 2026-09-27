@@ -184,6 +184,45 @@ export const updateStudentById = async ({
   }
 };
 
+export const softDeleteStudent = async (data) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // nonaktifkan user
+    await connection.query(
+      `
+      UPDATE users SET status_aktif = ?
+      WHERE id_user = ?
+      `,
+      [0, data.id_user],
+    );
+
+    // nonaktifkan siswa
+    await connection.query(
+      `
+      UPDATE siswa SET status_aktif = ?
+      WHERE id_siswa = ?
+      `,
+      [0, data.id_siswa],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: "Data siswa berhasil dinonaktifkan",
+    };
+  } catch (error) {
+    await connection.rollback();
+
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 export async function findAllClasses() {
   const [rows] = await pool.query(`
     SELECT

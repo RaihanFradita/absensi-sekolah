@@ -4,6 +4,7 @@ import {
   findAllClasses,
   insertStudents,
   updateStudentById,
+  softDeleteStudent,
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
@@ -90,7 +91,16 @@ export async function getStudent(req, res) {
 
 export const editStundent = async (req, res) => {
   const { id_siswa } = req.params;
-  const { id_user, username, nis, namaSiswa, nama_siswa, idKelas, id_kelas, password } = req.body;
+  const {
+    id_user,
+    username,
+    nis,
+    namaSiswa,
+    nama_siswa,
+    idKelas,
+    id_kelas,
+    password,
+  } = req.body;
 
   const finalNamaSiswa = namaSiswa || nama_siswa;
   const finalIdKelas = idKelas || id_kelas;
@@ -115,7 +125,13 @@ export const editStundent = async (req, res) => {
     finalIdUser = existingStudent.id_user;
   }
 
-  if (!finalIdUser || !finalUsername || !nis || !finalNamaSiswa || !finalIdKelas) {
+  if (
+    !finalIdUser ||
+    !finalUsername ||
+    !nis ||
+    !finalNamaSiswa ||
+    !finalIdKelas
+  ) {
     return res.status(400).json({
       success: false,
       message: "Semua field (NIS, Nama Siswa, Kelas, Username) wajib diisi",
@@ -143,6 +159,33 @@ export const editStundent = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error?.message || "Terjadi kesalahan server",
+    });
+  }
+};
+
+export const deleteStudent = async (req, res) => {
+  const { id_siswa } = req.params;
+  const { id_user } = req.body;
+
+  if (!id_siswa || !id_user) {
+    return res.status(400).json({
+      success: false,
+      message: "ID guru atau ID user tidak ditemukan",
+    });
+  }
+
+  try {
+    const result = await softDeleteStudent(id_siswa, id_user);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
     });
   }
 };

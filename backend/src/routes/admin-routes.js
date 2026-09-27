@@ -12,6 +12,7 @@ import {
   getClasses,
   createStudent,
   editStundent,
+  deleteStudent,
 } from "../controllers/admin/admin-student-controller.js";
 import {
   createClass,
@@ -37,6 +38,7 @@ admin.get("/students/classes/list", getClasses);
 admin.get("/students/:id", getStudent);
 admin.put("/students/edit/:id_siswa", editStundent);
 admin.put("/students/:id_siswa", editStundent);
+admin.patch("/students/:id_siswa/deactivate", deleteStudent);
 
 // route kelas
 admin.post("/class/add", createClass);
