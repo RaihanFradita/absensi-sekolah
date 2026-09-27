@@ -46,12 +46,12 @@
 
 - [x] **`POST /api/admin/student/add`** : Tambah siswa baru beserta pembuatan akun login (`users` + `siswa`).
 - [x] **`PUT /api/admin/student/edit/:id`** : Edit data profil siswa & username akun.
-- [ ] **`PATCH /api/admin/student/:id/deactivate`** : Nonaktifkan siswa & akun user (Soft delete).
-- [ ] **`POST /api/admin/student/:id/reset-password`** : Reset password akun siswa.
+- [x] **`PATCH /api/admin/student/:id/deactivate`** : Nonaktifkan siswa & akun user (Soft delete).
+<!-- - [ ] **`POST /api/admin/student/:id/reset-password`** : Reset password akun siswa. -->
 
 ### B. Modul Sesi & Absensi (Attendance Engine API)
 
-- [ ] **`POST /api/attendance/scan`** : API untuk siswa mengirimkan QR token & mencatat kehadiran (`hadir`/`terlambat`).
+- [x] **`POST /api/attendance/scan`** : API untuk siswa mengirimkan QR token & mencatat kehadiran (`hadir`/`terlambat`).
 - [ ] **`GET /api/attendance/daily`** : API rekap absensi harian per kelas/tanggal dengan status (`hadir`, `terlambat`, `sakit`, `izin`, `tanpa keterangan`).
 - [ ] **`PATCH /api/attendance/:id/status`** : API pengubahan status absensi oleh Guru Piket/Admin beserta pencatatan keterangan & audit `changed_by`.
 - [ ] **`GET /api/attendance/export.xlsx`** : API generate rekap absensi ke file Excel (.xlsx) atau CSV.
