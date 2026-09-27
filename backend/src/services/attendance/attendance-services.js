@@ -113,3 +113,97 @@ export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
     data: result[0],
   };
 };
+
+export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [session] = await connection.query(
+      `
+      SELECT * FROM sesi_absensi WHERE kode_qr = ? FOR UPDATE
+      `,
+      [kode_qr],
+    );
+
+    if (session.length === 0) {
+      const error = new Error("Kode QR tidak valid!");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const sesi = session[0];
+    const now = new Date();
+
+    if (sesi.status !== "aktif" || now > new Date(sesi.waktu_tutup)) {
+      if (sesi.status === "aktif") {
+        await connection.query(
+          `
+          UPDATE sesi_absensi SET status = 'tutup' WHERE id_sesi = ?
+          `,
+          [sesi.id_sesi],
+        );
+      }
+      const error = new Error("Sesi absensi sudah berakhir!");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // pastikan siswa terdaftar di kelas sesi ini
+    const [siswaKelas] = await connection.query(
+      `
+      SELECT id_siswa FROM siswa WHERE id_siswa = ? AND id_kelas = ?
+      `,
+      [id_siswa, sesi.id_kelas],
+    );
+
+    if (siswaKelas.length === 0) {
+      const error = new Error("Kamu bukan siswa di kelas ini!");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    // cek duplikat scan
+    const [existing] = await connection.query(
+      `
+      SELECT id_absensi FROM absensi WHERE id_sesi = ? AND id_siswa = ?
+      `,
+      [sesi.id_sesi, id_siswa],
+    );
+
+    if (existing.length > 0) {
+      const error = new Error("Kamu sudah melakukan absensi untuk hari ini");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const status =
+      now <= new Date(sesi.batas_terlambat) ? "hadir" : "terlambat";
+
+    await connection.query(
+      `
+        INSERT INTO absensi (id_sesi, id_siswa, status, waktu_scan, waktu_catat) VALUES
+        (?, ?, ?, ?, ?)
+        `,
+      [sesi.id_sesi, id_siswa, status, now, now],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: `Absensi berhasil, status: ${status}`,
+      data: { status, waktu_scan: now },
+    };
+  } catch (error) {
+    await connection.rollback();
+    // ER_DUP_ENTRY dari unique key sebagai fallback race condition terakhir
+    if (error.code === "ER_DUP_ENTRY") {
+      error.message = "Kamu sudah melakukan absensi untuk sesi ini";
+      error.statusCode = 400;
+    }
+  } finally {
+    connection.release();
+  }
+};
