@@ -3,6 +3,7 @@ import { verifyToken } from "../middleware/auth-middleware.js";
 import {
   createSession,
   getActiveSession,
+  scanAbsensi,
 } from "../controllers/attendance/attendance-controllers.js";
 
 export const attandance = express.Router();
@@ -10,3 +11,4 @@ export const attandance = express.Router();
 attandance.use(verifyToken);
 attandance.post("/sessions/add", createSession);
 attandance.get("/sessions/active/:kode_qr", getActiveSession);
+attandance.get("/sessions/scan", scanAbsensi);

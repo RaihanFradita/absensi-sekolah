@@ -17,7 +17,7 @@ export const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.SECRET_KEY || "default_secret_key"
+      process.env.SECRET_KEY || "default_secret_key",
     );
     req.user = decoded;
     next();
@@ -27,4 +27,16 @@ export const verifyToken = (req, res, next) => {
       message: "Sesi tidak valid atau telah berakhir. Silakan login kembali.",
     });
   }
+};
+
+export const requireRole = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Akses ditolak untuk role ini!",
+      });
+    }
+    next();
+  };
 };
