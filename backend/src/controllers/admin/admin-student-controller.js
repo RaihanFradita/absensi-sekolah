@@ -175,7 +175,7 @@ export const deleteStudent = async (req, res) => {
   }
 
   try {
-    const result = await softDeleteStudent(id_siswa, id_user);
+    const result = await softDeleteStudent({ id_siswa, id_user });
 
     if (!result.success) {
       return res.status(400).json(result);

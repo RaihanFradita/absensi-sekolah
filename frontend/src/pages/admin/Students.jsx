@@ -286,25 +286,39 @@ export default function Students() {
     setDeleteTarget(student);
   };
 
-  // Confirm soft delete / delete
+  // Confirm soft delete / deactivate
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
 
     setIsDeleting(true);
     try {
       const studentId = deleteTarget.id_siswa || deleteTarget.id;
-      if (studentService.deleteStudent) {
-        await studentService.deleteStudent(studentId);
+      const userId = deleteTarget.id_user;
+
+      if (!userId) {
+        showToast("ID user siswa tidak ditemukan.", { tone: "error" });
+        setIsDeleting(false);
+        return;
       }
+
+      const response = await studentService.deleteStudent(studentId, userId);
+
+      if (response && response.success === false) {
+        showToast(response.message || "Gagal menonaktifkan siswa.", {
+          tone: "error",
+        });
+        return;
+      }
+
       showToast(
-        `Siswa ${deleteTarget.nama_siswa || deleteTarget.name} berhasil dihapus/dinonaktifkan!`,
+        `Siswa "${deleteTarget.nama_siswa || deleteTarget.name}" berhasil dinonaktifkan!`,
         { tone: "success" },
       );
       setDeleteTarget(null);
       await fetchStudents();
     } catch (error) {
-      console.error("Gagal memproses data siswa:", error);
-      showToast(error?.message || "Gagal memproses data siswa.", {
+      console.error("Gagal menonaktifkan siswa:", error);
+      showToast(error?.message || "Gagal menonaktifkan data siswa.", {
         tone: "error",
       });
     } finally {

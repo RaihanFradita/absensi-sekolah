@@ -26,8 +26,17 @@ const studentService = {
     return response.data;
   },
 
-  async deleteStudent(id) {
-    const response = await api.delete(`/admin/students/${id}`, { method: "DELETE" });
+  async deleteStudent(id, id_user) {
+    const response = await api.patch(`/admin/students/${id}/deactivate`, {
+      id_user,
+    });
+    return response.data;
+  },
+
+  async deactivateStudent(id, id_user) {
+    const response = await api.patch(`/admin/students/${id}/deactivate`, {
+      id_user,
+    });
     return response.data;
   },
 };
