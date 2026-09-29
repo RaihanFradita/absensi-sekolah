@@ -19,7 +19,7 @@ import { ATTENDANCE_STATUS, ROLES } from "../utils/constants";
 const ENDPOINTS = {
   STUDENT_DASHBOARD: "/students/dashboard",
   STUDENT_PROFILE: "/students/profile",
-  SCAN_ATTENDANCE: "/attendance/scan",
+  SCAN_ATTENDANCE: "/attendance/sessions/scan",
   ATTENDANCE_HISTORY: "/students/attendance-history",
   TEACHER_DASHBOARD: "/teacher/dashboard",
   DUTY_DASHBOARD: "/duty/dashboard",
@@ -55,13 +55,18 @@ async function getAttendanceHistory(params = {}) {
   return (await api.get(ENDPOINTS.ATTENDANCE_HISTORY, { params })).data;
 }
 
-async function scanAttendance({ sessionToken }) {
+async function scanAttendance(payload) {
+  const kode_qr =
+    typeof payload === "string"
+      ? payload
+      : payload?.kode_qr || payload?.sessionToken;
+
   if (isMockMode()) {
     await mockDelay(650);
     const session = getMockActiveSession();
     if (new Date() > new Date(session.endsAt))
       throw new Error("Sesi absensi sudah berakhir.");
-    if (sessionToken && sessionToken !== session.qrToken)
+    if (kode_qr && kode_qr !== session.qrToken)
       throw new Error("QR Code tidak valid atau sudah kedaluwarsa.");
     const today = new Date().toISOString().slice(0, 10);
     const key = `schoolattend_daily_scan_${MOCK_USERS[ROLES.STUDENT].id}_${today}`;
@@ -81,7 +86,21 @@ async function scanAttendance({ sessionToken }) {
       scannedAt,
     };
   }
-  return (await api.post(ENDPOINTS.SCAN_ATTENDANCE, { sessionToken })).data;
+  const response = await api.post(ENDPOINTS.SCAN_ATTENDANCE, { kode_qr });
+  const resData = response.data?.data || response.data || {};
+
+  let status = resData.status || resData.currentStatus;
+  if (status === "hadir") status = ATTENDANCE_STATUS.PRESENT;
+  if (status === "terlambat") status = ATTENDANCE_STATUS.LATE;
+
+  return {
+    ...resData,
+    status: status || ATTENDANCE_STATUS.PRESENT,
+    scannedAt:
+      resData.waktu_scan || resData.scannedAt || new Date().toISOString(),
+    studentName: resData.studentName || resData.nama_siswa,
+    className: resData.className || resData.nama_kelas,
+  };
 }
 
 async function getTeacherDashboard(params = {}) {

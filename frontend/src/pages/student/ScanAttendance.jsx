@@ -14,6 +14,7 @@ import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Loading from "../../components/ui/Loading";
 import AttendanceStatus from "../../components/attendance/AttendanceStatus";
+import useAuth from "../../hooks/useAuth";
 
 const QRScanner = lazy(() => import("../../components/attendance/QRScanner"));
 import attendanceService from "../../services/attendanceService";
@@ -29,6 +30,7 @@ const ERROR_MESSAGES = {
 };
 
 export default function ScanAttendance() {
+  const { user } = useAuth();
   const [phase, setPhase] = useState("scanning");
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -37,7 +39,7 @@ export default function ScanAttendance() {
     if (phase === "processing") return;
     setPhase("processing");
     try {
-      const data = await attendanceService.scanAttendance({ sessionToken });
+      const data = await attendanceService.scanAttendance({ sessionToken, kode_qr: sessionToken });
       setResult(data);
       setPhase("success");
     } catch (error) {
@@ -104,17 +106,17 @@ export default function ScanAttendance() {
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-slate-400" />
                 <dt className="sr-only">Nama</dt>
-                <dd>{result?.studentName}</dd>
+                <dd>{result?.studentName || user?.name || "-"}</dd>
               </div>
               <div className="flex items-center gap-2">
                 <School className="h-4 w-4 text-slate-400" />
                 <dt className="sr-only">Kelas</dt>
-                <dd>{result?.className}</dd>
+                <dd>{result?.className || user?.className || user?.kelas || "-"}</dd>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-slate-400" />
                 <dt className="sr-only">Waktu</dt>
-                <dd>Masuk {formatTimeShort(result?.scannedAt)}</dd>
+                <dd>Masuk {formatTimeShort(result?.scannedAt || new Date())}</dd>
               </div>
             </dl>
             <Button
