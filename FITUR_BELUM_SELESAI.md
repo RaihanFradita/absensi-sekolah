@@ -52,7 +52,7 @@
 ### B. Modul Sesi & Absensi (Attendance Engine API)
 
 - [x] **`POST /api/attendance/scan`** : API untuk siswa mengirimkan QR token & mencatat kehadiran (`hadir`/`terlambat`).
-- [ ] **`GET /api/attendance/daily`** : API rekap absensi harian per kelas/tanggal dengan status (`hadir`, `terlambat`, `sakit`, `izin`, `tanpa keterangan`).
+- [x] **`GET /api/attendance/daily`** : API rekap absensi harian per kelas/tanggal dengan status (`hadir`, `terlambat`, `sakit`, `izin`, `tanpa keterangan`).
 - [ ] **`PATCH /api/attendance/:id/status`** : API pengubahan status absensi oleh Guru Piket/Admin beserta pencatatan keterangan & audit `changed_by`.
 - [ ] **`GET /api/attendance/export.xlsx`** : API generate rekap absensi ke file Excel (.xlsx) atau CSV.
 - [ ] **`POST /api/attendance/sessions/:id/end`** : API menutup sesi absensi secara manual oleh Guru.
