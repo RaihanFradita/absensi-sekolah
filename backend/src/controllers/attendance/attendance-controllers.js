@@ -97,10 +97,6 @@ export const scanAbsensi = async (req, res) => {
 
     const result = await scanQrAbsensi({ id_siswa, kode_qr });
 
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-
     res.status(200).json(result);
   } catch (error) {
     if (error.statusCode) {

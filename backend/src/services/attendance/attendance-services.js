@@ -203,6 +203,8 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
       error.message = "Kamu sudah melakukan absensi untuk sesi ini";
       error.statusCode = 400;
     }
+
+    throw error;
   } finally {
     connection.release();
   }
