@@ -36,6 +36,7 @@ import TeacherAccounts from "../pages/admin/TeacherAccounts";
 
 import { ROLES } from "../utils/constants";
 import useAuth from "../hooks/useAuth";
+import AttendanceScan from "../pages/student/AttendanceScan";
 
 function RootRedirect() {
   const { isAuthenticated, role } = useAuth();
@@ -77,7 +78,10 @@ export default function AppRoutes() {
             <Route path="/student/scan" element={<ScanAttendance />} />
 
             {/* route setelah scan */}
-            <Route path="/student/attendance/scan" element />
+            <Route
+              path="/student/attendance/scan"
+              element={<AttendanceScan />}
+            />
 
             <Route path="/student/history" element={<AttendanceHistory />} />
 
