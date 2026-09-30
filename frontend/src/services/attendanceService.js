@@ -63,44 +63,42 @@ async function scanAttendance(payload) {
 
   if (isMockMode()) {
     await mockDelay(650);
+
     const session = getMockActiveSession();
-    if (new Date() > new Date(session.endsAt))
+
+    if (new Date() > new Date(session.endsAt)) {
       throw new Error("Sesi absensi sudah berakhir.");
-    if (kode_qr && kode_qr !== session.qrToken)
-      throw new Error("QR Code tidak valid atau sudah kedaluwarsa.");
-    const today = new Date().toISOString().slice(0, 10);
-    const key = `schoolattend_daily_scan_${MOCK_USERS[ROLES.STUDENT].id}_${today}`;
-    if (localStorage.getItem(key)) {
-      const e = new Error("Anda sudah melakukan absensi hari ini.");
-      e.raw = { response: { data: { reason: "already_scanned" } } };
-      throw e;
     }
+
+    if (kode_qr && kode_qr !== session.qrToken) {
+      throw new Error("QR Code tidak valid atau sudah kedaluwarsa.");
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
+    const key = `schoolattend_daily_scan_${MOCK_USERS[ROLES.STUDENT].id}_${today}`;
+
+    if (localStorage.getItem(key)) {
+      throw new Error("Anda sudah melakukan absensi hari ini.");
+    }
+
     const scannedAt = new Date().toISOString();
+
     localStorage.setItem(key, scannedAt);
+
     return {
-      status: ATTENDANCE_STATUS.PRESENT,
-      initialStatus: ATTENDANCE_STATUS.PRESENT,
-      currentStatus: ATTENDANCE_STATUS.PRESENT,
-      studentName: MOCK_USERS.student.name,
-      className: MOCK_USERS.student.className,
-      scannedAt,
+      success: true,
+      message: "Absensi berhasil",
+      data: {
+        status: ATTENDANCE_STATUS.PRESENT,
+        waktu_scan: scannedAt,
+      },
     };
   }
+
   const response = await api.post(ENDPOINTS.SCAN_ATTENDANCE, { kode_qr });
-  const resData = response.data?.data || response.data || {};
 
-  let status = resData.status || resData.currentStatus;
-  if (status === "hadir") status = ATTENDANCE_STATUS.PRESENT;
-  if (status === "terlambat") status = ATTENDANCE_STATUS.LATE;
-
-  return {
-    ...resData,
-    status: status || ATTENDANCE_STATUS.PRESENT,
-    scannedAt:
-      resData.waktu_scan || resData.scannedAt || new Date().toISOString(),
-    studentName: resData.studentName || resData.nama_siswa,
-    className: resData.className || resData.nama_kelas,
-  };
+  return response.data;
 }
 
 async function getTeacherDashboard(params = {}) {
