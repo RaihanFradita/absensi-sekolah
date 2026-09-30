@@ -13,7 +13,7 @@ export default function QRDisplay({ value, size = 280, className = "" }) {
       className={`inline-flex items-center justify-center rounded-2xl bg-white p-6 shadow-card ${className}`}
     >
       <QRCodeSVG
-        value={`${baseUrl}/attendance/scan?token=${value}`}
+        value={`${baseUrl}/student/attendance/scan?token=${value}`}
         size={size}
         level="M"
         marginSize={0}
