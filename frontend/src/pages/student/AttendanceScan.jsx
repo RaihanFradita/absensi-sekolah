@@ -1,9 +1,13 @@
 import React from "react";
 import PageContainer from "../../components/layout/PageContainer";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 function AttendanceScan() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const token = searchParams.get("token");
+  console.log(token);
   return (
     <PageContainer
       title="Kehadiran Berhasil"
@@ -19,6 +23,7 @@ function AttendanceScan() {
       }
     >
       <h1>Ini Halaman siswa berhasil scan</h1>
+      <p>Token: {token}</p>
     </PageContainer>
   );
 }

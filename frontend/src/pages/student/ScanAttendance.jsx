@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   CheckCircle2,
   XCircle,
@@ -35,21 +35,27 @@ export default function ScanAttendance() {
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function handleScan(sessionToken) {
+  const navigate = useNavigate();
+
+  const handleScan = async (sessionToken) => {
     if (phase === "processing") return;
+
     setPhase("processing");
+
     try {
-      const data = await attendanceService.scanAttendance({ sessionToken, kode_qr: sessionToken });
-      setResult(data);
-      setPhase("success");
+      const url = new URL(sessionToken);
+      const token = url.searchParams.get("token");
+
+      if (!token) {
+        throw new Error("QR Code tidak valid");
+      }
+
+      navigate(`/student/attendance/scan?token=${encodeURIComponent(token)}`);
     } catch (error) {
-      const reason = error?.raw?.response?.data?.reason;
-      setErrorMessage(
-        ERROR_MESSAGES[reason] || error?.message || ERROR_MESSAGES.default,
-      );
+      setErrorMessage(error?.message || ERROR_MESSAGES.default);
       setPhase("error");
     }
-  }
+  };
 
   function reset() {
     setResult(null);
@@ -111,12 +117,16 @@ export default function ScanAttendance() {
               <div className="flex items-center gap-2">
                 <School className="h-4 w-4 text-slate-400" />
                 <dt className="sr-only">Kelas</dt>
-                <dd>{result?.className || user?.className || user?.kelas || "-"}</dd>
+                <dd>
+                  {result?.className || user?.className || user?.kelas || "-"}
+                </dd>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-slate-400" />
                 <dt className="sr-only">Waktu</dt>
-                <dd>Masuk {formatTimeShort(result?.scannedAt || new Date())}</dd>
+                <dd>
+                  Masuk {formatTimeShort(result?.scannedAt || new Date())}
+                </dd>
               </div>
             </dl>
             <Button
