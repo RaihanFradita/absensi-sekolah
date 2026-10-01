@@ -5,7 +5,7 @@ import {
 
 export async function getStudentDashboard(req, res) {
   try {
-    const idUser = req.user.id;
+    const idUser = req.user.id_user;
 
     console.log("USER DARI TOKEN:", req.user);
     console.log("ID USER:", idUser);
@@ -39,7 +39,7 @@ export async function getStudentProfile(req, res) {
   try {
     console.log("USER DARI TOKEN:", req.user);
 
-    const idUser = req.user.id;
+    const idUser = req.user.id_user;
 
     console.log("ID USER:", idUser);
 

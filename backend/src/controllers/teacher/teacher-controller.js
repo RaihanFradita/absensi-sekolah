@@ -1,0 +1,65 @@
+import {
+  findTeacherDashboardByUserId,
+} from "../../services/teacher/teacher-service.js";
+
+export async function getTeacherDashboard(req, res) {
+  console.log("getTeacherDashboard TERPANGGIL");
+
+  try {
+    console.log("USER DARI TOKEN:", req.user);
+
+    const idUser = req.user.id_user;
+
+    console.log("ID USER:", idUser);
+
+    if (!idUser) {
+      return res.status(401).json({
+        success: false,
+        message: "ID user tidak ditemukan dari token.",
+      });
+    }
+
+    const date =
+      req.query.date ||
+      new Date().toISOString().slice(0, 10);
+
+    console.log("TANGGAL DASHBOARD:", date);
+
+    const dashboard =
+      await findTeacherDashboardByUserId(
+        idUser,
+        date
+      );
+
+    console.log(
+      "HASIL DASHBOARD GURU:",
+      dashboard
+    );
+
+    if (!dashboard) {
+      return res.status(404).json({
+        success: false,
+        message: "Data dashboard guru tidak ditemukan.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      teacher: dashboard.teacher,
+      class: dashboard.class,
+      summary: dashboard.summary,
+      students: dashboard.students || [],
+      date,
+    });
+  } catch (error) {
+    console.error(
+      "getTeacherDashboard:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Gagal mengambil data dashboard guru.",
+    });
+  }
+}

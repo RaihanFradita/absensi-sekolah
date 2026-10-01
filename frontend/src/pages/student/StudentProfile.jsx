@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import {
-  IdCard,
   School,
   RefreshCw,
   Camera,
@@ -31,12 +30,8 @@ export default function StudentProfile() {
     []
   );
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useAttendance(fetchProfile);
+  const { data, isLoading, error, refetch } =
+    useAttendance(fetchProfile);
 
   const photoKey = `${PROFILE_PHOTO_KEY_PREFIX}${user?.id || "guest"}`;
 
@@ -56,7 +51,6 @@ export default function StudentProfile() {
    *   student: {
    *     id_siswa: 4,
    *     id_user: 7,
-   *     nis: "2607004",
    *     nama_siswa: "Raihan Fradita",
    *     id_kelas: 1,
    *     nama_kelas: "7A",
@@ -66,13 +60,14 @@ export default function StudentProfile() {
    *     username: "raihan"
    *   }
    * }
+   *
+   * NISN tidak ditampilkan di halaman profil siswa.
    */
 
   const student = data?.student;
 
   /*
-   * Summary akan kita gunakan ketika backend
-   * sudah mengirim data ringkasan absensi.
+   * Ringkasan kehadiran
    *
    * Contoh:
    *
@@ -198,26 +193,21 @@ export default function StudentProfile() {
               </div>
 
               {/* Informasi siswa */}
-              <div>
+              <div className="min-w-0">
                 {/* Nama */}
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {student.nama_siswa || "-"}
                 </h2>
 
-                {/* NIS dan Kelas */}
-                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <IdCard className="h-4 w-4" />
-                    NIS {student.nis || "-"}
-                  </span>
-
-                  <span className="flex items-center gap-1.5">
-                    <School className="h-4 w-4" />
+                {/* Kelas */}
+                <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+                  <School className="h-4 w-4" />
+                  <span>
                     Kelas {student.nama_kelas || "-"}
                   </span>
                 </div>
 
-                {/* Tahun ajaran */}
+                {/* Tahun Ajaran */}
                 {student.tahun_ajaran && (
                   <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                     Tahun Ajaran {student.tahun_ajaran}

@@ -11,7 +11,6 @@ const previewTeachers = [
   {
     id_guru: 1,
     username: "guru.budi",
-    nip: "19780101001",
     nama_guru: "Budi Santoso",
     wali_kelas: "7A",
     status_aktif: 1,
@@ -19,7 +18,6 @@ const previewTeachers = [
   {
     id_guru: 2,
     username: "guru.siti",
-    nip: "19820512002",
     nama_guru: "Siti Aminah",
     wali_kelas: "8A",
     status_aktif: 1,
@@ -42,7 +40,6 @@ export default function TeacherAccounts() {
       [
         teacher.nama_guru,
         teacher.username,
-        teacher.nip,
         teacher.wali_kelas,
       ]
         .join(" ")
@@ -95,7 +92,6 @@ export default function TeacherAccounts() {
               <tr>
                 <th className="px-4 py-3">Nama Guru</th>
                 <th className="px-4 py-3">Username</th>
-                <th className="px-4 py-3">NIP</th>
                 <th className="px-4 py-3">Wali Kelas</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3 text-right">Aksi</th>
@@ -111,10 +107,6 @@ export default function TeacherAccounts() {
 
                   <td className="px-4 py-3">
                     {teacher.username}
-                  </td>
-
-                  <td className="px-4 py-3">
-                    {teacher.nip}
                   </td>
 
                   <td className="px-4 py-3">

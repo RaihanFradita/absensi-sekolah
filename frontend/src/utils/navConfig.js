@@ -7,8 +7,6 @@ import {
   Users,
   GraduationCap,
   School,
-  BookOpen,
-  CalendarClock,
   FileBarChart,
   ClipboardCheck,
   UserCog,
@@ -19,6 +17,7 @@ import { ROLES } from './constants';
 
 export const NAV_ITEMS = {
   // ==================== SISWA ====================
+
   [ROLES.STUDENT]: [
     {
       to: '/student/dashboard',
@@ -43,6 +42,7 @@ export const NAV_ITEMS = {
   ],
 
   // ==================== GURU KELAS ====================
+
   [ROLES.TEACHER]: [
     {
       to: '/teacher/dashboard',
@@ -67,16 +67,12 @@ export const NAV_ITEMS = {
   ],
 
   // ==================== GURU PIKET ====================
+
   [ROLES.DUTY_TEACHER]: [
     {
       to: '/duty/dashboard',
       label: 'Piket Hari Ini',
       icon: LayoutDashboard,
-    },
-    {
-      to: '/duty/not-scanned',
-      label: 'Belum Scan',
-      icon: Users,
     },
     {
       to: '/duty/recap',
@@ -86,6 +82,7 @@ export const NAV_ITEMS = {
   ],
 
   // ==================== ADMIN ====================
+
   [ROLES.ADMIN]: [
     {
       to: '/admin/dashboard',
@@ -118,24 +115,9 @@ export const NAV_ITEMS = {
       icon: CalendarDays,
     },
     {
-      to: '/admin/attendance-sessions',
-      label: 'Sesi & QR',
-      icon: QrCode,
-    },
-    {
       to: '/admin/reports',
       label: 'Data Absensi',
       icon: FileBarChart,
-    },
-    {
-      to: '/admin/subjects',
-      label: 'Mapel',
-      icon: BookOpen,
-    },
-    {
-      to: '/admin/schedules',
-      label: 'Jadwal Akademik',
-      icon: CalendarClock,
     },
   ],
 };

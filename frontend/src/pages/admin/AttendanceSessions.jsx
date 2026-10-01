@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { QrCode, Clock3 } from 'lucide-react';
 import PageContainer from '../../components/layout/PageContainer';
 import Card, { CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';

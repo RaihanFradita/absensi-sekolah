@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, Search, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 import PageContainer from "../../components/layout/PageContainer";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -21,7 +20,6 @@ const previewStudents = [
     id_siswa: 2,
     id_user: 8,
     username: "budi",
-    nis: "2607002",
     nama_siswa: "Budi Setiawan",
     nama_kelas: "7A",
     status_aktif: 1,
@@ -30,7 +28,6 @@ const previewStudents = [
     id_siswa: 3,
     id_user: 9,
     username: "citra",
-    nis: "2607003",
     nama_siswa: "Citra Lestari",
     nama_kelas: "7A",
     status_aktif: 1,
@@ -39,7 +36,6 @@ const previewStudents = [
     id_siswa: 4,
     id_user: 10,
     username: "dina",
-    nis: "2607004",
     nama_siswa: "Dina Maharani",
     nama_kelas: "7B",
     status_aktif: 1,
@@ -48,7 +44,6 @@ const previewStudents = [
     id_siswa: 5,
     id_user: 11,
     username: "eko",
-    nis: "2607005",
     nama_siswa: "Eko Saputra",
     nama_kelas: "7B",
     status_aktif: 1,
@@ -57,7 +52,6 @@ const previewStudents = [
     id_siswa: 6,
     id_user: 12,
     username: "fajar",
-    nis: "2608001",
     nama_siswa: "Fajar Ramadhan",
     nama_kelas: "8A",
     status_aktif: 1,
@@ -85,7 +79,6 @@ export default function StudentAccounts() {
       [
         student.nama_siswa,
         student.username,
-        student.nis,
         student.nama_kelas,
       ]
         .join(" ")
@@ -154,10 +147,6 @@ export default function StudentAccounts() {
 
                     <td className="px-4 py-3">
                       {student.username}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {student.nis}
                     </td>
 
                     <td className="px-4 py-3">

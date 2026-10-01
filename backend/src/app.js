@@ -29,5 +29,5 @@ app.use(express.json());
 app.use("/api/auth", auth);
 app.use("/api/admin", admin);
 app.use("/api/students", student);
-app.use("/api/teachers", teacher);
+app.use("/api/teacher", teacher);
 app.use("/api/attendance", attandance);
