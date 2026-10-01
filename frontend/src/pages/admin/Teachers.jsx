@@ -13,6 +13,10 @@ import {
   Hash,
   Lock,
   AtSign,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 
 import PageContainer from "../../components/layout/PageContainer";
@@ -43,6 +47,18 @@ export default function Teachers() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'active' | 'inactive'
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalItems: 0,
+    totalPage: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+
   // Modal form state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -58,14 +74,38 @@ export default function Teachers() {
   // ==============================
   // FETCH DATA GURU
   // ==============================
-  const fetchTeachers = async () => {
+  const fetchTeachers = async (targetPage = page, targetLimit = limit) => {
     setLoading(true);
     try {
-      const response = await adminTeacherServices.getTeachers();
+      const response = await adminTeacherServices.getTeachers({
+        page: targetPage,
+        limit: targetLimit,
+      });
+
       if (response && response.success && response.data) {
         setTeachers(response.data);
+        if (response.pagination) {
+          setPagination(response.pagination);
+        } else {
+          setPagination({
+            page: targetPage,
+            limit: targetLimit,
+            totalItems: response.data.length,
+            totalPage: 1,
+            hasNextPage: false,
+            hasPrevPage: false,
+          });
+        }
       } else if (Array.isArray(response)) {
         setTeachers(response);
+        setPagination({
+          page: 1,
+          limit: response.length,
+          totalItems: response.length,
+          totalPage: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        });
       } else if (response?.data && Array.isArray(response.data)) {
         setTeachers(response.data);
       } else {
@@ -80,8 +120,90 @@ export default function Teachers() {
   };
 
   useEffect(() => {
-    fetchTeachers();
-  }, []);
+    fetchTeachers(page, limit);
+  }, [page, limit]);
+
+  // ==============================
+  // HANDLERS PAGINATION
+  // ==============================
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= (pagination.totalPage || 1)) {
+      setPage(newPage);
+    }
+  };
+
+  const handleLimitChange = (e) => {
+    const newLimit = Number(e.target.value);
+    setLimit(newLimit);
+    setPage(1);
+  };
+
+  const renderPageNumbers = () => {
+    const totalPages = pagination.totalPage || 1;
+    const pages = [];
+
+    let startPage = Math.max(1, page - 1);
+    let endPage = Math.min(totalPages, page + 1);
+
+    if (page === 1) {
+      endPage = Math.min(totalPages, 3);
+    } else if (page === totalPages) {
+      startPage = Math.max(1, totalPages - 2);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="flex items-center gap-1">
+        {startPage > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => handlePageChange(1)}
+              className="inline-flex h-8 px-2.5 items-center justify-center rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              1
+            </button>
+            {startPage > 2 && (
+              <span className="px-1 text-xs text-slate-400">...</span>
+            )}
+          </>
+        )}
+
+        {pages.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => handlePageChange(p)}
+            className={`inline-flex h-8 min-w-[32px] px-2 items-center justify-center rounded-lg text-xs font-semibold shadow-sm transition-all ${
+              p === page
+                ? "bg-brand-600 text-white dark:bg-brand-500"
+                : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && (
+              <span className="px-1 text-xs text-slate-400">...</span>
+            )}
+            <button
+              type="button"
+              onClick={() => handlePageChange(totalPages)}
+              className="inline-flex h-8 px-2.5 items-center justify-center rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-700 shadow-sm transition-all hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
 
   // ==============================
   // FILTER & SEARCH
@@ -304,7 +426,7 @@ export default function Teachers() {
           <Button
             variant="secondary"
             icon={RefreshCw}
-            onClick={fetchTeachers}
+            onClick={() => fetchTeachers(page, limit)}
             disabled={loading}
           >
             Refresh
@@ -325,7 +447,7 @@ export default function Teachers() {
               </h2>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 Menampilkan {filteredTeachers.length} dari total{" "}
-                {teachers.length} guru
+                {pagination.totalItems || teachers.length} guru
               </p>
             </div>
 
@@ -428,7 +550,7 @@ export default function Teachers() {
                           className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"
                         >
                           <td className="px-4 py-3.5 text-center font-medium text-slate-400">
-                            {index + 1}
+                            {(page - 1) * limit + index + 1}
                           </td>
 
                           <td className="px-4 py-3.5 font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -510,6 +632,79 @@ export default function Teachers() {
               </div>
             )}
           </div>
+
+          {/* Pagination Bar */}
+          {!loading && teachers.length > 0 && (
+            <div className="mt-5 flex flex-col gap-4 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
+              <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <span>Tampilkan</span>
+                <select
+                  value={limit}
+                  onChange={handleLimitChange}
+                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <option value={5}>5 per halaman</option>
+                  <option value={10}>10 per halaman</option>
+                  <option value={20}>20 per halaman</option>
+                  <option value={50}>50 per halaman</option>
+                </select>
+                <span>
+                  Menampilkan{" "}
+                  {pagination.totalItems === 0 ? 0 : (page - 1) * limit + 1} -{" "}
+                  {Math.min(page * limit, pagination.totalItems || 0)} dari{" "}
+                  {pagination.totalItems || 0} data
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 self-center sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(1)}
+                  disabled={!pagination.hasPrevPage || page === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  title="Halaman Pertama"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={!pagination.hasPrevPage || page === 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  title="Halaman Sebelumnya"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                {renderPageNumbers()}
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={
+                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                  }
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  title="Halaman Selanjutnya"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handlePageChange(pagination.totalPage || 1)}
+                  disabled={
+                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                  }
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  title="Halaman Terakhir"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

@@ -1,8 +1,8 @@
 import api from "../api";
 
 export const adminTeacherServices = {
-  async getTeachers() {
-    const response = await api.get("/admin/teacher");
+  async getTeachers(params = {}) {
+    const response = await api.get("/admin/teacher", { params });
     return response.data;
   },
 

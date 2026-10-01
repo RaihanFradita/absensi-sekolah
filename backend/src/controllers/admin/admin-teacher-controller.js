@@ -39,7 +39,8 @@ export const createTeacher = async (req, res) => {
 
 export const getAllTeachers = async (req, res) => {
   try {
-    const result = await findAllTeacher();
+    const { page, limit } = req.query;
+    const result = await findAllTeacher({ page, limit });
 
     return res.json(result);
   } catch (error) {

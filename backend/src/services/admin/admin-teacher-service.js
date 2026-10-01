@@ -85,8 +85,21 @@ export const insertTeacher = async (data) => {
   }
 };
 
-export const findAllTeacher = async () => {
-  const [teachers] = await pool.query(`
+export const findAllTeacher = async ({ page = 1, limit = 10 } = {}) => {
+  // sanitasi input suapaya aman dan tidak negatif
+  const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+  const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+  const offset = (currentPage - 1) * perPage;
+
+  // hitung total data
+  const [[{ total }]] = await pool.query(`
+    SELECT COUNT(*) AS total FROM guru g INNER JOIN users u
+    ON u.id_user = g.id_user;
+    `);
+
+  // ambil data sesuai halaman
+  const [teachers] = await pool.query(
+    `
     SELECT
       g.id_guru,
       g.id_user,
@@ -98,13 +111,26 @@ export const findAllTeacher = async () => {
     FROM guru g
     INNER JOIN users u
       ON u.id_user = g.id_user
-    ORDER BY g.nama_guru ASC
-  `);
+    ORDER BY g.nama_guru ASC, g.id_guru ASC
+    LIMIT ? OFFSET ?
+  `,
+    [perPage, offset],
+  );
+
+  const totalPage = Math.ceil(total / perPage);
 
   return {
     success: true,
     message: "Data guru berhasil diambil",
     data: teachers,
+    pagination: {
+      page: currentPage,
+      limit: perPage,
+      totalItems: total,
+      totalPage,
+      hasNextPage: currentPage < totalPage,
+      hasPrevPage: currentPage > 1,
+    },
   };
 };
 
