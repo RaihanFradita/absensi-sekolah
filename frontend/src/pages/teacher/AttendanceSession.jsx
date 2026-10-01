@@ -142,6 +142,8 @@ export default function AttendanceSession() {
     );
   }
 
+  console.log(data);
+
   return (
     <PageContainer
       title="QR Kehadiran Harian"
@@ -159,7 +161,7 @@ export default function AttendanceSession() {
             </span>
             <span className="flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4" aria-hidden="true" />
-              {data.attendanceDate || data.tanggal || "Hari ini"}
+              {data.attendanceDate.split("T")[0] || data.tanggal || "Hari ini"}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" aria-hidden="true" />
