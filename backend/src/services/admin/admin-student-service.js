@@ -87,8 +87,24 @@ export const insertStudents = async ({
   }
 };
 
-export async function findAllStudents() {
-  const [rows] = await pool.query(`
+export async function findAllStudents({ page = 1, limit = 10 } = {}) {
+  // sanitasi input suapaya aman dan tidak negatif
+  const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+  const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+  const offset = (currentPage - 1) * perPage;
+
+  // Hitung total data
+  const [[{ total }]] = await pool.query(`
+    SELECT COUNT(*) AS total
+    FROM siswa s
+    INNER JOIN kelas k
+      ON s.id_kelas = k.id_kelas
+    INNER JOIN users u
+      ON s.id_user = u.id_user
+  `);
+
+  const [rows] = await pool.query(
+    `
     SELECT
       s.id_siswa,
       s.id_user,
@@ -103,10 +119,25 @@ export async function findAllStudents() {
       ON s.id_kelas = k.id_kelas
     INNER JOIN users u
       ON s.id_user = u.id_user
-    ORDER BY s.nama_siswa ASC
-  `);
+    ORDER BY s.nama_siswa ASC, s.id_siswa ASC
+    LIMIT ? OFFSET ?
+  `,
+    [perPage, offset],
+  );
 
-  return rows;
+  const totalPages = Math.ceil(total / perPage);
+
+  return {
+    data: rows,
+    pagination: {
+      page: currentPage,
+      limit: perPage,
+      totalItems: total,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1,
+    },
+  };
 }
 
 export async function findStudentById(id) {

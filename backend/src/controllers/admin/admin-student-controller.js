@@ -8,14 +8,8 @@ import {
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
-  const {
-    namaSiswa,
-    nama_siswa,
-    idKelas,
-    id_kelas,
-    username,
-    password,
-  } = req.body;
+  const { namaSiswa, nama_siswa, idKelas, id_kelas, username, password } =
+    req.body;
 
   const finalNamaSiswa = namaSiswa || nama_siswa;
   const finalIdKelas = idKelas || id_kelas;
@@ -53,11 +47,14 @@ export const createStudent = async (req, res) => {
 
 export async function getStudents(req, res) {
   try {
-    const students = await findAllStudents();
+    const { page, limit } = req.query;
+    const { data, pagination } = await findAllStudents({ page, limit });
 
     res.json({
       success: true,
-      students,
+      message: "Data siswa berhasil diambil",
+      data,
+      pagination,
     });
   } catch (error) {
     console.error("getStudents:", error);
@@ -137,8 +134,7 @@ export const editStundent = async (req, res) => {
   if (!finalIdUser || !username || !finalNamaSiswa || !finalIdKelas) {
     return res.status(400).json({
       success: false,
-      message:
-        "Semua field (Nama Siswa, Username, Kelas) wajib diisi",
+      message: "Semua field (Nama Siswa, Username, Kelas) wajib diisi",
     });
   }
 
