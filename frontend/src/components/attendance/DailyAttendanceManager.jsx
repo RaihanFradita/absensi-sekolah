@@ -55,9 +55,8 @@ export default function DailyAttendanceManager({
         const q = search.trim().toLowerCase();
 
         const searchOk =
-          !q ||
-          r.student?.name?.toLowerCase().includes(q) ||
-          r.student?.nis?.includes(q);
+         !q ||
+         r.student?.name?.toLowerCase().includes(q);
 
         return statusOk && searchOk;
       }),
@@ -179,7 +178,7 @@ export default function DailyAttendanceManager({
             label="Cari siswa"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Nama atau NIS"
+            placeholder="Nama Siswa"
             startAdornment={
               <Search className="h-4 w-4" />
             }
@@ -213,10 +212,6 @@ export default function DailyAttendanceManager({
           <table className="w-full min-w-[850px] text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-950">
               <tr>
-                <th className="px-4 py-3">
-                  NIS/NISN
-                </th>
-
                 <th className="px-4 py-3">
                   Nama
                 </th>
@@ -254,13 +249,7 @@ export default function DailyAttendanceManager({
                   <tr
                     key={row.id}
                     className="bg-white align-top dark:bg-slate-900"
-                  >
-                    {/* NIS / NISN */}
-                    <td className="px-4 py-3 text-xs text-slate-500">
-                      {row.student?.nis}
-                      <br />
-                      {row.student?.nisn}
-                    </td>
+                  > 
 
                     {/* Nama */}
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
@@ -380,7 +369,7 @@ export default function DailyAttendanceManager({
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={canEdit ? 7 : 6}
+                    colSpan={canEdit ? 6 : 5}
                     className="px-4 py-10 text-center text-slate-500"
                   >
                     Tidak ada siswa yang cocok dengan filter.

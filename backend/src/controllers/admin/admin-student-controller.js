@@ -8,26 +8,31 @@ import {
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
-  const { nis, namaSiswa, nama_siswa, idKelas, id_kelas, username, password } =
-    req.body;
+  const {
+    namaSiswa,
+    nama_siswa,
+    idKelas,
+    id_kelas,
+    username,
+    password,
+  } = req.body;
 
   const finalNamaSiswa = namaSiswa || nama_siswa;
   const finalIdKelas = idKelas || id_kelas;
-  const finalUsername = username || nis;
 
-  if (!nis || !finalNamaSiswa || !finalIdKelas || !password) {
+  if (!finalNamaSiswa || !finalIdKelas || !username || !password) {
     return res.status(400).json({
       success: false,
-      message: "Semua field (NIS, Nama Siswa, Kelas, Password) wajib diisi!",
+      message:
+        "Semua field (Nama Siswa, Username, Kelas, Password) wajib diisi!",
     });
   }
 
   try {
     const result = await insertStudents({
-      nis,
       namaSiswa: finalNamaSiswa,
       idKelas: finalIdKelas,
-      username: finalUsername,
+      username,
       password,
     });
 
@@ -37,6 +42,8 @@ export const createStudent = async (req, res) => {
 
     res.status(201).json(result);
   } catch (error) {
+    console.error("createStudent:", error);
+
     return res.status(500).json({
       success: false,
       message: error?.message || "Terjadi kesalahan server",
@@ -91,10 +98,10 @@ export async function getStudent(req, res) {
 
 export const editStundent = async (req, res) => {
   const { id_siswa } = req.params;
+
   const {
     id_user,
     username,
-    nis,
     namaSiswa,
     nama_siswa,
     idKelas,
@@ -104,7 +111,6 @@ export const editStundent = async (req, res) => {
 
   const finalNamaSiswa = namaSiswa || nama_siswa;
   const finalIdKelas = idKelas || id_kelas;
-  const finalUsername = username || nis;
 
   if (!id_siswa) {
     return res.status(400).json({
@@ -114,27 +120,25 @@ export const editStundent = async (req, res) => {
   }
 
   let finalIdUser = id_user;
+
   if (!finalIdUser) {
     const existingStudent = await findStudentById(id_siswa);
+
     if (!existingStudent) {
       return res.status(404).json({
         success: false,
         message: "Data siswa tidak ditemukan",
       });
     }
+
     finalIdUser = existingStudent.id_user;
   }
 
-  if (
-    !finalIdUser ||
-    !finalUsername ||
-    !nis ||
-    !finalNamaSiswa ||
-    !finalIdKelas
-  ) {
+  if (!finalIdUser || !username || !finalNamaSiswa || !finalIdKelas) {
     return res.status(400).json({
       success: false,
-      message: "Semua field (NIS, Nama Siswa, Kelas, Username) wajib diisi",
+      message:
+        "Semua field (Nama Siswa, Username, Kelas) wajib diisi",
     });
   }
 
@@ -142,10 +146,9 @@ export const editStundent = async (req, res) => {
     const result = await updateStudentById({
       id_user: finalIdUser,
       id_siswa,
-      nis,
       namaSiswa: finalNamaSiswa,
       idKelas: finalIdKelas,
-      username: finalUsername,
+      username,
       password,
     });
 
@@ -156,6 +159,7 @@ export const editStundent = async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     console.error("editStundent:", error);
+
     return res.status(500).json({
       success: false,
       message: error?.message || "Terjadi kesalahan server",
@@ -170,12 +174,15 @@ export const deleteStudent = async (req, res) => {
   if (!id_siswa || !id_user) {
     return res.status(400).json({
       success: false,
-      message: "ID guru atau ID user tidak ditemukan",
+      message: "ID siswa atau ID user tidak ditemukan",
     });
   }
 
   try {
-    const result = await softDeleteStudent({ id_siswa, id_user });
+    const result = await softDeleteStudent({
+      id_siswa,
+      id_user,
+    });
 
     if (!result.success) {
       return res.status(400).json(result);
@@ -183,6 +190,8 @@ export const deleteStudent = async (req, res) => {
 
     res.status(200).json(result);
   } catch (error) {
+    console.error("deleteStudent:", error);
+
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",

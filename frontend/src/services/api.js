@@ -26,6 +26,8 @@ async function request(path, options = {}) {
   } = options;
 
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    console.log ("API Request:", path);
+    console.log ("TOKEN:", token ? "ada" : "tidak ada");
 
   const requestHeaders = {
     ...headers,
