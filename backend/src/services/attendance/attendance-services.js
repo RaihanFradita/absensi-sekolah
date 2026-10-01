@@ -153,8 +153,16 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
     // pastikan siswa terdaftar di kelas sesi ini
     const [siswaKelas] = await connection.query(
       `
-      SELECT id_siswa FROM siswa WHERE id_siswa = ? AND id_kelas = ?
-      `,
+  SELECT
+    s.id_siswa,
+    s.nis,
+    s.nama_siswa,
+    k.tingkat,
+    k.nama_kelas
+  FROM siswa s
+  JOIN kelas k ON k.id_kelas = s.id_kelas
+  WHERE s.id_siswa = ? AND s.id_kelas = ?
+  `,
       [id_siswa, sesi.id_kelas],
     );
 
@@ -163,6 +171,8 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
       error.statusCode = 403;
       throw error;
     }
+
+    const siswa = siswaKelas[0];
 
     // cek duplikat scan
     const [existing] = await connection.query(
@@ -194,7 +204,16 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
     return {
       success: true,
       message: `Absensi berhasil, status: ${status}`,
-      data: { status, waktu_scan: now },
+      data: {
+        status,
+        waktu_scan: now,
+        siswa: {
+          id_siswa: siswa.id_siswa,
+          nama_siswa: siswa.nama_siswa,
+          nis: siswa.nis,
+          kelas: `${siswa.tingkat}${siswa.nama_kelas}`,
+        },
+      },
     };
   } catch (error) {
     await connection.rollback();

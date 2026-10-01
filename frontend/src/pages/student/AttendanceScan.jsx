@@ -34,7 +34,8 @@ function getNormalizedStatus(rawStatus) {
   if (s === "terlambat" || s === "late") return ATTENDANCE_STATUS.LATE;
   if (s === "sakit" || s === "sick") return ATTENDANCE_STATUS.SICK;
   if (s === "izin" || s === "excused") return ATTENDANCE_STATUS.EXCUSED;
-  if (s === "alpa" || s === "absent" || s === "tidak hadir") return ATTENDANCE_STATUS.ABSENT;
+  if (s === "alpa" || s === "absent" || s === "tidak hadir")
+    return ATTENDANCE_STATUS.ABSENT;
   return ATTENDANCE_STATUS.PRESENT;
 }
 
@@ -107,17 +108,17 @@ function AttendanceScan() {
         loading
           ? "Memproses Absensi..."
           : success
-          ? isLate
-            ? "Absensi Dicatat (Terlambat)"
-            : "Kehadiran Berhasil"
-          : "Absensi Gagal"
+            ? isLate
+              ? "Absensi Dicatat (Terlambat)"
+              : "Kehadiran Berhasil"
+            : "Absensi Gagal"
       }
       description={
         loading
           ? "Sedang memverifikasi QR Code dan mencatat data kehadiranmu."
           : success
-          ? "Data kehadiranmu telah tersimpan di sistem absensi sekolah."
-          : "Proses verifikasi QR Code absensi tidak dapat diselesaikan."
+            ? "Data kehadiranmu telah tersimpan di sistem absensi sekolah."
+            : "Proses verifikasi QR Code absensi tidak dapat diselesaikan."
       }
       action={
         <Link
@@ -142,7 +143,8 @@ function AttendanceScan() {
               Memverifikasi QR Code...
             </h3>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Mohon tunggu sejenak, data kehadiran kamu sedang dikirim ke server.
+              Mohon tunggu sejenak, data kehadiran kamu sedang dikirim ke
+              server.
             </p>
             <div className="mt-6 flex justify-center">
               <Loading label="Memproses absensi..." />
@@ -173,7 +175,8 @@ function AttendanceScan() {
             {/* Title & Badge */}
             <div className="mb-2 flex items-center justify-center gap-2">
               <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-slate-400">
-                <Sparkles className="h-3.5 w-3.5 text-brand-500" /> Status Kehadiran
+                <Sparkles className="h-3.5 w-3.5 text-brand-500" /> Status
+                Kehadiran
               </span>
             </div>
 
@@ -186,7 +189,10 @@ function AttendanceScan() {
             </p>
 
             <div className="my-4 flex justify-center">
-              <AttendanceStatus status={normalizedStatus} className="text-sm px-3 py-1" />
+              <AttendanceStatus
+                status={normalizedStatus}
+                className="text-sm px-3 py-1"
+              />
             </div>
 
             {/* Student & Attendance Info Card */}
@@ -197,7 +203,7 @@ function AttendanceScan() {
                   <span>Nama Siswa</span>
                 </div>
                 <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {user?.name || user?.nama || "-"}
+                  {scanData.siswa.nama_siswa || "-"}
                 </span>
               </div>
 
@@ -207,7 +213,7 @@ function AttendanceScan() {
                   <span>NIS / NISN</span>
                 </div>
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {user?.nis || user?.nisn || "-"}
+                  {scanData.siswa.nis || "-"}
                 </span>
               </div>
 
@@ -217,7 +223,7 @@ function AttendanceScan() {
                   <span>Kelas</span>
                 </div>
                 <span className="text-sm text-slate-600 dark:text-slate-400">
-                  {user?.className || user?.kelas || "-"}
+                  {scanData.siswa.kelas || "-"}
                 </span>
               </div>
 
@@ -296,9 +302,18 @@ function AttendanceScan() {
                     Catatan untuk Siswa:
                   </p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Siswa hanya dapat melakukan absensi 1 (satu) kali setiap harinya.</li>
-                    <li>Pastikan QR Code dipindai dari layar resmi Guru Kelas / Guru Piket.</li>
-                    <li>Jika sesi sudah berakhir, hubungi guru piket untuk konfirmasi kehadiran manual.</li>
+                    <li>
+                      Siswa hanya dapat melakukan absensi 1 (satu) kali setiap
+                      harinya.
+                    </li>
+                    <li>
+                      Pastikan QR Code dipindai dari layar resmi Guru Kelas /
+                      Guru Piket.
+                    </li>
+                    <li>
+                      Jika sesi sudah berakhir, hubungi guru piket untuk
+                      konfirmasi kehadiran manual.
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -306,12 +321,7 @@ function AttendanceScan() {
 
             {/* Action Buttons */}
             <div className="grid gap-3 sm:grid-cols-2">
-              <Button
-                as={Link}
-                to="/student/scan"
-                icon={RotateCcw}
-                fullWidth
-              >
+              <Button as={Link} to="/student/scan" icon={RotateCcw} fullWidth>
                 Scan Ulang
               </Button>
               <Button
@@ -332,4 +342,3 @@ function AttendanceScan() {
 }
 
 export default AttendanceScan;
-
