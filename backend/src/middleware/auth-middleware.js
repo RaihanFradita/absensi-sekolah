@@ -6,10 +6,7 @@ export const verifyToken = (req, res, next) => {
   console.log("===== VERIFY TOKEN =====");
   console.log("PATH:", req.originalUrl);
   console.log("AUTH HEADER:", authHeader ? "ADA" : "TIDAK ADA");
-  console.log(
-    "COOKIE TOKEN:",
-    req.cookies?.accessToken ? "ADA" : "TIDAK ADA",
-  );
+  console.log("COOKIE TOKEN:", req.cookies?.accessToken ? "ADA" : "TIDAK ADA");
 
   const token =
     (authHeader && authHeader.startsWith("Bearer ")
@@ -28,10 +25,7 @@ export const verifyToken = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.SECRET_KEY || "default_secret_key",
-    );
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
     console.log("✅ TOKEN VALID");
     console.log("USER:", decoded);
