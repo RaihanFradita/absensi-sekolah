@@ -241,6 +241,7 @@ async function getActiveSession(kode_qr) {
   try {
     const response = await api.get(`${ENDPOINTS.ACTIVE_SESSION}/${kode_qr}`);
     const session = extractSessionPayload(response?.data);
+    console.log(session);
     if (!hasSessionShape(session)) return getMockActiveSession();
 
     return {
