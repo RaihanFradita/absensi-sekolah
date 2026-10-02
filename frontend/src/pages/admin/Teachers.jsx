@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   XCircle,
   User,
-  Hash,
   Lock,
   AtSign,
   ChevronLeft,
@@ -33,7 +32,6 @@ import { adminTeacherServices } from "../../services/adminServices/teacherServic
 const EMPTY_FORM = {
   id_guru: null,
   id_user: null,
-  nip: "",
   nama_guru: "",
   username: "",
   password: "",
@@ -211,17 +209,13 @@ export default function Teachers() {
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {
       const keyword = search.toLowerCase().trim();
-      const matchSearch =
-        !keyword ||
-        String(teacher.nama_guru || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        String(teacher.nip || "")
-          .toLowerCase()
-          .includes(keyword) ||
+      const matchSearch = 
+       !keyword ||
+       String(teacher.nama_guru || "")
+        .toLowerCase().includes(keyword) ||
         String(teacher.username || "")
-          .toLowerCase()
-          .includes(keyword);
+        .toLowerCase()
+        .includes(keyword);
 
       const isActive = Number(teacher.status_aktif ?? 1) === 1;
       let matchStatus = true;
@@ -252,7 +246,6 @@ export default function Teachers() {
     setFormData({
       id_guru: teacherId,
       id_user: teacher.id_user || null,
-      nip: teacher.nip || "",
       nama_guru: teacher.nama_guru || "",
       username: teacher.username || "",
       password: "",
@@ -267,7 +260,6 @@ export default function Teachers() {
         setFormData({
           id_guru: detail.id_guru || teacherId,
           id_user: detail.id_user || teacher.id_user || null,
-          nip: detail.nip || "",
           nama_guru: detail.nama_guru || "",
           username: detail.username || "",
           password: "",
@@ -306,11 +298,6 @@ export default function Teachers() {
     e.preventDefault();
     setFormError("");
 
-    if (!formData.nip.trim()) {
-      setFormError("NIP wajib diisi!");
-      return;
-    }
-
     if (!formData.nama_guru.trim()) {
       setFormError("Nama guru wajib diisi!");
       return;
@@ -331,7 +318,6 @@ export default function Teachers() {
       if (isEditMode) {
         const payload = {
           id_user: formData.id_user,
-          nip: formData.nip.trim(),
           username: formData.username.trim(),
           nama_guru: formData.nama_guru.trim(),
         };
@@ -349,7 +335,6 @@ export default function Teachers() {
         showToast("Data guru berhasil diperbarui!", { tone: "success" });
       } else {
         const payload = {
-          nip: formData.nip.trim(),
           nama_guru: formData.nama_guru.trim(),
           username: formData.username.trim(),
           password: formData.password,
@@ -497,7 +482,7 @@ export default function Teachers() {
               icon={Search}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari berdasarkan NIP, Nama Guru, atau Username..."
+              placeholder="Cari berdasarkan Nama Guru, atau Username..."
             />
           </div>
 
@@ -532,7 +517,6 @@ export default function Teachers() {
                   <thead>
                     <tr className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
                       <th className="w-12 px-4 py-3.5 text-center">No</th>
-                      <th className="px-4 py-3.5">NIP</th>
                       <th className="px-4 py-3.5">Nama Guru</th>
                       <th className="px-4 py-3.5">Username</th>
                       <th className="px-4 py-3.5 text-center">Status</th>
@@ -551,10 +535,6 @@ export default function Teachers() {
                         >
                           <td className="px-4 py-3.5 text-center font-medium text-slate-400">
                             {(page - 1) * limit + index + 1}
-                          </td>
-
-                          <td className="px-4 py-3.5 font-mono text-xs font-medium text-slate-700 dark:text-slate-300">
-                            {teacher.nip || "-"}
                           </td>
 
                           <td className="px-4 py-3.5">
@@ -732,7 +712,7 @@ export default function Teachers() {
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {isEditMode
-                      ? "Perbarui NIP, nama lengkap, dan username akun guru."
+                      ? "Perbarui Nama lengkap, dan username akun guru."
                       : "Lengkapi data guru baru ke dalam sistem absensi."}
                   </p>
                 </div>
@@ -761,16 +741,6 @@ export default function Teachers() {
               </div>
             ) : (
               <form onSubmit={handleSubmitForm} className="mt-4 space-y-4">
-                <Input
-                  label="Nomor Induk Pegawai (NIP)"
-                  name="nip"
-                  icon={Hash}
-                  value={formData.nip}
-                  onChange={handleInputChange}
-                  placeholder="Contoh: 198507152010011002"
-                  required
-                />
-
                 <Input
                   label="Nama Lengkap Guru"
                   name="nama_guru"
