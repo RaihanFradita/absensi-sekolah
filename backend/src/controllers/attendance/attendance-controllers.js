@@ -110,7 +110,7 @@ export const scanAbsensi = async (req, res) => {
         status,
         waktu_scan,
       });
-    } catch (error) {
+    } catch (socketError) {
       console.error("Gagal emit attendance_created:", socketError);
     }
 
