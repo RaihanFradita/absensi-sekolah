@@ -14,7 +14,7 @@ app.use(morgan("dev"));
 
 app.use(
   cors({
-    origin: ["https://absensi-sekolah-to2v.vercel.app"],
+    origin: [process.env.FRONTEND_URL],
     credentials: true,
   }),
 );
