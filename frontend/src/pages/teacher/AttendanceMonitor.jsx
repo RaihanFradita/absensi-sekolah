@@ -7,7 +7,7 @@ import Loading from "../../components/ui/Loading";
 import EmptyState from "../../components/ui/EmptyState";
 import useAttendance from "../../hooks/useAttendance";
 import attendanceService from "../../services/attendanceService";
-// import classService from "../../services/classService";
+import { teacherServices } from "../../services/teacher/teacherService";
 
 const STATUS_OPTIONS = [
   { value: "hadir", label: "Hadir" },
@@ -35,9 +35,13 @@ const formatTime = (value) => {
 };
 
 export default function AttendanceMonitor() {
-  // daftar kelas untuk filter
-  const fetchClasses = useCallback(() => classService.getAll(), []);
-  const { data: classes } = useAttendance(fetchClasses);
+  // daftar kelas untuk filter dari API
+  const fetchClasses = useCallback(() => teacherServices.getAllClass(), []);
+  const {
+    data: classes,
+    isLoading: isClassesLoading,
+    error: classesError,
+  } = useAttendance(fetchClasses);
 
   const [classId, setClassId] = useState("");
   const [rows, setRows] = useState([]);
@@ -52,7 +56,7 @@ export default function AttendanceMonitor() {
 
   const classList = Array.isArray(classes) ? classes : classes?.data || [];
 
-  // pilih kelas pertama otomatis
+  // pilih kelas pertama otomatis saat daftar kelas berhasil dimuat
   useEffect(() => {
     if (!classId && classList.length > 0) {
       setClassId(String(classList[0].id || classList[0].id_kelas));
@@ -67,7 +71,7 @@ export default function AttendanceMonitor() {
       const result = await attendanceService.getDailyByClass(classId);
       const list = Array.isArray(result)
         ? result
-        : result?.data || result?.events || [];
+        : result?.rows || result?.data || result?.events || [];
       setRows(
         list.map((r) => ({
           id: r.id || r.id_kehadiran,
@@ -141,20 +145,28 @@ export default function AttendanceMonitor() {
             <select
               id="class-filter"
               value={classId}
+              disabled={isClassesLoading || classList.length === 0}
               onChange={(e) => {
                 cancelEdit();
                 setClassId(e.target.value);
               }}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {classList.map((c) => {
-                const id = c.id || c.id_kelas;
-                return (
-                  <option key={id} value={id}>
-                    {c.nama_kelas || c.name}
-                  </option>
-                );
-              })}
+              {isClassesLoading ? (
+                <option value="">Memuat kelas...</option>
+              ) : classList.length === 0 ? (
+                <option value="">Tidak ada kelas</option>
+              ) : (
+                classList.map((kelas) => {
+                  const id = kelas.id || kelas.id_kelas;
+                  return (
+                    <option key={id} value={id}>
+                      {kelas.tingkat}
+                      {kelas.nama_kelas}
+                    </option>
+                  );
+                })
+              )}
             </select>
             <Button
               size="sm"

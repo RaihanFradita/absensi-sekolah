@@ -123,6 +123,9 @@ async function getDailyAttendance(params = {}) {
   }
   return (await api.get(ENDPOINTS.ATTENDANCE_DAILY, { params })).data;
 }
+async function getDailyByClass(classId, params = {}) {
+  return getDailyAttendance({ classId, id_kelas: classId, ...params });
+}
 async function updateAttendanceStatus(id, payload) {
   if (isMockMode()) {
     await mockDelay(300);
@@ -331,6 +334,7 @@ export default {
   getTeacherDashboard,
   getDutyDashboard,
   getDailyAttendance,
+  getDailyByClass,
   updateAttendanceStatus,
   exportAttendanceExcel,
   downloadBlob,

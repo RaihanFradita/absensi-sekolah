@@ -1,6 +1,5 @@
-import {
-  findTeacherDashboardByUserId,
-} from "../../services/teacher/teacher-service.js";
+import { findAllClass } from "../../services/admin/admin-teacher-service.js";
+import { findTeacherDashboardByUserId } from "../../services/teacher/teacher-service.js";
 
 export async function getTeacherDashboard(req, res) {
   console.log("getTeacherDashboard TERPANGGIL");
@@ -19,22 +18,13 @@ export async function getTeacherDashboard(req, res) {
       });
     }
 
-    const date =
-      req.query.date ||
-      new Date().toISOString().slice(0, 10);
+    const date = req.query.date || new Date().toISOString().slice(0, 10);
 
     console.log("TANGGAL DASHBOARD:", date);
 
-    const dashboard =
-      await findTeacherDashboardByUserId(
-        idUser,
-        date
-      );
+    const dashboard = await findTeacherDashboardByUserId(idUser, date);
 
-    console.log(
-      "HASIL DASHBOARD GURU:",
-      dashboard
-    );
+    console.log("HASIL DASHBOARD GURU:", dashboard);
 
     if (!dashboard) {
       return res.status(404).json({
@@ -52,10 +42,7 @@ export async function getTeacherDashboard(req, res) {
       date,
     });
   } catch (error) {
-    console.error(
-      "getTeacherDashboard:",
-      error
-    );
+    console.error("getTeacherDashboard:", error);
 
     return res.status(500).json({
       success: false,
@@ -63,3 +50,20 @@ export async function getTeacherDashboard(req, res) {
     });
   }
 }
+
+export const getAllClass = async (req, res) => {
+  try {
+    const result = await findAllClass();
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+    });
+  }
+};

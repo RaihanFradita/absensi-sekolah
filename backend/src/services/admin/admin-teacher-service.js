@@ -271,3 +271,24 @@ export const softDeleteTeacher = async (data) => {
     connection.release();
   }
 };
+
+// ambil data kelas untuk keperluan input
+export const findAllClass = async () => {
+  try {
+    const [kelas] = await pool.query(
+      "SELECT * FROM kelas WHERE status_aktif = ?",
+      [1],
+    );
+
+    return {
+      success: true,
+      message: "data berhasil diambil",
+      data: kelas,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Terjadi kesalahan server",
+    };
+  }
+};

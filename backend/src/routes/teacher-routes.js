@@ -2,9 +2,8 @@ import express from "express";
 
 import { verifyToken } from "../middleware/auth-middleware.js";
 
-import { getAllClass } from "../controllers/admin/admin-class-controller.js";
-
 import {
+  getAllClass,
   getTeacherDashboard,
 } from "../controllers/teacher/teacher-controller.js";
 
