@@ -148,8 +148,6 @@ export default function AttendanceSession() {
     );
   }
 
-  console.log(data);
-
   return (
     <PageContainer
       title="QR Kehadiran Harian"
