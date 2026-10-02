@@ -22,7 +22,7 @@ import { formatTimeShort } from "../../utils/formatTime";
 
 const ERROR_MESSAGES = {
   invalid_qr: "QR Code kehadiran tidak valid.",
-  session_expired: "QR kehadiran hari ini sudah tidak aktif.",
+  session_expired: "Sesi absensi sudah ditutup oleh guru.",
   already_scanned:
     "Kamu sudah melakukan absensi hari ini. Satu siswa hanya dapat absen satu kali per hari.",
   class_mismatch: "QR Code tidak berlaku untuk akunmu.",

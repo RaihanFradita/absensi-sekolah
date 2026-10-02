@@ -259,8 +259,9 @@ export default function AttendanceSession() {
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" aria-hidden="true" />
-              {formatTimeShort(data.startsAt || data.waktu_buka)} -{" "}
-              {formatTimeShort(data.endsAt || data.waktu_tutup)}
+              {data.endsAt || data.waktu_tutup
+                ? `${formatTimeShort(data.startsAt || data.waktu_buka)} - ${formatTimeShort(data.endsAt || data.waktu_tutup)}`
+                : `Dibuka ${formatTimeShort(data.startsAt || data.waktu_buka)} (Batas Tepat Waktu: ${formatTimeShort(data.batas_terlambat || data.lateThreshold)})`}
             </span>
           </div>
           <span
@@ -285,12 +286,31 @@ export default function AttendanceSession() {
           <QRDisplay value={data.qrToken || data.kode_qr} size={280} />
 
           <div className="mt-5 text-center">
-            <p className="text-xs uppercase tracking-wide text-slate-400">
-              QR aktif selama jendela absensi
-            </p>
-            <p className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
-              {formatCountdown(secondsLeft)}
-            </p>
+            {endsAt ? (
+              <>
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  QR aktif selama jendela absensi
+                </p>
+                <p className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
+                  {formatCountdown(secondsLeft)}
+                </p>
+              </>
+            ) : (
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  QR Aktif (Tanpa Batas Waktu)
+                </div>
+                {data.batas_terlambat && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Batas Hadir Tepat Waktu:{" "}
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                      {formatTimeShort(data.batas_terlambat)}
+                    </span>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

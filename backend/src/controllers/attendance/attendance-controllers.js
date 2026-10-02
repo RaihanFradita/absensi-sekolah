@@ -1,6 +1,8 @@
 import {
   createNewSession,
   findActiveSessionByTeacherId,
+  findTodayActiveSessionByTeacherId,
+  endSessionById,
   scanQrAbsensi,
 } from "../../services/attendance/attendance-services.js";
 import { getIO } from "../../socket.js";
@@ -8,7 +10,7 @@ import { getIO } from "../../socket.js";
 export const createSession = async (req, res, next) => {
   try {
     const id_guru = req.user.id_guru;
-    const { id_kelas, durasi_menit, batas_terlambat_menit } = req.body;
+    const { id_kelas, batas_terlambat_menit } = req.body;
 
     if (!id_guru) {
       return res.status(400).json({
@@ -16,18 +18,27 @@ export const createSession = async (req, res, next) => {
         message: "id tidak ditemukan!",
       });
     }
-    if (!id_kelas || !durasi_menit || !batas_terlambat_menit) {
+    if (!id_kelas) {
       return res.status(400).json({
         success: false,
-        message: "Semua field wajib diisi!",
+        message: "Kelas wajib dipilih!",
+      });
+    }
+    if (
+      batas_terlambat_menit === undefined ||
+      batas_terlambat_menit === null ||
+      Number(batas_terlambat_menit) < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Batas terlambat (menit) wajib diisi dengan angka valid!",
       });
     }
 
     const result = await createNewSession({
       id_guru,
       id_kelas,
-      durasi_menit,
-      batas_terlambat_menit,
+      batas_terlambat_menit: Number(batas_terlambat_menit),
     });
 
     if (!result.success) {
@@ -46,6 +57,62 @@ export const createSession = async (req, res, next) => {
     return res.status(500).json({
       success: false,
       message: "Tejadi kesalahan server",
+      error: error.message,
+    });
+  }
+};
+
+export const getTodayActiveSession = async (req, res) => {
+  try {
+    const id_guru = req.user.id_guru;
+    if (!id_guru) {
+      return res.status(400).json({
+        success: false,
+        message: "id guru tidak ditemukan!",
+      });
+    }
+
+    const result = await findTodayActiveSessionByTeacherId({ id_guru });
+    if (!result.success) {
+      return res.status(200).json({
+        success: false,
+        message: result.message,
+        data: null,
+      });
+    }
+
+    res.json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
+      error: error.message,
+    });
+  }
+};
+
+export const endSession = async (req, res) => {
+  try {
+    const id_guru = req.user.id_guru;
+    const { id } = req.params;
+
+    if (!id_guru) {
+      return res.status(400).json({
+        success: false,
+        message: "id guru tidak ditemukan!",
+      });
+    }
+
+    const result = await endSessionById({ id_guru, id_sesi: id });
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
       error: error.message,
     });
   }

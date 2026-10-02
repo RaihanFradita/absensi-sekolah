@@ -27,6 +27,7 @@ const ENDPOINTS = {
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
   EXPORT_EXCEL: "/attendance/export.xlsx",
   CREATE_SESSION: "/attendance/sessions/add",
+  TODAY_SESSION: "/attendance/sessions/today",
   ACTIVE_SESSION: "/attendance/sessions/active",
   END_SESSION: (id) => `/attendance/sessions/${id}/end`,
   MONITOR: (id) => `/attendance/sessions/${id}/monitor`,
@@ -303,6 +304,14 @@ async function saveDutySchedule(payload) {
   return (await api.post(ENDPOINTS.DUTY_SCHEDULES, payload)).data;
 }
 
+async function getTodayActiveSession() {
+  if (isMockMode()) {
+    await mockDelay();
+    return { success: false, message: "Mock: tidak ada sesi aktif", data: null };
+  }
+  return (await api.get(ENDPOINTS.TODAY_SESSION)).data;
+}
+
 export default {
   getStudentDashboard,
   getStudentProfile,
@@ -315,6 +324,7 @@ export default {
   exportAttendanceExcel,
   downloadBlob,
   createAttendanceSession,
+  getTodayActiveSession,
   getActiveSession,
   endAttendanceSession,
   getAttendanceMonitor,

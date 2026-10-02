@@ -4,7 +4,6 @@ import crypto from "crypto";
 export const createNewSession = async ({
   id_guru,
   id_kelas,
-  durasi_menit,
   batas_terlambat_menit,
 }) => {
   const connection = await pool.getConnection();
@@ -36,21 +35,12 @@ export const createNewSession = async ({
     const randomBytes = crypto.randomBytes(32).toString("hex");
     const kode_qr = `QR-${Date.now()}-${randomBytes.substring(0, 30)}`;
 
-    // waktu buka, batas_terlambat dan tutup
+    // waktu buka dan batas_terlambat (tanpa batas waktu tutup)
     const waktu_buka = new Date();
     const batas_terlambat = new Date(
-      waktu_buka.getTime() + batas_terlambat_menit * 60000,
+      waktu_buka.getTime() + Number(batas_terlambat_menit) * 60000,
     );
-    const waktu_tutup = new Date(waktu_buka.getTime() + durasi_menit * 60000);
-
-    // validasi batas terlambat tidak boleh melebihi waktu tutup
-    if (batas_terlambat > waktu_tutup) {
-      const error = new Error(
-        "Batas terlambat tidak boleh lebih besar dari durasi qr",
-      );
-      error.statusCode = 400;
-      throw error;
-    }
+    const waktu_tutup = null;
 
     // insert ke database sesi_absensi
     const insertQuery = `
@@ -80,7 +70,7 @@ export const createNewSession = async ({
         kode_qr,
         waktu_buka,
         batas_terlambat,
-        waktu_tutup,
+        waktu_tutup: null,
         status: "aktif",
       },
     };
@@ -114,6 +104,55 @@ export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
   };
 };
 
+export const findTodayActiveSessionByTeacherId = async ({ id_guru }) => {
+  const today = new Date().toISOString().split("T")[0];
+  const [result] = await pool.query(
+    `
+      SELECT * FROM sesi_absensi 
+      WHERE id_guru = ? AND tanggal = ? AND status = 'aktif'
+      ORDER BY id_sesi DESC
+      LIMIT 1
+    `,
+    [id_guru, today],
+  );
+
+  if (result.length === 0) {
+    return {
+      success: false,
+      message: "Tidak ada sesi aktif hari ini",
+    };
+  }
+
+  return {
+    success: true,
+    message: "Sesi aktif ditemukan",
+    data: result[0],
+  };
+};
+
+export const endSessionById = async ({ id_guru, id_sesi }) => {
+  const [result] = await pool.query(
+    `
+      UPDATE sesi_absensi 
+      SET status = 'tutup', waktu_tutup = NOW() 
+      WHERE (id_sesi = ? OR kode_qr = ?) AND id_guru = ? AND status = 'aktif'
+    `,
+    [id_sesi, id_sesi, id_guru],
+  );
+
+  if (result.affectedRows === 0) {
+    return {
+      success: false,
+      message: "Sesi tidak ditemukan atau sudah ditutup",
+    };
+  }
+
+  return {
+    success: true,
+    message: "Sesi absensi berhasil ditutup",
+  };
+};
+
 export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
   const connection = await pool.getConnection();
 
@@ -136,18 +175,8 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
     const sesi = session[0];
     const now = new Date();
 
-    if (sesi.status !== "aktif" || now > new Date(sesi.waktu_tutup)) {
-      if (sesi.status === "aktif") {
-        await connection.query(
-          `
-          UPDATE sesi_absensi SET status = 'tutup' WHERE id_sesi = ?
-          `,
-          [sesi.id_sesi],
-        );
-
-        await connection.commit();
-      }
-      const error = new Error("Sesi absensi sudah berakhir!");
+    if (sesi.status !== "aktif") {
+      const error = new Error("Sesi absensi sudah ditutup oleh guru!");
       error.statusCode = 400;
       throw error;
     }
