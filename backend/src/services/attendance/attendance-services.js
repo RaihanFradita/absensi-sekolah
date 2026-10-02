@@ -285,3 +285,31 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
     connection.release();
   }
 };
+
+export const getDailyByClass = async ({ kelasId, tanggal }) => {
+  const getTodayWIB = () =>
+    new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+
+  const date = tanggal || getTodayWIB();
+
+  const [rows] = await pool.query(
+    `SELECT
+        k.id_kehadiran,
+        s.nama_siswa,
+        s.nis,
+        kl.nama_kelas,
+        k.waktu_scan,
+        k.status
+     FROM kehadiran_siswa k
+     JOIN sesi_absensi sa ON sa.id_sesi = k.id_sesi
+     JOIN siswa s         ON s.id_siswa = k.id_siswa
+     JOIN kelas kl        ON kl.id_kelas = sa.id_kelas
+     WHERE sa.id_kelas = ?
+       AND sa.waktu_buka >= ?
+       AND sa.waktu_buka <  DATE_ADD(?, INTERVAL 1 DAY)
+     ORDER BY k.waktu_scan DESC`,
+    [kelasId, date, date],
+  );
+
+  return rows;
+};

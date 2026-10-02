@@ -12,5 +12,4 @@ export const teacher = express.Router();
 teacher.use(verifyToken);
 
 teacher.get("/class", getAllClass);
-
 teacher.get("/dashboard", getTeacherDashboard);

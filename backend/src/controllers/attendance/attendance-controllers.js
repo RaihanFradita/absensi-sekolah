@@ -4,6 +4,7 @@ import {
   findTodayActiveSessionByTeacherId,
   endSessionById,
   scanQrAbsensi,
+  getDailyByClass,
 } from "../../services/attendance/attendance-services.js";
 import { getIO } from "../../socket.js";
 
@@ -200,5 +201,36 @@ export const scanAbsensi = async (req, res) => {
       message: "Tejadi kesalahan server",
       error: error.message,
     });
+  }
+};
+
+const isValidDate = (str) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  const d = new Date(`${str}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === str;
+};
+
+export const getDaily = async (req, res) => {
+  try {
+    const { kelas_id: kelasIdRaw, tanggal } = req.query;
+
+    const kelasId = Number(kelasIdRaw);
+    if (!kelasIdRaw || !Number.isInteger(kelasId) || kelasId <= 0) {
+      return res
+        .status(400)
+        .json({ message: "kelas_id wajib berupa angka yang valid" });
+    }
+
+    if (tanggal && !isValidDate(tanggal)) {
+      return res
+        .status(400)
+        .json({ message: "Format tanggal harus YYYY-MM-DD" });
+    }
+
+    const data = await getDailyByClass({ kelasId, tanggal });
+    return res.json({ data });
+  } catch (err) {
+    console.error("getDaily error:", err);
+    return res.status(500).json({ message: "Gagal mengambil data kehadiran" });
   }
 };
