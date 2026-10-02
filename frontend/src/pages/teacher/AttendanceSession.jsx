@@ -17,7 +17,6 @@ import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import QRDisplay from "../../components/attendance/QRDisplay";
 import AttendanceStats from "../../components/attendance/AttendanceStats";
 import useAttendance from "../../hooks/useAttendance";
-import useWebSocket from "../../hooks/useWebSocket";
 import attendanceService from "../../services/attendanceService";
 import {
   formatCountdown,
@@ -25,6 +24,7 @@ import {
   getSecondsUntil,
 } from "../../utils/formatTime";
 import useSocket from "../../hooks/useSocket";
+import toast from "react-hot-toast";
 
 // Satu sesi = QR kehadiran harian sekolah. Tidak terkait mata pelajaran.
 export default function AttendanceSession() {
@@ -70,15 +70,21 @@ export default function AttendanceSession() {
     sessionId: sessionIdValue,
     enabled: Boolean(sessionIdValue),
     onEvent: (payload) => {
+      const isLate = payload.status === "terlambat";
+      if (payload.nama_siswa) {
+        toast.success(
+          `${payload.nama_siswa} (${payload.nama_kelas || ""}) telah absen [${isLate ? "Terlambat" : "Hadir"}]`,
+          { id: `att-${payload.id_siswa}-${Date.now()}` }
+        );
+      }
       setData((prev) => {
         if (!prev) return prev;
-        const isLate = payload.status === "terlambat";
         return {
           ...prev,
           presentCount: isLate
-            ? prev.presentCount
+            ? prev.presentCount ?? 0
             : (prev.presentCount ?? 0) + 1,
-          lateCount: isLate ? (prev.lateCount ?? 0) + 1 : prev.lateCount,
+          lateCount: isLate ? (prev.lateCount ?? 0) + 1 : prev.lateCount ?? 0,
           notYetCount: Math.max(0, (prev.notYetCount ?? 0) - 1),
         };
       });
@@ -141,8 +147,6 @@ export default function AttendanceSession() {
       </PageContainer>
     );
   }
-
-  console.log(data);
 
   return (
     <PageContainer

@@ -8,10 +8,16 @@ import EmptyState from '../../components/ui/EmptyState';
 import AttendanceStats from '../../components/attendance/AttendanceStats';
 import LiveAttendanceFeed from '../../components/attendance/LiveAttendanceFeed';
 import useAttendance from '../../hooks/useAttendance';
-import useWebSocket from '../../hooks/useWebSocket';
+import useSocket from '../../hooks/useSocket';
 import attendanceService from '../../services/attendanceService';
 
-const WS_STATUS_LABEL = { idle: 'Belum terhubung', connecting: 'Menghubungkan...', connected: 'Terhubung', reconnecting: 'Koneksi terputus. Mencoba kembali.', disconnected: 'Terputus', failed: 'Gagal terhubung', error: 'Terjadi kesalahan koneksi' };
+const WS_STATUS_LABEL = {
+  idle: 'Belum terhubung',
+  connecting: 'Menghubungkan...',
+  connected: 'Terhubung',
+  disconnected: 'Terputus',
+  error: 'Terjadi kesalahan koneksi',
+};
 
 export default function AttendanceMonitor() {
   const fetchActiveSession = useCallback(() => attendanceService.getActiveSession(), []);
@@ -21,29 +27,43 @@ export default function AttendanceMonitor() {
   const [monitorError, setMonitorError] = useState('');
   const [isMonitorLoading, setIsMonitorLoading] = useState(false);
 
+  const sessionId = session?.id || session?.id_sesi;
+
   useEffect(() => {
-    if (!session?.id) return undefined;
+    if (!sessionId) return undefined;
     let cancelled = false;
     async function loadMonitor() {
       setIsMonitorLoading(true); setMonitorError('');
       try {
-        const result = await attendanceService.getAttendanceMonitor(session.id);
+        const result = await attendanceService.getAttendanceMonitor(sessionId);
         if (!cancelled) { setEvents(result.events || []); setCounts({ present: result.presentCount || 0, late: result.lateCount || 0 }); }
       } catch (err) { if (!cancelled) setMonitorError(err?.message || 'Gagal memuat data monitor.'); }
       finally { if (!cancelled) setIsMonitorLoading(false); }
     }
     loadMonitor();
     return () => { cancelled = true; };
-  }, [session?.id]);
+  }, [sessionId]);
 
-  const wsPath = session?.id ? `/sessions/${session.id}/monitor` : null;
-  const { status: wsStatus, reconnect } = useWebSocket(wsPath, {
-    enabled: Boolean(session?.id),
-    onMessage: (payload) => {
-      if (payload?.event !== 'attendance_created') return;
-      const newEvent = { id: `${payload.student?.name}-${payload.time}-${Math.random()}`, student: payload.student, time: payload.time, status: payload.status };
+  const { status: wsStatus } = useSocket({
+    sessionId: sessionId,
+    enabled: Boolean(sessionId),
+    onEvent: (payload) => {
+      const isLate = payload.status === 'terlambat' || payload.status === 'late';
+      const newEvent = {
+        id: `${payload.nama_siswa || payload.student?.name}-${payload.waktu_scan || payload.time}-${Math.random()}`,
+        student: {
+          name: payload.nama_siswa || payload.student?.name || 'Siswa',
+          className: payload.nama_kelas || payload.student?.className || '',
+          nis: payload.nis || payload.student?.nis || '',
+        },
+        time: payload.waktu_scan || payload.time || new Date().toISOString(),
+        status: isLate ? 'late' : 'present',
+      };
       setEvents((prev) => [newEvent, ...prev]);
-      setCounts((prev) => ({ present: payload.status === 'present' ? prev.present + 1 : prev.present, late: payload.status === 'late' ? prev.late + 1 : prev.late }));
+      setCounts((prev) => ({
+        present: !isLate ? prev.present + 1 : prev.present,
+        late: isLate ? prev.late + 1 : prev.late,
+      }));
     },
   });
   const isConnected = wsStatus === 'connected';

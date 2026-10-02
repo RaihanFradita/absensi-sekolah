@@ -1,36 +1,64 @@
-import { useEffect } from "react";
-import { useRef } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { AUTH_TOKEN_KEY } from "../utils/constants";
 
 export default function useSocket({ sessionId, enabled = true, onEvent }) {
   const [status, setStatus] = useState("connecting");
   const onEventRef = useRef(onEvent);
 
-  //   simpan handler terbaru tanpa memicu koneksi ulang
+  // Simpan handler terbaru tanpa memicu koneksi ulang
   useEffect(() => {
     onEventRef.current = onEvent;
   }, [onEvent]);
 
   useEffect(() => {
-    if (!enabled || !sessionId) return undefined;
+    if (!enabled || !sessionId) {
+      setStatus("disconnected");
+      return undefined;
+    }
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL, {
-      auth: { token: localStorage.getItem("accessToken") },
-      transports: ["websocket"],
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL || "http://localhost:3000";
+    const token =
+      localStorage.getItem(AUTH_TOKEN_KEY) ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("token");
+
+    const socket = io(socketUrl, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: 10,
+      reconnectionDelay: 2000,
     });
 
     const joinRoom = () => {
       socket.emit("session:join", sessionId, (res) => {
-        setStatus(res?.ok ? "connected" : "error");
+        if (res?.ok) {
+          setStatus("connected");
+        } else {
+          console.warn("[socket] Gagal join sesi:", res?.message);
+          setStatus("error");
+        }
       });
     };
 
-    // 'connect' juga terpicu saat reconnect, jadi join ulang otomatis
-    socket.on("connect", joinRoom);
-    socket.on("disconnect", () => setStatus("connecting"));
-    socket.on("connect_error", () => setStatus("error"));
-    socket.on("attendance_created", (payload) => onEventRef.current?.(payload));
+    socket.on("connect", () => {
+      joinRoom();
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("[socket] disconnected:", reason);
+      setStatus("connecting");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("[socket] connect_error:", err.message);
+      setStatus("error");
+    });
+
+    socket.on("attendance_created", (payload) => {
+      onEventRef.current?.(payload);
+    });
 
     return () => {
       socket.emit("session:leave", sessionId);

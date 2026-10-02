@@ -33,7 +33,7 @@ export const initSocket = (httpServer) => {
         return ack?.({ ok: false, message: "Forbidden" });
       }
 
-      socket.join(`session;${sessionId}`);
+      socket.join(`session:${sessionId}`);
       ack?.({ ok: true });
     });
 
@@ -48,6 +48,6 @@ export const initSocket = (httpServer) => {
 export const getIO = () => {
   if (!io) {
     throw new Error("Socket.io belum diinisialisasi");
-    return io;
   }
+  return io;
 };
