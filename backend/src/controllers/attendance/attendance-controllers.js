@@ -169,14 +169,18 @@ export const scanAbsensi = async (req, res) => {
     // supaya kegagalan socket tidak membuat scan siswa terlihat gagal.
     try {
       const { id_sesi, status, waktu_scan, siswa } = result.data;
-      getIO().to(`session:${id_sesi}`).emit("attendance_created", {
+      const payload = {
         event: "attendance_created",
         id_siswa: siswa.id_siswa,
         nama_siswa: siswa.nama_siswa,
         nama_kelas: siswa.kelas,
         status,
         waktu_scan,
-      });
+      };
+      getIO()
+        .to(`session:${id_sesi}`)
+        .to(`session:${kode_qr}`)
+        .emit("attendance_created", payload);
     } catch (socketError) {
       console.error("Gagal emit attendance_created:", socketError);
     }

@@ -93,9 +93,9 @@ export default function AttendanceSession() {
   const [scannedStudents, setScannedStudents] = useState([]);
 
   const endsAt = data?.endsAt || data?.waktu_tutup;
-  const sessionIdValue = data?.id || data?.id_sesi;
+  const sessionIdValue = data?.id || data?.id_sesi || sessionId;
 
-  // Inisialisasi daftar siswa yang sudah scan jika data sesi menyediakannya
+  // Inisialisasi daftar siswa yang sudah scan saat data sesi pertama kali dimuat
   useEffect(() => {
     if (data?.attendees && Array.isArray(data.attendees)) {
       setScannedStudents(data.attendees);
@@ -110,7 +110,7 @@ export default function AttendanceSession() {
         })),
       );
     }
-  }, [data]);
+  }, [data?.id, data?.id_sesi]);
 
   // Countdown masa aktif QR, dihitung ulang tiap detik dari waktu berakhir backend.
   useEffect(() => {
@@ -139,25 +139,25 @@ export default function AttendanceSession() {
         );
       }
 
+      const newItem = {
+        id_siswa: payload.id_siswa,
+        nama_siswa: payload.nama_siswa,
+        nama_kelas: payload.nama_kelas,
+        status: payload.status,
+        waktu_scan: payload.waktu_scan || new Date().toISOString(),
+      };
+
       // Menambahkan siswa yang berhasil scan ke dalam tabel
       setScannedStudents((prev) => {
-        const newItem = {
-          id_siswa: payload.id_siswa,
-          nama_siswa: payload.nama_siswa,
-          nama_kelas: payload.nama_kelas,
-          status: payload.status,
-          waktu_scan: payload.waktu_scan || new Date().toISOString(),
-        };
-
         const exists = prev.some(
           (s) =>
-            (payload.id_siswa && s.id_siswa === payload.id_siswa) ||
+            (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
             (!payload.id_siswa && s.nama_siswa === payload.nama_siswa),
         );
 
         if (exists) {
           return prev.map((s) =>
-            (payload.id_siswa && s.id_siswa === payload.id_siswa) ||
+            (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
             (!payload.id_siswa && s.nama_siswa === payload.nama_siswa)
               ? newItem
               : s,
@@ -169,8 +169,24 @@ export default function AttendanceSession() {
 
       setData((prev) => {
         if (!prev) return prev;
+        const prevAttendees = prev.attendees || [];
+        const exists = prevAttendees.some(
+          (s) =>
+            (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
+            (!payload.id_siswa && s.nama_siswa === payload.nama_siswa),
+        );
+        const nextAttendees = exists
+          ? prevAttendees.map((s) =>
+              (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
+              (!payload.id_siswa && s.nama_siswa === payload.nama_siswa)
+                ? newItem
+                : s,
+            )
+          : [newItem, ...prevAttendees];
+
         return {
           ...prev,
+          attendees: nextAttendees,
           presentCount: isLate
             ? (prev.presentCount ?? 0)
             : (prev.presentCount ?? 0) + 1,

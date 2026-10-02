@@ -15,13 +15,17 @@ export const initSocket = (httpServer) => {
   //   autentikasi: client mengirim access token saat handshake
   io.use((socket, next) => {
     try {
-      const token = socket.handshake.auth?.token;
+      let token = socket.handshake.auth?.token;
       if (!token) return next(new Error("Unauthorized"));
+      if (typeof token === "string" && token.startsWith("Bearer ")) {
+        token = token.slice(7);
+      }
 
       const payload = jwt.verify(token, process.env.SECRET_KEY);
       socket.user = payload;
       next();
     } catch (error) {
+      console.error("[socket auth error]:", error.message);
       next(new Error("Unauthorized"));
     }
   });
@@ -33,7 +37,9 @@ export const initSocket = (httpServer) => {
         return ack?.({ ok: false, message: "Forbidden" });
       }
 
-      socket.join(`session:${sessionId}`);
+      if (sessionId) {
+        socket.join(`session:${sessionId}`);
+      }
       ack?.({ ok: true });
     });
 

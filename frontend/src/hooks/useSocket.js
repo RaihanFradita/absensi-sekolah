@@ -32,6 +32,7 @@ export default function useSocket({ sessionId, enabled = true, onEvent }) {
     });
 
     const joinRoom = () => {
+      if (!sessionId) return;
       socket.emit("session:join", sessionId, (res) => {
         if (res?.ok) {
           setStatus("connected");
@@ -41,6 +42,10 @@ export default function useSocket({ sessionId, enabled = true, onEvent }) {
         }
       });
     };
+
+    if (socket.connected) {
+      joinRoom();
+    }
 
     socket.on("connect", () => {
       joinRoom();
@@ -57,6 +62,7 @@ export default function useSocket({ sessionId, enabled = true, onEvent }) {
     });
 
     socket.on("attendance_created", (payload) => {
+      console.log("[socket] Received attendance_created:", payload);
       onEventRef.current?.(payload);
     });
 
