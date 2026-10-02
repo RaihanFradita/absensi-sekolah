@@ -74,7 +74,7 @@ export default function AttendanceSession() {
       if (payload.nama_siswa) {
         toast.success(
           `${payload.nama_siswa} (${payload.nama_kelas || ""}) telah absen [${isLate ? "Terlambat" : "Hadir"}]`,
-          { id: `att-${payload.id_siswa}-${Date.now()}` }
+          { id: `att-${payload.id_siswa}-${Date.now()}` },
         );
       }
       setData((prev) => {
@@ -82,9 +82,9 @@ export default function AttendanceSession() {
         return {
           ...prev,
           presentCount: isLate
-            ? prev.presentCount ?? 0
+            ? (prev.presentCount ?? 0)
             : (prev.presentCount ?? 0) + 1,
-          lateCount: isLate ? (prev.lateCount ?? 0) + 1 : prev.lateCount ?? 0,
+          lateCount: isLate ? (prev.lateCount ?? 0) + 1 : (prev.lateCount ?? 0),
           notYetCount: Math.max(0, (prev.notYetCount ?? 0) - 1),
         };
       });
@@ -147,6 +147,8 @@ export default function AttendanceSession() {
       </PageContainer>
     );
   }
+
+  console.log(data);
 
   return (
     <PageContainer
