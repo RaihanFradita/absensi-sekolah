@@ -144,6 +144,8 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
           `,
           [sesi.id_sesi],
         );
+
+        await connection.commit();
       }
       const error = new Error("Sesi absensi sudah berakhir!");
       error.statusCode = 400;
@@ -205,6 +207,7 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
       success: true,
       message: `Absensi berhasil, status: ${status}`,
       data: {
+        id_sesi: sesi.id_sesi,
         status,
         waktu_scan: now,
         siswa: {

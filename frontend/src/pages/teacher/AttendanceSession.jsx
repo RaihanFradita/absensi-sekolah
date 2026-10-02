@@ -24,6 +24,7 @@ import {
   formatTimeShort,
   getSecondsUntil,
 } from "../../utils/formatTime";
+import useSocket from "../../hooks/useSocket";
 
 // Satu sesi = QR kehadiran harian sekolah. Tidak terkait mata pelajaran.
 export default function AttendanceSession() {
@@ -64,15 +65,14 @@ export default function AttendanceSession() {
     return () => clearInterval(interval);
   }, [endsAt]);
 
-  // Update jumlah hadir/terlambat/belum secara real-time lewat WebSocket.
-  const wsPath = sessionIdValue ? `/sessions/${sessionIdValue}/monitor` : null;
-  const { status: wsStatus } = useWebSocket(wsPath, {
+  // Update jumlah hadir/terlambat/belum secara real-time lewat socket.io
+  const { status: wsStatus } = useSocket({
+    sessionId: sessionIdValue,
     enabled: Boolean(sessionIdValue),
-    onMessage: (payload) => {
-      if (payload?.event !== "attendance_created") return;
+    onEvent: (payload) => {
       setData((prev) => {
         if (!prev) return prev;
-        const isLate = payload.status === "late";
+        const isLate = payload.status === "terlambat";
         return {
           ...prev,
           presentCount: isLate

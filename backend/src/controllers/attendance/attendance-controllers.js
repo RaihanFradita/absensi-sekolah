@@ -3,6 +3,7 @@ import {
   findActiveSessionByTeacherId,
   scanQrAbsensi,
 } from "../../services/attendance/attendance-services.js";
+import { getIO } from "../../socket.js";
 
 export const createSession = async (req, res, next) => {
   try {
@@ -97,8 +98,25 @@ export const scanAbsensi = async (req, res) => {
 
     const result = await scanQrAbsensi({ id_siswa, kode_qr });
 
+    // Notifikasi real-time ke halaman guru. Dibungkus try/catch sendiri
+    // supaya kegagalan socket tidak membuat scan siswa terlihat gagal.
+    try {
+      const { id_sesi, status, waktu_scan, siswa } = result.data;
+      getIO().to(`session:${id_sesi}`).emit("attendance_created", {
+        event: "attendance_created",
+        id_siswa: siswa.id_siswa,
+        nama_siswa: siswa.nama_siswa,
+        nama_kelas: siswa.kelas,
+        status,
+        waktu_scan,
+      });
+    } catch (error) {
+      console.error("Gagal emit attendance_created:", socketError);
+    }
+
     res.status(200).json(result);
   } catch (error) {
+    console.log(error);
     if (error.statusCode) {
       return res.status(error.statusCode).json({
         success: false,
