@@ -97,10 +97,35 @@ export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
     };
   }
 
+  const sesi = result[0];
+
+  // Ambil daftar siswa yang sudah scan pada sesi ini agar tabel
+  // tetap terisi saat guru pindah halaman lalu kembali.
+  const [attendees] = await pool.query(
+    `
+      SELECT
+        a.id_absensi,
+        a.id_siswa,
+        a.status,
+        a.waktu_scan,
+        s.nama_siswa,
+        CONCAT(k.tingkat, ' ', k.nama_kelas) AS nama_kelas
+      FROM absensi a
+      JOIN siswa s ON s.id_siswa = a.id_siswa
+      JOIN kelas k ON k.id_kelas = s.id_kelas
+      WHERE a.id_sesi = ?
+      ORDER BY a.waktu_scan ASC
+    `,
+    [sesi.id_sesi],
+  );
+
   return {
     success: true,
     message: "data berhasil diambil",
-    data: result[0],
+    data: {
+      ...sesi,
+      attendees,
+    },
   };
 };
 

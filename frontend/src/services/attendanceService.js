@@ -245,6 +245,16 @@ async function getActiveSession(kode_qr) {
 
     if (!hasSessionShape(session)) return getMockActiveSession();
 
+    const attendees = Array.isArray(session.attendees) ? session.attendees : [];
+
+    // Hitung stats dari attendees jika backend tidak menyertakannya
+    const presentCount =
+      session.presentCount ??
+      attendees.filter((a) => a.status === "hadir").length;
+    const lateCount =
+      session.lateCount ??
+      attendees.filter((a) => a.status === "terlambat").length;
+
     return {
       ...session,
       id: session.id ?? session.id_sesi,
@@ -253,8 +263,9 @@ async function getActiveSession(kode_qr) {
       endsAt: session.endsAt ?? session.waktu_tutup,
       attendanceDate: session.attendanceDate ?? session.tanggal,
       teacherName: session.teacherName ?? session.nama_guru ?? "Guru",
-      presentCount: session.presentCount ?? 0,
-      lateCount: session.lateCount ?? 0,
+      attendees,
+      presentCount,
+      lateCount,
       notYetCount: session.notYetCount ?? 0,
     };
   } catch (error) {
