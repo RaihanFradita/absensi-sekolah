@@ -214,6 +214,8 @@ export const getDaily = async (req, res) => {
   try {
     const { kelas_id: kelasIdRaw, tanggal } = req.query;
 
+    console.log(req.query);
+
     const kelasId = Number(kelasIdRaw);
     if (!kelasIdRaw || !Number.isInteger(kelasId) || kelasId <= 0) {
       return res

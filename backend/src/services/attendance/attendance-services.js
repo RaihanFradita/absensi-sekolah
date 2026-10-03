@@ -288,28 +288,44 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
 
 export const getDailyByClass = async ({ kelasId, tanggal }) => {
   const getTodayWIB = () =>
-    new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
+    new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Jakarta",
+    });
 
   const date = tanggal || getTodayWIB();
 
   const [rows] = await pool.query(
-    `SELECT
-        k.id_kehadiran,
-        s.nama_siswa,
-        s.nis,
-        kl.nama_kelas,
-        k.waktu_scan,
-        k.status
-     FROM kehadiran_siswa k
-     JOIN sesi_absensi sa ON sa.id_sesi = k.id_sesi
-     JOIN siswa s         ON s.id_siswa = k.id_siswa
-     JOIN kelas kl        ON kl.id_kelas = sa.id_kelas
-     WHERE sa.id_kelas = ?
-       AND sa.waktu_buka >= ?
-       AND sa.waktu_buka <  DATE_ADD(?, INTERVAL 1 DAY)
-     ORDER BY k.waktu_scan DESC`,
-    [kelasId, date, date],
+    `
+    SELECT
+      s.id_siswa,
+      s.nama_siswa,
+      s.nis,
+      kl.nama_kelas,
+      a.id_absensi,
+      a.waktu_scan,
+      COALESCE(a.status, 'belum absen') AS status,
+      a.keterangan
+    FROM siswa s
+
+    JOIN kelas kl
+      ON kl.id_kelas = s.id_kelas
+
+    LEFT JOIN sesi_absensi sa
+      ON sa.id_kelas = s.id_kelas
+      AND sa.tanggal = ?
+
+    LEFT JOIN absensi a
+      ON a.id_siswa = s.id_siswa
+      AND a.id_sesi = sa.id_sesi
+
+    WHERE s.id_kelas = ?
+
+    ORDER BY s.nama_siswa ASC;
+    `,
+    [date, kelasId],
   );
+
+  console.log(rows);
 
   return rows;
 };

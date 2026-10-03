@@ -23,7 +23,7 @@ const ENDPOINTS = {
   ATTENDANCE_HISTORY: "/students/attendance-history",
   TEACHER_DASHBOARD: "/teacher/dashboard",
   DUTY_DASHBOARD: "/duty/dashboard",
-  ATTENDANCE_DAILY: "/attendance/daily",
+  ATTENDANCE_DAILY: "/attendance/sessions/daily",
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
   EXPORT_EXCEL: "/attendance/export.xlsx",
   CREATE_SESSION: "/attendance/sessions/add",
@@ -123,8 +123,12 @@ async function getDailyAttendance(params = {}) {
   }
   return (await api.get(ENDPOINTS.ATTENDANCE_DAILY, { params })).data;
 }
-async function getDailyByClass(classId, params = {}) {
-  return getDailyAttendance({ classId, id_kelas: classId, ...params });
+async function getDailyByClass(kelasId, tanggal) {
+  return (
+    await api.get("/attendance/sessions/daily", {
+      params: { kelas_id: kelasId, tanggal },
+    })
+  ).data;
 }
 async function updateAttendanceStatus(id, payload) {
   if (isMockMode()) {
@@ -321,7 +325,11 @@ async function saveDutySchedule(payload) {
 async function getTodayActiveSession() {
   if (isMockMode()) {
     await mockDelay();
-    return { success: false, message: "Mock: tidak ada sesi aktif", data: null };
+    return {
+      success: false,
+      message: "Mock: tidak ada sesi aktif",
+      data: null,
+    };
   }
   return (await api.get(ENDPOINTS.TODAY_SESSION)).data;
 }
