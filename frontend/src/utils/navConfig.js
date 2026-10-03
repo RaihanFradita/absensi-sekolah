@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   UserCog,
   CalendarDays,
+  UserCheck,
 } from 'lucide-react';
 
 import { ROLES } from './constants';
@@ -100,6 +101,11 @@ export const NAV_ITEMS = {
       icon: GraduationCap,
     },
     {
+      to: '/admin/duty-schedules',
+      label: 'Guru Piket',
+      icon: UserCheck,
+    },
+    {
       to: '/admin/classes',
       label: 'Kelas',
       icon: School,
@@ -108,11 +114,6 @@ export const NAV_ITEMS = {
       to: '/admin/user-roles',
       label: 'Kelola Akun',
       icon: UserCog,
-    },
-    {
-      to: '/admin/duty-schedules',
-      label: 'Jadwal Piket',
-      icon: CalendarDays,
     },
     {
       to: '/admin/reports',

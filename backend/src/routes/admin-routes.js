@@ -21,6 +21,13 @@ import {
   getClassById,
   softDeleteClass,
 } from "../controllers/admin/admin-class-controller.js";
+import {
+  createPicketTeacher,
+  deletePicketTeacher,
+  editPicketTeacher,
+  getAllPicketTeachers,
+  getPicketTeacherById,
+} from "../controllers/admin/admin-picket-teacher-controller.js";
 
 export const admin = express.Router();
 
@@ -30,6 +37,13 @@ admin.get("/teacher/:id_guru", getTeacherById);
 admin.post("/teacher/add", createTeacher);
 admin.put("/teacher/edit/:id_guru", editTeacher);
 admin.patch("/teacher/:id_guru/deactivate", deleteTeacher);
+
+// guru piket
+admin.post("/picket-teacher/add", createPicketTeacher);
+admin.get("/picket-teacher", getAllPicketTeachers);
+admin.get("/picket-teacher/:id_user", getPicketTeacherById);
+admin.patch("/picket-teacher/edit/:id_user", editPicketTeacher);
+admin.patch("/picket-teacher/:id_user/deactivate", deletePicketTeacher);
 
 // route siswa
 admin.post("/students/add", createStudent);
