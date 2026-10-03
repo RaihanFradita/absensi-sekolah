@@ -23,10 +23,12 @@ const ENDPOINTS = {
   ATTENDANCE_HISTORY: "/students/attendance-history",
   TEACHER_DASHBOARD: "/teacher/dashboard",
   DUTY_DASHBOARD: "/duty/dashboard",
-  ATTENDANCE_DAILY: "/attendance/daily",
+  ATTENDANCE_DAILY: "/attendance/sessions/daily",
+  ATTENDANCE_MANUAL: "/attendance/manual",
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
   EXPORT_EXCEL: "/attendance/export.xlsx",
   CREATE_SESSION: "/attendance/sessions/add",
+  TODAY_SESSION: "/attendance/sessions/today",
   ACTIVE_SESSION: "/attendance/sessions/active",
   END_SESSION: (id) => `/attendance/sessions/${id}/end`,
   MONITOR: (id) => `/attendance/sessions/${id}/monitor`,
@@ -121,6 +123,23 @@ async function getDailyAttendance(params = {}) {
     return { rows: getMockAttendanceRows(params) };
   }
   return (await api.get(ENDPOINTS.ATTENDANCE_DAILY, { params })).data;
+}
+async function getDailyByClass(kelasId, tanggal) {
+  return (
+    await api.get("/attendance/sessions/daily", {
+      params: { kelas_id: kelasId, tanggal },
+    })
+  ).data;
+}
+async function manualAttendance(payload) {
+  if (isMockMode()) {
+    await mockDelay(300);
+    return {
+      success: true,
+      message: "Absensi berhasil diperbarui (mode mock)",
+    };
+  }
+  return (await api.post(ENDPOINTS.ATTENDANCE_MANUAL, payload)).data;
 }
 async function updateAttendanceStatus(id, payload) {
   if (isMockMode()) {
@@ -241,7 +260,18 @@ async function getActiveSession(kode_qr) {
   try {
     const response = await api.get(`${ENDPOINTS.ACTIVE_SESSION}/${kode_qr}`);
     const session = extractSessionPayload(response?.data);
+
     if (!hasSessionShape(session)) return getMockActiveSession();
+
+    const attendees = Array.isArray(session.attendees) ? session.attendees : [];
+
+    // Hitung stats dari attendees jika backend tidak menyertakannya
+    const presentCount =
+      session.presentCount ??
+      attendees.filter((a) => a.status === "hadir").length;
+    const lateCount =
+      session.lateCount ??
+      attendees.filter((a) => a.status === "terlambat").length;
 
     return {
       ...session,
@@ -251,8 +281,9 @@ async function getActiveSession(kode_qr) {
       endsAt: session.endsAt ?? session.waktu_tutup,
       attendanceDate: session.attendanceDate ?? session.tanggal,
       teacherName: session.teacherName ?? session.nama_guru ?? "Guru",
-      presentCount: session.presentCount ?? 0,
-      lateCount: session.lateCount ?? 0,
+      attendees,
+      presentCount,
+      lateCount,
       notYetCount: session.notYetCount ?? 0,
     };
   } catch (error) {
@@ -302,6 +333,18 @@ async function saveDutySchedule(payload) {
   return (await api.post(ENDPOINTS.DUTY_SCHEDULES, payload)).data;
 }
 
+async function getTodayActiveSession() {
+  if (isMockMode()) {
+    await mockDelay();
+    return {
+      success: false,
+      message: "Mock: tidak ada sesi aktif",
+      data: null,
+    };
+  }
+  return (await api.get(ENDPOINTS.TODAY_SESSION)).data;
+}
+
 export default {
   getStudentDashboard,
   getStudentProfile,
@@ -310,10 +353,13 @@ export default {
   getTeacherDashboard,
   getDutyDashboard,
   getDailyAttendance,
+  getDailyByClass,
+  manualAttendance,
   updateAttendanceStatus,
   exportAttendanceExcel,
   downloadBlob,
   createAttendanceSession,
+  getTodayActiveSession,
   getActiveSession,
   endAttendanceSession,
   getAttendanceMonitor,

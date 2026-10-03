@@ -37,7 +37,8 @@ export const createClass = async (req, res) => {
 
 export const getAllClass = async (req, res) => {
   try {
-    const result = await findAllClass();
+    const { page, limit } = req.query;
+    const result = await findAllClass({ page, limit });
 
     res.json(result);
   } catch (error) {

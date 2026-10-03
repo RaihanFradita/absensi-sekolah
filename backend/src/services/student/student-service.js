@@ -9,13 +9,11 @@ export async function findStudentDashboardByUserId(idUser) {
       SELECT
         s.id_siswa,
         s.id_user,
-        s.nis,
         s.nama_siswa,
         s.id_kelas,
         s.status_aktif,
         k.nama_kelas,
-        k.tingkat,
-        k.tahun_ajaran
+        k.tingkat
       FROM siswa s
       INNER JOIN kelas k
         ON s.id_kelas = k.id_kelas
@@ -34,10 +32,6 @@ export async function findStudentDashboardByUserId(idUser) {
   // =========================
   // RINGKASAN ABSENSI
   // =========================
-  //
-  // Sesuaikan nama tabel/kolom
-  // dengan schema absensi kamu.
-  //
   const [attendanceRows] = await pool.query(
     `
       SELECT
@@ -53,7 +47,7 @@ export async function findStudentDashboardByUserId(idUser) {
   let absent = 0;
 
   for (const attendance of attendanceRows) {
-    const status = String(attendance.status).toLowerCase();
+    const status = String(attendance.status || "").toLowerCase();
 
     if (status === "hadir") {
       present++;
@@ -63,7 +57,8 @@ export async function findStudentDashboardByUserId(idUser) {
       status === "tidak_hadir" ||
       status === "tidak hadir" ||
       status === "alpha" ||
-      status === "alpa"
+      status === "alpa" ||
+      status === "tanpa keterangan"
     ) {
       absent++;
     }
@@ -72,16 +67,20 @@ export async function findStudentDashboardByUserId(idUser) {
   // =========================
   // ABSENSI HARI INI
   // =========================
-
   const [todayRows] = await pool.query(
     `
       SELECT
+        a.id_absensi,
         a.status,
-        a.waktu_absen
+        a.waktu_absen,
+        a.waktu_scan
       FROM absensi a
       WHERE a.id_siswa = ?
-        AND DATE(a.waktu_absen) = CURDATE()
-      ORDER BY a.waktu_absen DESC
+        AND DATE(
+          COALESCE(a.waktu_scan, a.waktu_absen)
+        ) = CURDATE()
+      ORDER BY
+        COALESCE(a.waktu_scan, a.waktu_absen) DESC
       LIMIT 1
     `,
     [student.id_siswa],
@@ -89,14 +88,34 @@ export async function findStudentDashboardByUserId(idUser) {
 
   const today = todayRows[0] || null;
 
+  // =========================
+  // RIWAYAT ABSENSI TERBARU
+  // =========================
+  const [recentAttendanceRows] = await pool.query(
+    `
+      SELECT
+        a.id_absensi,
+        a.status,
+        a.waktu_absen,
+        a.waktu_scan
+      FROM absensi a
+      WHERE a.id_siswa = ?
+      ORDER BY
+        COALESCE(a.waktu_scan, a.waktu_absen) DESC
+      LIMIT 5
+    `,
+    [student.id_siswa],
+  );
+
+  // =========================
+  // RESPONSE DASHBOARD
+  // =========================
   return {
     student: {
       id: student.id_siswa,
       name: student.nama_siswa,
-      nis: student.nis,
       className: student.nama_kelas,
       tingkat: student.tingkat,
-      tahunAjaran: student.tahun_ajaran,
     },
 
     summary: {
@@ -106,6 +125,8 @@ export async function findStudentDashboardByUserId(idUser) {
     },
 
     today,
+
+    recentAttendance: recentAttendanceRows,
   };
 }
 
@@ -115,12 +136,10 @@ export async function findStudentProfileByUserId(idUser) {
       SELECT
         s.id_siswa,
         s.id_user,
-        s.nis,
         s.nama_siswa,
         s.id_kelas,
         k.nama_kelas,
         k.tingkat,
-        k.tahun_ajaran,
         s.status_aktif,
         u.username
       FROM siswa s

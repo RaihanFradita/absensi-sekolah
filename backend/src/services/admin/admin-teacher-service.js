@@ -271,3 +271,67 @@ export const softDeleteTeacher = async (data) => {
     connection.release();
   }
 };
+
+// ambil data kelas untuk keperluan input
+export const findAllClass = async () => {
+  try {
+    const [kelas] = await pool.query(
+      "SELECT * FROM kelas WHERE status_aktif = ?",
+      [1],
+    );
+
+    return {
+      success: true,
+      message: "data berhasil diambil",
+      data: kelas,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: "Terjadi kesalahan server",
+    };
+  }
+};
+
+/**
+ * Ambil profil lengkap guru berdasarkan id_user dari token.
+ * Termasuk: data guru, akun user, dan kelas yang menjadi wali kelas (jika ada).
+ */
+export const findTeacherProfile = async (idUser) => {
+  const [[guru]] = await pool.query(
+    `
+    SELECT
+      g.id_guru,
+      g.nip,
+      g.nama_guru,
+      g.status_aktif,
+      u.username,
+      u.role
+    FROM guru g
+    INNER JOIN users u ON u.id_user = g.id_user
+    WHERE g.id_user = ?
+    LIMIT 1
+    `,
+    [idUser],
+  );
+
+  if (!guru) {
+    return {
+      success: false,
+      message: "Data guru tidak ditemukan",
+    };
+  }
+
+  return {
+    success: true,
+    message: "Profil guru berhasil diambil",
+    data: {
+      id_guru: guru.id_guru,
+      nama_guru: guru.nama_guru,
+      nip: guru.nip || null,
+      username: guru.username,
+      role: guru.role,
+      status_aktif: guru.status_aktif === 1,
+    },
+  };
+};

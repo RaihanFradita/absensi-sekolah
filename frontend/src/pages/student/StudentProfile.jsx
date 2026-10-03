@@ -1,11 +1,13 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
+  UserCircle,
+  BadgeCheck,
+  User,
   School,
+  ShieldCheck,
+  LogOut,
   RefreshCw,
-  Camera,
-  CheckCircle2,
-  Clock,
-  XCircle,
+  AlertCircle,
 } from "lucide-react";
 
 import PageContainer from "../../components/layout/PageContainer";
@@ -18,283 +20,248 @@ import useAttendance from "../../hooks/useAttendance";
 import useAuth from "../../hooks/useAuth";
 import attendanceService from "../../services/attendanceService";
 
-import { PROFILE_PHOTO_KEY_PREFIX } from "../../utils/constants";
+function InfoItem({ icon: Icon, label, value }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+        <Icon className="h-3.5 w-3.5" />
+        <span>{label}</span>
+      </div>
 
-const MAX_PHOTO_SIZE_BYTES = 2 * 1024 * 1024;
+      <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
+        {value || "-"}
+      </p>
+    </div>
+  );
+}
 
 export default function StudentProfile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const fetchProfile = useCallback(
     () => attendanceService.getStudentProfile(),
     []
   );
 
-  const { data, isLoading, error, refetch } =
-    useAttendance(fetchProfile);
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useAttendance(fetchProfile);
 
-  const photoKey = `${PROFILE_PHOTO_KEY_PREFIX}${user?.id || "guest"}`;
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const [photo, setPhoto] = useState(() =>
-    localStorage.getItem(photoKey)
-  );
+  const student = data?.student || data || null;
 
-  const [photoError, setPhotoError] = useState("");
+  const studentName =
+    student?.nama_siswa ||
+    student?.name ||
+    user?.name ||
+    "Siswa";
 
-  const fileInputRef = useRef(null);
+  const username =
+    student?.username ||
+    user?.username ||
+    "-";
 
-  /*
-   * Data dari backend:
-   *
-   * {
-   *   success: true,
-   *   student: {
-   *     id_siswa: 4,
-   *     id_user: 7,
-   *     nama_siswa: "Raihan Fradita",
-   *     id_kelas: 1,
-   *     nama_kelas: "7A",
-   *     tingkat: 7,
-   *     tahun_ajaran: "2026/2027",
-   *     status_aktif: 1,
-   *     username: "raihan"
-   *   }
-   * }
-   *
-   * NISN tidak ditampilkan di halaman profil siswa.
-   */
+  const className =
+    student?.nama_kelas ||
+    student?.className ||
+    "-";
 
-  const student = data?.student;
+  const isActive =
+    student?.status_aktif === undefined ||
+    student?.status_aktif === null
+      ? true
+      : Number(student.status_aktif) === 1;
 
-  /*
-   * Ringkasan kehadiran
-   *
-   * Contoh:
-   *
-   * summary: {
-   *   present: 10,
-   *   late: 2,
-   *   absent: 1
-   * }
-   */
-  const summary = data?.summary || {};
+  async function handleLogout() {
+    setIsLoggingOut(true);
 
-  function handlePhotoChange(event) {
-    const file = event.target.files?.[0];
-
-    event.target.value = "";
-
-    if (!file) {
-      return;
+    try {
+      await logout();
+    } finally {
+      setIsLoggingOut(false);
     }
-
-    if (!file.type.startsWith("image/")) {
-      setPhotoError("File harus berupa gambar.");
-      return;
-    }
-
-    if (file.size > MAX_PHOTO_SIZE_BYTES) {
-      setPhotoError("Ukuran foto maksimal 2MB.");
-      return;
-    }
-
-    setPhotoError("");
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const result = reader.result;
-
-      setPhoto(result);
-
-      try {
-        localStorage.setItem(photoKey, result);
-      } catch {
-        setPhotoError("Gagal menyimpan foto di perangkat.");
-      }
-    };
-
-    reader.onerror = () => {
-      setPhotoError("Gagal membaca foto.");
-    };
-
-    reader.readAsDataURL(file);
   }
 
   return (
     <PageContainer
       title="Profil Siswa"
-      description="Informasi akun dan ringkasan kehadiran harian"
+      description="Informasi akun dan data siswa pada sistem absensi sekolah."
     >
-      {/* Loading */}
-      {isLoading && <Loading label="Memuat profil..." />}
+      <div className="space-y-6">
 
-      {/* Error */}
-      {!isLoading && error && (
-        <EmptyState
-          title="Gagal memuat profil"
-          description={error}
-          action={
+        {/* =========================
+            HEADER PROFIL
+        ========================== */}
+        <Card>
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+            <div className="flex items-center gap-4">
+
+              {/* ICON PROFIL, TANPA FOTO */}
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
+                <UserCircle className="h-11 w-11" />
+              </div>
+
+              <div className="min-w-0">
+
+                {isLoading ? (
+                  <>
+                    <div className="h-6 w-48 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
+
+                    <div className="mt-2 h-4 w-56 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                        {studentName}
+                      </h2>
+
+                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                        <BadgeCheck className="h-3.5 w-3.5" />
+                        Siswa
+                      </span>
+
+                      {isActive ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Aktif
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                          Tidak Aktif
+                        </span>
+                      )}
+
+                    </div>
+
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                      @{username} · Sistem Absensi Sekolah
+                    </p>
+                  </>
+                )}
+
+              </div>
+            </div>
+
+            {/* LOGOUT */}
             <Button
+              variant="danger"
+              size="sm"
+              icon={LogOut}
+              onClick={handleLogout}
+              isLoading={isLoggingOut}
+              disabled={isLoggingOut}
+              className="self-start sm:self-auto"
+            >
+              Keluar
+            </Button>
+
+          </div>
+        </Card>
+
+        {/* =========================
+            ERROR
+        ========================== */}
+        {error && (
+          <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400 sm:flex-row sm:items-center">
+
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+
+              <span>
+                Gagal mengambil profil siswa.
+              </span>
+            </div>
+
+            <Button
+              size="sm"
               variant="secondary"
               icon={RefreshCw}
               onClick={refetch}
+              className="sm:ml-auto"
             >
               Coba Lagi
             </Button>
-          }
-        />
-      )}
 
-      {/* Profile */}
-      {!isLoading && !error && student && (
-        <div className="space-y-6">
-          {/* =========================
-              INFORMASI PROFIL
-          ========================== */}
+          </div>
+        )}
+
+        {/* =========================
+            INFORMASI SISWA
+        ========================== */}
+        {!isLoading && !error && student && (
           <Card>
-            <div className="flex flex-wrap items-center gap-5">
-              {/* Foto */}
-              <div className="relative shrink-0">
-                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-2xl font-semibold text-brand-700 dark:bg-brand-900 dark:text-brand-300">
-                  {photo ? (
-                    <img
-                      src={photo}
-                      alt="Foto profil"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    student.nama_siswa
-                      ?.charAt(0)
-                      ?.toUpperCase() || "S"
-                  )}
-                </div>
 
-                {/* Tombol ganti foto */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    fileInputRef.current?.click()
-                  }
-                  className="absolute bottom-0 right-0 rounded-full border border-white bg-slate-900 p-2 text-white shadow-sm dark:border-slate-950"
-                  aria-label="Ganti foto profil"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                </button>
-
-                {/* Input file */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
-              </div>
-
-              {/* Informasi siswa */}
-              <div className="min-w-0">
-                {/* Nama */}
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                  {student.nama_siswa || "-"}
-                </h2>
-
-                {/* Kelas */}
-                <div className="mt-2 flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
-                  <School className="h-4 w-4" />
-                  <span>
-                    Kelas {student.nama_kelas || "-"}
-                  </span>
-                </div>
-
-                {/* Tahun Ajaran */}
-                {student.tahun_ajaran && (
-                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                    Tahun Ajaran {student.tahun_ajaran}
-                  </p>
-                )}
-
-                {/* Error foto */}
-                {photoError && (
-                  <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-                    {photoError}
-                  </p>
-                )}
-              </div>
-            </div>
-          </Card>
-
-          {/* =========================
-              RINGKASAN KEHADIRAN
-          ========================== */}
-          <Card>
             <CardHeader
-              title="Ringkasan Kehadiran"
-              subtitle="Dihitung berdasarkan satu absensi per hari"
+              title="Informasi Siswa"
+              subtitle="Data identitas siswa yang terdaftar di sistem."
             />
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              {/* Hadir */}
-              <SummaryItem
-                icon={CheckCircle2}
-                label="Hadir"
-                value={summary.present ?? 0}
+            <div className="grid gap-4 sm:grid-cols-2">
+
+              <InfoItem
+                icon={User}
+                label="Nama Lengkap"
+                value={studentName}
               />
 
-              {/* Terlambat */}
-              <SummaryItem
-                icon={Clock}
-                label="Terlambat"
-                value={summary.late ?? 0}
+              <InfoItem
+                icon={School}
+                label="Kelas"
+                value={className}
               />
 
-              {/* Tidak Hadir */}
-              <SummaryItem
-                icon={XCircle}
-                label="Tidak Hadir"
-                value={summary.absent ?? 0}
+              <InfoItem
+                icon={User}
+                label="Username"
+                value={username}
               />
+
+              <InfoItem
+                icon={ShieldCheck}
+                label="Role"
+                value="Siswa"
+              />
+
             </div>
+
           </Card>
-        </div>
-      )}
+        )}
 
-      {/* Data siswa tidak ditemukan */}
-      {!isLoading && !error && !student && (
-        <EmptyState
-          title="Profil siswa tidak ditemukan"
-          description="Data profil siswa tidak tersedia."
-          action={
-            <Button
-              variant="secondary"
-              icon={RefreshCw}
-              onClick={refetch}
-            >
-              Coba Lagi
-            </Button>
-          }
-        />
-      )}
-    </PageContainer>
-  );
-}
+        {/* =========================
+            LOADING
+        ========================== */}
+        {isLoading && (
+          <Loading label="Memuat profil siswa..." />
+        )}
 
-/* =================================
-   COMPONENT RINGKASAN
-================================= */
+        {/* =========================
+            DATA KOSONG
+        ========================== */}
+        {!isLoading && !error && !student && (
+          <EmptyState
+            title="Profil siswa tidak ditemukan"
+            description="Data profil siswa belum tersedia."
+            action={
+              <Button
+                variant="secondary"
+                icon={RefreshCw}
+                onClick={refetch}
+              >
+                Coba Lagi
+              </Button>
+            }
+          />
+        )}
 
-function SummaryItem({ icon: Icon, label, value }) {
-  return (
-    <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-      <div className="mb-2 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <Icon className="h-4 w-4" />
-
-        <span>{label}</span>
       </div>
-
-      <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-        {value}
-      </p>
-    </div>
+    </PageContainer>
   );
 }

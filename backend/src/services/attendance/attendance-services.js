@@ -4,7 +4,6 @@ import crypto from "crypto";
 export const createNewSession = async ({
   id_guru,
   id_kelas,
-  durasi_menit,
   batas_terlambat_menit,
 }) => {
   const connection = await pool.getConnection();
@@ -18,7 +17,7 @@ export const createNewSession = async ({
     const [existingSession] = await connection.query(
       `
         SELECT id_sesi FROM sesi_absensi
-        WHERE id_guru = ? AND id_kelas = ? AND tanggal = ? AND status = 'aktif'
+        WHERE id_guru = ? AND id_kelas = ? AND tanggal = ? 
         FOR UPDATE
         `,
       [id_guru, id_kelas, today],
@@ -36,21 +35,12 @@ export const createNewSession = async ({
     const randomBytes = crypto.randomBytes(32).toString("hex");
     const kode_qr = `QR-${Date.now()}-${randomBytes.substring(0, 30)}`;
 
-    // waktu buka, batas_terlambat dan tutup
+    // waktu buka dan batas_terlambat (tanpa batas waktu tutup)
     const waktu_buka = new Date();
     const batas_terlambat = new Date(
-      waktu_buka.getTime() + batas_terlambat_menit * 60000,
+      waktu_buka.getTime() + Number(batas_terlambat_menit) * 60000,
     );
-    const waktu_tutup = new Date(waktu_buka.getTime() + durasi_menit * 60000);
-
-    // validasi batas terlambat tidak boleh melebihi waktu tutup
-    if (batas_terlambat > waktu_tutup) {
-      const error = new Error(
-        "Batas terlambat tidak boleh lebih besar dari durasi qr",
-      );
-      error.statusCode = 400;
-      throw error;
-    }
+    const waktu_tutup = null;
 
     // insert ke database sesi_absensi
     const insertQuery = `
@@ -80,7 +70,7 @@ export const createNewSession = async ({
         kode_qr,
         waktu_buka,
         batas_terlambat,
-        waktu_tutup,
+        waktu_tutup: null,
         status: "aktif",
       },
     };
@@ -107,10 +97,84 @@ export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
     };
   }
 
+  const sesi = result[0];
+
+  // Ambil daftar siswa yang sudah scan pada sesi ini agar tabel
+  // tetap terisi saat guru pindah halaman lalu kembali.
+  const [attendees] = await pool.query(
+    `
+      SELECT
+        a.id_absensi,
+        a.id_siswa,
+        a.status,
+        a.waktu_scan,
+        s.nama_siswa,
+        CONCAT(k.tingkat, ' ', k.nama_kelas) AS nama_kelas
+      FROM absensi a
+      JOIN siswa s ON s.id_siswa = a.id_siswa
+      JOIN kelas k ON k.id_kelas = s.id_kelas
+      WHERE a.id_sesi = ?
+      ORDER BY a.waktu_scan ASC
+    `,
+    [sesi.id_sesi],
+  );
+
   return {
     success: true,
     message: "data berhasil diambil",
+    data: {
+      ...sesi,
+      attendees,
+    },
+  };
+};
+
+export const findTodayActiveSessionByTeacherId = async ({ id_guru }) => {
+  const today = new Date().toISOString().split("T")[0];
+  const [result] = await pool.query(
+    `
+      SELECT * FROM sesi_absensi 
+      WHERE id_guru = ? AND tanggal = ? AND status = 'aktif'
+      ORDER BY id_sesi DESC
+      LIMIT 1
+    `,
+    [id_guru, today],
+  );
+
+  if (result.length === 0) {
+    return {
+      success: false,
+      message: "Tidak ada sesi aktif hari ini",
+    };
+  }
+
+  return {
+    success: true,
+    message: "Sesi aktif ditemukan",
     data: result[0],
+  };
+};
+
+export const endSessionById = async ({ id_guru, id_sesi }) => {
+  const [result] = await pool.query(
+    `
+      UPDATE sesi_absensi 
+      SET status = 'tutup', waktu_tutup = NOW() 
+      WHERE (id_sesi = ? OR kode_qr = ?) AND id_guru = ? AND status = 'aktif'
+    `,
+    [id_sesi, id_sesi, id_guru],
+  );
+
+  if (result.affectedRows === 0) {
+    return {
+      success: false,
+      message: "Sesi tidak ditemukan atau sudah ditutup",
+    };
+  }
+
+  return {
+    success: true,
+    message: "Sesi absensi berhasil ditutup",
   };
 };
 
@@ -136,16 +200,8 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
     const sesi = session[0];
     const now = new Date();
 
-    if (sesi.status !== "aktif" || now > new Date(sesi.waktu_tutup)) {
-      if (sesi.status === "aktif") {
-        await connection.query(
-          `
-          UPDATE sesi_absensi SET status = 'tutup' WHERE id_sesi = ?
-          `,
-          [sesi.id_sesi],
-        );
-      }
-      const error = new Error("Sesi absensi sudah berakhir!");
+    if (sesi.status !== "aktif") {
+      const error = new Error("Sesi absensi sudah ditutup oleh guru!");
       error.statusCode = 400;
       throw error;
     }
@@ -205,6 +261,7 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
       success: true,
       message: `Absensi berhasil, status: ${status}`,
       data: {
+        id_sesi: sesi.id_sesi,
         status,
         waktu_scan: now,
         siswa: {
@@ -227,4 +284,157 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
   } finally {
     connection.release();
   }
+};
+
+export const manualAttendance = async ({
+  id_siswa,
+  id_kelas,
+  tanggal,
+  status,
+  keterangan = null,
+}) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. Cari sesi absensi
+    const [sessions] = await connection.query(
+      `
+      SELECT id_sesi
+      FROM sesi_absensi
+      WHERE id_kelas = ?
+        AND tanggal = ?
+        AND status != 'batal'
+      LIMIT 1
+      `,
+      [id_kelas, tanggal],
+    );
+
+    if (sessions.length === 0) {
+      throw new Error("Sesi absensi belum dibuka");
+    }
+
+    const id_sesi = sessions[0].id_sesi;
+
+    // 2. Pastikan siswa berada di kelas tersebut
+    const [students] = await connection.query(
+      `
+      SELECT id_siswa
+      FROM siswa
+      WHERE id_siswa = ?
+        AND id_kelas = ?
+      `,
+      [id_siswa, id_kelas],
+    );
+
+    if (students.length === 0) {
+      throw new Error("Siswa tidak terdaftar di kelas ini");
+    }
+
+    // 3. Cek apakah siswa sudah memiliki absensi
+    const [existing] = await connection.query(
+      `
+      SELECT id_absensi
+      FROM absensi
+      WHERE id_sesi = ?
+        AND id_siswa = ?
+      LIMIT 1
+      `,
+      [id_sesi, id_siswa],
+    );
+
+    // 4. Kalau sudah ada → UPDATE
+    if (existing.length > 0) {
+      await connection.query(
+        `
+        UPDATE absensi
+        SET status = ?,
+            keterangan = ?
+        WHERE id_absensi = ?
+        `,
+        [status, keterangan, existing[0].id_absensi],
+      );
+    }
+
+    // 5. Kalau belum ada → INSERT
+    else {
+      await connection.query(
+        `
+        INSERT INTO absensi (
+          id_sesi,
+          id_siswa,
+          status,
+          waktu_scan,
+          keterangan
+        )
+        VALUES (?, ?, ?, NULL, ?)
+        `,
+        [id_sesi, id_siswa, status, keterangan],
+      );
+    }
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message:
+        existing.length > 0
+          ? "Absensi berhasil diperbarui"
+          : "Absensi manual berhasil dibuat",
+    };
+  } catch (error) {
+    await connection.rollback();
+
+    return {
+      success: false,
+      message: error.message || "Terjadi kesalahan server",
+    };
+  } finally {
+    connection.release();
+  }
+};
+
+export const getDailyByClass = async ({ kelasId, tanggal }) => {
+  const getTodayWIB = () =>
+    new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Jakarta",
+    });
+
+  const date = tanggal || getTodayWIB();
+
+  const [rows] = await pool.query(
+    `
+    SELECT
+      s.id_siswa,
+      s.nama_siswa,
+      s.nis,
+      kl.nama_kelas,
+      a.id_absensi,
+      a.waktu_scan,
+      COALESCE(a.status, 'belum absen') AS status,
+      a.keterangan
+    FROM siswa s
+
+    JOIN kelas kl
+      ON kl.id_kelas = s.id_kelas
+
+    LEFT JOIN sesi_absensi sa
+      ON sa.id_kelas = s.id_kelas
+      AND sa.tanggal = ?
+
+    LEFT JOIN absensi a
+      ON a.id_siswa = s.id_siswa
+      AND a.id_sesi = sa.id_sesi
+
+    WHERE s.id_kelas = ?
+
+    ORDER BY s.nama_siswa ASC;
+    `,
+    [date, kelasId],
+  );
+
+  console.log(rows);
+
+  return rows;
 };

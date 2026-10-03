@@ -1,24 +1,45 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarPlus, AlertCircle, QrCode, Info, School } from "lucide-react";
+import { CalendarPlus, AlertCircle, QrCode, Info, School, Clock } from "lucide-react";
 import PageContainer from "../../components/layout/PageContainer";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import Loading from "../../components/ui/Loading";
 import attendanceService from "../../services/attendanceService";
 import { teacherServices } from "../../services/teacher/teacherService";
 
 export default function CreateAttendanceSession() {
   const navigate = useNavigate();
+  const [isCheckingActiveSession, setIsCheckingActiveSession] = useState(true);
   const [form, setForm] = useState({
     id_kelas: "",
-    durationMinutes: 120,
     lateThresholdMinutes: 15,
   });
   const [classes, setClasses] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+
+  // Cek apakah guru sudah memiliki sesi QR aktif hari ini.
+  // Jika ya, langsung redirect ke halaman sesi aktif tersebut.
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      try {
+        const response = await attendanceService.getTodayActiveSession();
+        if (response && response.success && response.data && response.data.kode_qr) {
+          navigate(`/teacher/sessions/${response.data.kode_qr}`, { replace: true });
+          return;
+        }
+      } catch (error) {
+        console.error("Gagal memeriksa sesi aktif:", error);
+      } finally {
+        setIsCheckingActiveSession(false);
+      }
+    };
+
+    checkActiveSession();
+  }, [navigate]);
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -28,8 +49,6 @@ export default function CreateAttendanceSession() {
   function validate() {
     const next = {};
     if (!form.id_kelas) next.id_kelas = "Silakan pilih kelas terlebih dahulu.";
-    if (!form.durationMinutes || Number(form.durationMinutes) <= 0)
-      next.durationMinutes = "Durasi harus lebih dari 0 menit.";
     if (
       form.lateThresholdMinutes === "" ||
       Number(form.lateThresholdMinutes) < 0
@@ -47,10 +66,8 @@ export default function CreateAttendanceSession() {
     try {
       const session = await attendanceService.createAttendanceSession({
         id_kelas: form.id_kelas,
-        durasi_menit: Number(form.durationMinutes),
         batas_terlambat_menit: Number(form.lateThresholdMinutes),
       });
-      console.log(session);
       navigate(`/teacher/sessions/${session.data.kode_qr}`);
     } catch (error) {
       setSubmitError(
@@ -77,6 +94,14 @@ export default function CreateAttendanceSession() {
     fetchDataClass();
   }, []);
 
+  if (isCheckingActiveSession) {
+    return (
+      <PageContainer title="QR Kehadiran Harian">
+        <Loading label="Memeriksa sesi absensi aktif..." />
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer
       title="Buat QR Kehadiran Harian"
@@ -102,9 +127,10 @@ export default function CreateAttendanceSession() {
                   Satu QR untuk satu hari
                 </p>
                 <p className="mt-1 text-xs leading-5 text-brand-700 dark:text-brand-300">
-                  Semua siswa yang masuk sekolah menggunakan QR yang sama.
-                  Sistem akan menolak scan kedua dari siswa yang sama pada
-                  tanggal yang sama.
+                  QR Code tidak memiliki batas waktu kedaluwarsa otomatis dan
+                  tetap aktif sampai Anda menutupnya secara manual. Status scan
+                  siswa akan otomatis ditandai &apos;Terlambat&apos; jika melebihi batas waktu
+                  toleransi yang ditentukan.
                 </p>
               </div>
             </div>
@@ -146,19 +172,9 @@ export default function CreateAttendanceSession() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div>
             <Input
-              label="Durasi QR (menit)"
-              type="number"
-              min={1}
-              value={form.durationMinutes}
-              onChange={(e) => updateField("durationMinutes", e.target.value)}
-              error={errors.durationMinutes}
-              disabled={isSubmitting}
-              hint="Masa aktif QR hari ini"
-            />
-            <Input
-              label="Batas Terlambat (menit)"
+              label="Batas Terlambat (menit dari waktu QR dibuat)"
               type="number"
               min={0}
               value={form.lateThresholdMinutes}
@@ -167,13 +183,13 @@ export default function CreateAttendanceSession() {
               }
               error={errors.lateThresholdMinutes}
               disabled={isSubmitting}
-              hint="Setelah batas ini: terlambat"
+              hint="Siswa yang scan setelah durasi menit ini akan berstatus 'Terlambat'"
             />
           </div>
 
           <div className="flex items-start gap-2 rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-900 dark:text-slate-400">
             <Info className="mt-0.5 h-4 w-4 shrink-0" />
-            Status kehadiran dicatat berdasarkan waktu scan dan hanya boleh
+            Status kehadiran dicatat berdasarkan waktu scan siswa dan hanya boleh
             dibuat satu kali per siswa setiap hari.
           </div>
           <Button

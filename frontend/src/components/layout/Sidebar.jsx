@@ -1,5 +1,8 @@
 import { NavLink } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import {
+  LogOut,
+  UserCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import useAuth from "../../hooks/useAuth";
@@ -15,24 +18,38 @@ export default function Sidebar() {
   const { user, role, logout } = useAuth();
   const items = NAV_ITEMS[role] || [];
 
+  /*
+   * Foto profil hanya digunakan untuk Guru/Admin.
+   * Siswa menggunakan icon UserCircle.
+   */
+  const isStudent = role === "siswa";
+
   const photoKey = `${PROFILE_PHOTO_KEY_PREFIX}${user?.id || "guest"}`;
 
   const [profilePhoto, setProfilePhoto] = useState(() =>
-    localStorage.getItem(photoKey)
+    isStudent ? null : localStorage.getItem(photoKey)
   );
 
   /*
    * Ambil foto ketika user berubah.
+   * Tidak dijalankan untuk siswa.
    */
   useEffect(() => {
+    if (isStudent) {
+      setProfilePhoto(null);
+      return;
+    }
+
     setProfilePhoto(localStorage.getItem(photoKey));
-  }, [photoKey]);
+  }, [photoKey, isStudent]);
 
   /*
    * Update foto ketika localStorage berubah
    * dari tab/window lain.
    */
   useEffect(() => {
+    if (isStudent) return;
+
     function handleStorageChange(event) {
       if (event.key === photoKey) {
         setProfilePhoto(event.newValue);
@@ -44,10 +61,11 @@ export default function Sidebar() {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [photoKey]);
+  }, [photoKey, isStudent]);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 lg:flex">
+
       {/* =========================
           HEADER
       ========================== */}
@@ -94,10 +112,27 @@ export default function Sidebar() {
           USER PROFILE
       ========================== */}
       <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+
         <div className="mb-2 flex items-center gap-3 rounded-lg px-2 py-1.5">
-          {/* Avatar */}
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-100 text-sm font-semibold text-brand-700 dark:bg-brand-900 dark:text-brand-300">
-            {profilePhoto ? (
+
+          {/* =========================
+              AVATAR
+              Siswa = Icon
+              Guru/Admin = Foto
+          ========================== */}
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+              isStudent
+                ? "bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400"
+                : "overflow-hidden bg-brand-100 text-sm font-semibold text-brand-700 dark:bg-brand-900 dark:text-brand-300"
+            }`}
+          >
+            {isStudent ? (
+              <UserCircle
+                className="h-6 w-6"
+                aria-hidden="true"
+              />
+            ) : profilePhoto ? (
               <img
                 src={profilePhoto}
                 alt="Foto profil"
@@ -108,7 +143,9 @@ export default function Sidebar() {
             )}
           </div>
 
-          {/* Nama dan role */}
+          {/* =========================
+              NAMA DAN ROLE
+          ========================== */}
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
               {user?.name || "Pengguna"}
@@ -120,7 +157,9 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Logout */}
+        {/* =========================
+            LOGOUT
+        ========================== */}
         <button
           onClick={logout}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-slate-300 dark:hover:bg-red-950 dark:hover:text-red-400"

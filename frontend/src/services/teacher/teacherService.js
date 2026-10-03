@@ -5,4 +5,9 @@ export const teacherServices = {
     const response = await api.get("/teacher/class");
     return response.data;
   },
+
+  async getProfile() {
+    const response = await api.get("/teacher/profile");
+    return response.data;
+  },
 };

@@ -31,15 +31,35 @@ export const insertClass = async (data) => {
   };
 };
 
-export const findAllClass = async () => {
+export const findAllClass = async ({ page = 1, limit = 10 } = {}) => {
+  const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+  const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+  const offset = (currentPage - 1) * perPage;
+
+  // Hitung total data
+  const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM kelas");
+
+  // ambil daata sesuai halaman
   const [rows] = await pool.query(
-    "SELECT id_kelas, nama_kelas, tingkat, status_aktif FROM kelas",
+    `SELECT id_kelas, nama_kelas, tingkat, status_aktif FROM kelas ORDER BY tingkat ASC, nama_kelas ASC, id_kelas ASC
+    LIMIT ? OFFSET ?`,
+    [perPage, offset],
   );
+
+  const totalPages = Math.ceil(total / perPage);
 
   return {
     success: true,
     message: "Data berhasil diambil",
     data: rows,
+    pagination: {
+      page: currentPage,
+      limit: perPage,
+      totalItems: total,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1,
+    },
   };
 };
 
