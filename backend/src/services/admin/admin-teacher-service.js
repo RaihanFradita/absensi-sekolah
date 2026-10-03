@@ -322,20 +322,6 @@ export const findTeacherProfile = async (idUser) => {
     };
   }
 
-  // // Cari kelas yang memiliki wali kelas guru ini (jika ada)
-  // const [[waliKelas]] = await pool.query(
-  //   `
-  //   SELECT
-  //     k.id_kelas,
-  //     k.nama_kelas,
-  //     k.tingkat
-  //   FROM kelas k
-  //   WHERE k.id_guru = ? AND k.status_aktif = 1
-  //   LIMIT 1
-  //   `,
-  //   [guru.id_guru],
-  // );
-
   return {
     success: true,
     message: "Profil guru berhasil diambil",
