@@ -18,16 +18,11 @@ function buildUrl(path, params) {
 }
 
 async function request(path, options = {}) {
-  const {
-    method = "GET",
-    body,
-    params,
-    headers = {},
-  } = options;
+  const { method = "GET", body, params, headers = {} } = options;
 
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    console.log ("API Request:", path);
-    console.log ("TOKEN:", token ? "ada" : "tidak ada");
+  console.log("API Request:", path);
+  console.log("TOKEN:", token ? "ada" : "tidak ada");
 
   const requestHeaders = {
     ...headers,
