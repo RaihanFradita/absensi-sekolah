@@ -1,4 +1,7 @@
-import { findAllClass, findTeacherProfile } from "../../services/admin/admin-teacher-service.js";
+import {
+  findAllClass,
+  findTeacherProfile,
+} from "../../services/admin/admin-teacher-service.js";
 import { findTeacherDashboardByUserId } from "../../services/teacher/teacher-service.js";
 
 export async function getTeacherDashboard(req, res) {

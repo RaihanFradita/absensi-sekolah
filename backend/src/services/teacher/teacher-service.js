@@ -23,7 +23,7 @@ export async function findTeacherDashboardByUserId(idUser, date) {
     WHERE g.id_user = ?
     LIMIT 1
     `,
-    [idUser]
+    [idUser],
   );
 
   if (!teacherRows.length) {
@@ -46,7 +46,7 @@ export async function findTeacherDashboardByUserId(idUser, date) {
       AND k.status_aktif = 1
     LIMIT 1
     `,
-    [teacher.id_guru]
+    [teacher.id_guru],
   );
 
   const classData = classRows[0] || null;
@@ -81,7 +81,7 @@ export async function findTeacherDashboardByUserId(idUser, date) {
       AND s.status_aktif = 1
     ORDER BY s.nama_siswa ASC
     `,
-    [classData.id_kelas]
+    [classData.id_kelas],
   );
 
   // =========================
@@ -99,7 +99,7 @@ export async function findTeacherDashboardByUserId(idUser, date) {
     WHERE s.id_kelas = ?
       AND DATE(a.waktu_absen) = ?
     `,
-    [classData.id_kelas, date]
+    [classData.id_kelas, date],
   );
 
   // =========================
@@ -108,19 +108,14 @@ export async function findTeacherDashboardByUserId(idUser, date) {
   const attendanceMap = new Map();
 
   for (const attendance of attendanceRows) {
-    attendanceMap.set(
-      attendance.id_siswa,
-      attendance
-    );
+    attendanceMap.set(attendance.id_siswa, attendance);
   }
 
   // =========================
   // 6. Gabungkan siswa + absensi
   // =========================
   const students = studentRows.map((student) => {
-    const attendance = attendanceMap.get(
-      student.id_siswa
-    );
+    const attendance = attendanceMap.get(student.id_siswa);
 
     return {
       id_siswa: student.id_siswa,
@@ -143,9 +138,7 @@ export async function findTeacherDashboardByUserId(idUser, date) {
   };
 
   for (const student of students) {
-    const status = String(
-      student.status || ""
-    ).toLowerCase();
+    const status = String(student.status || "").toLowerCase();
 
     if (status === "hadir") {
       summary.hadir += 1;
