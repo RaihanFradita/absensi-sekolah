@@ -5,6 +5,7 @@ import { verifyToken } from "../middleware/auth-middleware.js";
 import {
   getAllClass,
   getTeacherDashboard,
+  getTeacherProfile,
 } from "../controllers/teacher/teacher-controller.js";
 
 export const teacher = express.Router();
@@ -13,3 +14,4 @@ teacher.use(verifyToken);
 
 teacher.get("/class", getAllClass);
 teacher.get("/dashboard", getTeacherDashboard);
+teacher.get("/profile", getTeacherProfile);

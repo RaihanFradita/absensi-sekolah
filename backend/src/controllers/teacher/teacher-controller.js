@@ -1,4 +1,4 @@
-import { findAllClass } from "../../services/admin/admin-teacher-service.js";
+import { findAllClass, findTeacherProfile } from "../../services/admin/admin-teacher-service.js";
 import { findTeacherDashboardByUserId } from "../../services/teacher/teacher-service.js";
 
 export async function getTeacherDashboard(req, res) {
@@ -64,6 +64,33 @@ export const getAllClass = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan server",
+    });
+  }
+};
+
+export const getTeacherProfile = async (req, res) => {
+  try {
+    const idUser = req.user?.id_user;
+
+    if (!idUser) {
+      return res.status(401).json({
+        success: false,
+        message: "ID user tidak ditemukan dari token.",
+      });
+    }
+
+    const result = await findTeacherProfile(idUser);
+
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+
+    return res.json(result);
+  } catch (error) {
+    console.error("getTeacherProfile:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Gagal mengambil profil guru.",
     });
   }
 };
