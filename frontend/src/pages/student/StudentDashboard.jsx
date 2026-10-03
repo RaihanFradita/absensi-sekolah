@@ -1,355 +1,621 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  QrCode,
-  RefreshCw,
-  Radio,
-  School,
+  CalendarDays,
   CheckCircle2,
   Clock3,
-  XCircle,
-  ArrowRight,
-  CalendarDays,
-} from 'lucide-react';
+  History,
+  QrCode,
+  School,
+  UserCircle,
+  AlertCircle,
+  RefreshCw,
+  CircleX,
+} from "lucide-react";
 
-import PageContainer from '../../components/layout/PageContainer';
-import Card, { CardHeader } from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Loading from '../../components/ui/Loading';
-import EmptyState from '../../components/ui/EmptyState';
-import AttendanceTable from '../../components/attendance/AttendanceTable';
-import AttendanceStatus from '../../components/attendance/AttendanceStatus';
-import useAttendance from '../../hooks/useAttendance';
-import useAuth from '../../hooks/useAuth';
-import attendanceService from '../../services/attendanceService';
-import { formatTimeShort } from '../../utils/formatTime';
-import { PROFILE_PHOTO_KEY_PREFIX } from '../../utils/constants';
+import PageContainer from "../../components/layout/PageContainer";
+import Button from "../../components/ui/Button";
+import attendanceService from "../../services/attendanceService";
+import useAuth from "../../hooks/useAuth";
 
-export default function StudentDashboard() {
-  const { user } = useAuth();
+function getStatusLabel(status) {
+  const value = String(status || "").toLowerCase();
 
-  const fetchDashboard = useCallback(
-    () => attendanceService.getStudentDashboard(),
-    []
-  );
+  if (value === "hadir" || value === "present") {
+    return "Hadir";
+  }
 
-  const { data, isLoading, error, refetch } =
-    useAttendance(fetchDashboard);
+  if (value === "terlambat" || value === "late") {
+    return "Terlambat";
+  }
 
-  const [profilePhoto, setProfilePhoto] = useState(null);
+  if (value === "izin" || value === "excused") {
+    return "Izin";
+  }
 
-  const photoKey = `${PROFILE_PHOTO_KEY_PREFIX}${user?.id || 'guest'}`;
+  if (value === "sakit" || value === "sick") {
+    return "Sakit";
+  }
 
-  useEffect(() => {
-    const savedPhoto = localStorage.getItem(photoKey);
-    setProfilePhoto(savedPhoto);
-  }, [photoKey]);
+  if (
+    value === "tidak_hadir" ||
+    value === "absent" ||
+    value === "tanpa keterangan"
+  ) {
+    return "Tidak Hadir";
+  }
 
-  const todayStatus = data?.today?.status;
+  return "Belum Absen";
+}
 
-  const todayTime =
-    data?.today?.waktu_absen ||
-    data?.today?.scannedAt ||
-    null;
+function getStatusStyle(status) {
+  const value = String(status || "").toLowerCase();
 
-  const studentName =
-    data?.student?.name ||
-    user?.name ||
-    'Siswa';
+  if (value === "hadir" || value === "present") {
+    return {
+      wrapper:
+        "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
+      icon: CheckCircle2,
+    };
+  }
 
-  const className =
-    data?.student?.className ||
-    '-';
+  if (value === "terlambat" || value === "late") {
+    return {
+      wrapper:
+        "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400",
+      icon: Clock3,
+    };
+  }
 
+  if (value === "izin" || value === "excused") {
+    return {
+      wrapper:
+        "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400",
+      icon: CalendarDays,
+    };
+  }
+
+  if (value === "sakit" || value === "sick") {
+    return {
+      wrapper:
+        "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400",
+      icon: AlertCircle,
+    };
+  }
+
+  return {
+    wrapper:
+      "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+    icon: CircleX,
+  };
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) return "-";
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(dateValue);
+  }
+
+  return date.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatTime(dateValue) {
+  if (!dateValue) return "-";
+
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(dateValue);
+  }
+
+  return date.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  description,
+  iconClassName,
+}) {
   return (
-    <PageContainer
-      title={`Halo, ${studentName}`}
-      description="Pantau kehadiran sekolahmu hari ini"
-    >
-      {isLoading && <Loading label="Memuat dashboard..." />}
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {label}
+          </p>
 
-      {!isLoading && error && (
-        <EmptyState
-          title="Gagal memuat dashboard"
-          description={error}
-          action={
-            <Button
-              variant="secondary"
-              icon={RefreshCw}
-              onClick={refetch}
-            >
-              Coba Lagi
-            </Button>
-          }
-        />
-      )}
+          <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
+            {value}
+          </p>
 
-      {!isLoading && !error && data && (
-        <div className="space-y-6">
-
-          {/* HERO / PROFILE */}
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="bg-gradient-to-br from-brand-50 via-white to-emerald-50 px-5 py-5 dark:from-brand-950 dark:via-slate-900 dark:to-emerald-950 sm:px-7 sm:py-7">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-
-                <div className="flex min-w-0 items-center gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-100 text-xl font-bold text-brand-700 ring-4 ring-white dark:bg-brand-900 dark:text-brand-300 dark:ring-slate-800">
-                    {profilePhoto ? (
-                      <img
-                        src={profilePhoto}
-                        alt="Foto profil"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      studentName[0]?.toUpperCase()
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium uppercase tracking-wide text-brand-600 dark:text-brand-400">
-                      Profil Siswa
-                    </p>
-
-                    <h2 className="mt-1 truncate text-xl font-bold text-slate-900 dark:text-slate-100">
-                      {studentName}
-                    </h2>
-
-                    <div className="mt-2 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                      <School className="h-4 w-4 shrink-0" />
-                      <span>Kelas {className}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    as={Link}
-                    to="/student/scan"
-                    icon={QrCode}
-                    className="justify-center"
-                  >
-                    Scan Kehadiran
-                  </Button>
-
-                  <Button
-                    as={Link}
-                    to="/student/profile"
-                    variant="secondary"
-                    className="justify-center"
-                  >
-                    Lihat Profil
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ACTIVE QR SESSION */}
-          {data.activeSession ? (
-            <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950">
-              <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
-                  <Radio className="h-6 w-6 animate-pulse" />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-bold text-emerald-900 dark:text-emerald-200">
-                      Absensi sedang dibuka
-                    </p>
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                      AKTIF
-                    </span>
-                  </div>
-
-                  <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">
-                    Segera scan QR untuk mencatat kehadiran hari ini.
-                    QR aktif sampai {formatTimeShort(data.activeSession.endsAt)}.
-                  </p>
-                </div>
-
-                <Button
-                  as={Link}
-                  to="/student/scan"
-                  icon={QrCode}
-                  className="shrink-0 justify-center"
-                >
-                  Scan Sekarang
-                </Button>
-              </div>
-            </section>
-          ) : (
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-              <div className="flex items-center gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  <CalendarDays className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100">
-                    Belum ada sesi absensi aktif
-                  </p>
-                  <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                    Tunggu sampai Guru Kelas membuka QR kehadiran.
-                  </p>
-                </div>
-              </div>
-            </section>
+          {description && (
+            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {description}
+            </p>
           )}
-
-          {/* STATUS TODAY */}
-          <section>
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  Kehadiran Hari Ini
-                </h2>
-                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                  Status absensi kamu hari ini
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
-
-              <Card className="relative overflow-hidden border-slate-200 dark:border-slate-800">
-                <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-brand-50 blur-2xl dark:bg-brand-950" />
-
-                <div className="relative flex min-h-[150px] items-center gap-4">
-                  <div
-                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${
-                      todayStatus === 'hadir'
-                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                        : todayStatus === 'terlambat'
-                          ? 'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400'
-                          : todayStatus === 'tidak_hadir'
-                            ? 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400'
-                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                    }`}
-                  >
-                    {todayStatus === 'hadir' ? (
-                      <CheckCircle2 className="h-7 w-7" />
-                    ) : todayStatus === 'terlambat' ? (
-                      <Clock3 className="h-7 w-7" />
-                    ) : todayStatus === 'tidak_hadir' ? (
-                      <XCircle className="h-7 w-7" />
-                    ) : (
-                      <Clock3 className="h-7 w-7" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Status Absensi
-                    </p>
-
-                    {todayStatus ? (
-                      <div className="mt-1">
-                        <AttendanceStatus status={todayStatus} />
-                      </div>
-                    ) : (
-                      <p className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">
-                        Belum Absen
-                      </p>
-                    )}
-
-                    {todayTime && (
-                      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                        Dicatat pukul {formatTimeShort(todayTime)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-
-              <AttendanceSummaryCard
-                icon={CheckCircle2}
-                value={data.summary?.present ?? 0}
-                label="Hadir"
-                type="success"
-              />
-
-              <AttendanceSummaryCard
-                icon={Clock3}
-                value={data.summary?.late ?? 0}
-                label="Terlambat"
-                type="warning"
-              />
-
-              <AttendanceSummaryCard
-                icon={XCircle}
-                value={data.summary?.absent ?? 0}
-                label="Tidak Hadir"
-                type="danger"
-              />
-            </div>
-          </section>
-
-          {/* RECENT HISTORY */}
-          <Card className="overflow-hidden">
-            <CardHeader
-              title="Riwayat Kehadiran"
-              action={
-                <Link
-                  to="/student/history"
-                  className="group flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
-                >
-                  Lihat semua
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              }
-            />
-
-            {data.recentHistory?.length > 0 ? (
-              <AttendanceTable rows={data.recentHistory} />
-            ) : (
-              <EmptyState
-                title="Belum ada riwayat"
-                description="Riwayat kehadiran harianmu akan muncul di sini."
-              />
-            )}
-          </Card>
         </div>
-      )}
-    </PageContainer>
+
+        <div
+          className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconClassName}`}
+        >
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+    </div>
   );
 }
 
-function AttendanceSummaryCard({
-  icon: Icon,
-  value,
-  label,
-  type,
-}) {
-  const styles = {
-    success: {
-      wrapper:
-        'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400',
-    },
-    warning: {
-      wrapper:
-        'bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400',
-    },
-    danger: {
-      wrapper:
-        'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400',
-    },
-  };
+export default function StudentDashboard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [dashboard, setDashboard] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const response =
+        await attendanceService.getStudentDashboard();
+
+      const result = response?.data ?? response;
+
+      setDashboard(result);
+    } catch (err) {
+      console.error("Gagal memuat dashboard siswa:", err);
+
+      setError(
+        err?.message ||
+          "Gagal mengambil data dashboard siswa."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  /*
+   * =========================
+   * DATA SISWA
+   * =========================
+   */
+  const student =
+    dashboard?.student ||
+    dashboard?.siswa ||
+    {};
+
+  const studentName =
+    student?.nama_siswa ||
+    student?.name ||
+    user?.name ||
+    "Siswa";
+
+  const className =
+    student?.nama_kelas ||
+    student?.kelas ||
+    student?.class_name ||
+    "-";
+
+  /*
+   * =========================
+   * STATUS HARI INI
+   * =========================
+   */
+  const todayAttendance =
+    dashboard?.today ||
+    dashboard?.todayAttendance ||
+    dashboard?.attendanceToday ||
+    dashboard?.kehadiran_hari_ini ||
+    null;
+
+  const todayStatus =
+    todayAttendance?.status ||
+    dashboard?.today_status ||
+    dashboard?.status_hari_ini ||
+    null;
+
+  const todayTime =
+    todayAttendance?.waktu_scan ||
+    todayAttendance?.waktu_absen ||
+    todayAttendance?.time ||
+    null;
+
+  const statusLabel = getStatusLabel(todayStatus);
+  const statusStyle = getStatusStyle(todayStatus);
+  const StatusIcon = statusStyle.icon;
+
+  /*
+   * =========================
+   * SUMMARY
+   * =========================
+   */
+  const summary =
+    dashboard?.summary ||
+    dashboard?.ringkasan ||
+    {};
+
+  const hadir =
+    summary?.hadir ??
+    summary?.present ??
+    0;
+
+  const terlambat =
+    summary?.terlambat ??
+    summary?.late ??
+    0;
+
+  const tidakHadir =
+    summary?.tidak_hadir ??
+    summary?.absent ??
+    0;
+
+  /*
+   * =========================
+   * RIWAYAT
+   * =========================
+   */
+  const history =
+    dashboard?.recentAttendance ||
+    dashboard?.recent_attendance ||
+    dashboard?.history ||
+    dashboard?.attendance_history ||
+    dashboard?.riwayat ||
+    [];
+
+  const recentHistory = Array.isArray(history)
+    ? history.slice(0, 5)
+    : [];
 
   return (
-    <Card className="min-h-[150px] border-slate-200 dark:border-slate-800">
-      <div
-        className={`flex h-10 w-10 items-center justify-center rounded-xl ${styles[type].wrapper}`}
-      >
-        <Icon className="h-5 w-5" />
+    <PageContainer>
+      <div className="space-y-6">
+
+        {/* =====================================
+            HEADER
+        ====================================== */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-brand-600 dark:text-brand-400">
+              Sistem Absensi Sekolah
+            </p>
+
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+              Halo, {studentName}
+            </h1>
+
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Pantau kehadiran sekolahmu hari ini.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <CalendarDays className="h-4 w-4" />
+
+            {new Date().toLocaleDateString("id-ID", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </div>
+        </div>
+
+        {/* =====================================
+            ERROR
+        ====================================== */}
+        {error && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-900/50 dark:bg-red-950/30 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+              <AlertCircle className="h-5 w-5 shrink-0" />
+
+              <span>
+                Gagal memuat dashboard siswa.
+              </span>
+            </div>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={RefreshCw}
+              onClick={loadDashboard}
+              className="sm:ml-auto"
+            >
+              Coba Lagi
+            </Button>
+          </div>
+        )}
+
+        {/* =====================================
+            INFO SISWA + SCAN
+        ====================================== */}
+        <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
+
+          {/* DATA SISWA */}
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-4">
+
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
+                <UserCircle className="h-8 w-8" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  {studentName}
+                </p>
+
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                  <span className="inline-flex items-center gap-1">
+                    <School className="h-4 w-4" />
+                    {className}
+                  </span>
+
+                  <span>•</span>
+
+                  <span>Siswa</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* SCAN BUTTON */}
+          <button
+            type="button"
+            onClick={() => navigate("/student/scan")}
+            className="group flex min-h-[120px] items-center gap-4 rounded-2xl border border-brand-200 bg-brand-50 p-5 text-left transition-all hover:border-brand-300 hover:bg-brand-100 dark:border-brand-900/60 dark:bg-brand-950/40 dark:hover:bg-brand-950"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm transition-transform group-hover:scale-105">
+              <QrCode className="h-6 w-6" />
+            </div>
+
+            <div>
+              <p className="font-bold text-brand-800 dark:text-brand-300">
+                Scan Kehadiran
+              </p>
+
+              <p className="mt-1 text-xs leading-relaxed text-brand-700/70 dark:text-brand-400/70">
+                Scan QR untuk mencatat kehadiran hari ini.
+              </p>
+            </div>
+          </button>
+
+        </div>
+
+        {/* =====================================
+            STATUS HARI INI
+        ====================================== */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
+            <div>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                Status Kehadiran Hari Ini
+              </p>
+
+              <div className="mt-3 flex items-center gap-3">
+
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl ${statusStyle.wrapper}`}
+                >
+                  <StatusIcon className="h-6 w-6" />
+                </div>
+
+                <div>
+                  <p className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    {isLoading ? "Memuat..." : statusLabel}
+                  </p>
+
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {todayTime
+                      ? `Dicatat pukul ${formatTime(todayTime)}`
+                      : "Belum ada catatan kehadiran hari ini"}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 px-5 py-4 dark:bg-slate-800/70">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Tanggal
+              </p>
+
+              <p className="mt-1 font-semibold text-slate-800 dark:text-slate-200">
+                {formatDate(new Date())}
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* =====================================
+            RINGKASAN
+        ====================================== */}
+        <div>
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Ringkasan Kehadiran
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Rekap status kehadiranmu.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+
+            <StatCard
+              icon={CheckCircle2}
+              label="Hadir"
+              value={hadir}
+              description="Hari hadir"
+              iconClassName="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+            />
+
+            <StatCard
+              icon={Clock3}
+              label="Terlambat"
+              value={terlambat}
+              description="Hari terlambat"
+              iconClassName="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+            />
+
+            <StatCard
+              icon={CircleX}
+              label="Tidak Hadir"
+              value={tidakHadir}
+              description="Tidak tercatat hadir"
+              iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+            />
+
+          </div>
+        </div>
+
+        {/* =====================================
+            RIWAYAT TERBARU
+        ====================================== */}
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+
+            <div>
+              <div className="flex items-center gap-2">
+                <History className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+
+                <h2 className="font-bold text-slate-900 dark:text-slate-100">
+                  Riwayat Terbaru
+                </h2>
+              </div>
+
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Catatan kehadiran terbaru.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate("/student/history")}
+              className="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+            >
+              Lihat Semua
+            </button>
+
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-3 p-5">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="h-16 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
+                />
+              ))}
+            </div>
+          ) : recentHistory.length > 0 ? (
+            <div className="divide-y divide-slate-200 dark:divide-slate-800">
+
+              {recentHistory.map((item, index) => {
+                const itemStatus =
+                  item?.status ||
+                  item?.status_kehadiran;
+
+                const itemStyle =
+                  getStatusStyle(itemStatus);
+
+                const ItemIcon = itemStyle.icon;
+
+                const date =
+                  item?.tanggal ||
+                  item?.date ||
+                  item?.waktu_scan ||
+                  item?.waktu_absen;
+
+                const time =
+                  item?.waktu_scan ||
+                  item?.waktu_absen ||
+                  item?.time;
+
+                return (
+                  <div
+                    key={
+                      item?.id_absensi ||
+                      item?.id ||
+                      index
+                    }
+                    className="flex items-center justify-between gap-4 px-5 py-4"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${itemStyle.wrapper}`}
+                      >
+                        <ItemIcon className="h-5 w-5" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="font-medium text-slate-800 dark:text-slate-200">
+                          {formatDate(date)}
+                        </p>
+
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                          {time
+                            ? `Jam ${formatTime(time)}`
+                            : "Waktu tidak tersedia"}
+                        </p>
+                      </div>
+
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${itemStyle.wrapper}`}
+                    >
+                      {getStatusLabel(itemStatus)}
+                    </span>
+                  </div>
+                );
+              })}
+
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center px-5 py-12 text-center">
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+                <History className="h-6 w-6" />
+              </div>
+
+              <p className="mt-3 font-medium text-slate-700 dark:text-slate-300">
+                Belum ada riwayat kehadiran
+              </p>
+
+              <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                Riwayat kehadiran akan muncul setelah kamu melakukan scan QR.
+              </p>
+
+            </div>
+          )}
+
+        </div>
+
       </div>
-
-      <p className="mt-5 text-2xl font-bold text-slate-900 dark:text-slate-100">
-        {value}
-      </p>
-
-      <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">
-        {label}
-      </p>
-    </Card>
+    </PageContainer>
   );
 }
