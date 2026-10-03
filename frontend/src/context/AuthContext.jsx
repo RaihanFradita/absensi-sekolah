@@ -44,23 +44,9 @@ export function AuthProvider({ children }) {
       setUser(loggedInUser);
       return loggedInUser;
     } catch (error) {
-      const message = error?.message || 'Username/NIS atau password salah.';
+      const message = error?.message || 'Username atau password salah.';
       setAuthError(message);
       throw error;
-    } finally {
-      setIsAuthenticating(false);
-    }
-  }, []);
-
-  // Mode pratinjau: login tanpa backend, hanya dipicu eksplisit dari tombol
-  // "Coba tanpa backend" di halaman Login. Lihat services/mockData.js.
-  const loginAsMock = useCallback(async (role) => {
-    setIsAuthenticating(true);
-    setAuthError(null);
-    try {
-      const { user: loggedInUser } = await authService.loginMock(role);
-      setUser(loggedInUser);
-      return loggedInUser;
     } finally {
       setIsAuthenticating(false);
     }
@@ -77,10 +63,9 @@ export function AuthProvider({ children }) {
       isAuthenticating,
       authError,
       login,
-      loginAsMock,
       logout,
     }),
-    [user, isAuthenticating, authError, login, loginAsMock, logout]
+    [user, isAuthenticating, authError, login, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

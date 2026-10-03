@@ -7,11 +7,6 @@ import {
   IdCard,
   Lock,
   AlertCircle,
-  FlaskConical,
-  GraduationCap,
-  Users,
-  ShieldCheck,
-  ClipboardCheck,
 } from "lucide-react";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
@@ -26,18 +21,8 @@ const ROLE_HOME = {
   [ROLES.ADMIN]: "/admin/dashboard",
 };
 
-// Tombol mode pratinjau hanya muncul saat `npm run dev` (import.meta.env.DEV),
-// tidak pernah ikut ke build production — jadi aman, tidak akan terlihat oleh
-// siswa/guru sungguhan setelah di-deploy.
-const MOCK_ROLE_OPTIONS = [
-  { role: ROLES.STUDENT, label: "Siswa", icon: GraduationCap },
-  { role: ROLES.TEACHER, label: "Guru Kelas", icon: Users },
-  { role: ROLES.DUTY_TEACHER, label: "Guru Piket", icon: ClipboardCheck },
-  { role: ROLES.ADMIN, label: "Admin", icon: ShieldCheck },
-];
-
 export default function Login() {
-  const { login, loginAsMock, isAuthenticating } = useAuth();
+  const { login, isAuthenticating } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -45,7 +30,6 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
-  const [mockRoleLoading, setMockRoleLoading] = useState(null);
 
   const from = location.state?.from?.pathname;
 
@@ -54,7 +38,7 @@ export default function Login() {
     setFormError("");
 
     if (!identifier.trim() || !password) {
-      setFormError("Username/NIS dan password wajib diisi.");
+      setFormError("Username dan password wajib diisi.");
       return;
     }
 
@@ -63,18 +47,7 @@ export default function Login() {
       // Redirect berdasarkan role dari backend, atau kembali ke halaman asal jika ada.
       navigate(from || ROLE_HOME[user?.role] || "/", { replace: true });
     } catch (error) {
-      setFormError(error?.message || "Username/NIS atau password salah.");
-    }
-  }
-
-  async function handleMockLogin(role) {
-    setFormError("");
-    setMockRoleLoading(role);
-    try {
-      const user = await loginAsMock(role);
-      navigate(ROLE_HOME[user?.role] || "/", { replace: true });
-    } finally {
-      setMockRoleLoading(null);
+      setFormError(error?.message || "Username atau password salah.");
     }
   }
 
@@ -112,9 +85,9 @@ export default function Login() {
             )}
 
             <Input
-              label="Username atau NIS"
+              label="Username"
               icon={IdCard}
-              placeholder="Masukkan username atau NIS"
+              placeholder="Masukkan username"
               autoComplete="username"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
@@ -154,34 +127,6 @@ export default function Login() {
             </Button>
           </form>
         </div>
-
-        {import.meta.env.DEV && (
-          <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
-              <FlaskConical className="h-4 w-4" aria-hidden="true" />
-              Mode Pratinjau (development saja)
-            </div>
-            <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
-              Lihat tampilan tiap role tanpa backend, pakai data contoh. Bagian
-              ini tidak ikut ter-build ke production.
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {MOCK_ROLE_OPTIONS.map(({ role, label, icon: Icon }) => (
-                <Button
-                  key={role}
-                  variant="secondary"
-                  size="sm"
-                  icon={Icon}
-                  onClick={() => handleMockLogin(role)}
-                  isLoading={mockRoleLoading === role}
-                  disabled={isAuthenticating || Boolean(mockRoleLoading)}
-                >
-                  {label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        )}
 
         <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
           Lupa password atau tidak bisa masuk?{" "}
