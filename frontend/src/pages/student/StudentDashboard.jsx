@@ -19,7 +19,7 @@ import attendanceService from "../../services/attendanceService";
 import useAuth from "../../hooks/useAuth";
 
 function getStatusLabel(status) {
-  const value = String(status || "").toLowerCase();
+  const value = String(status || "").toLowerCase().trim();
 
   if (value === "hadir" || value === "present") {
     return "Hadir";
@@ -39,8 +39,11 @@ function getStatusLabel(status) {
 
   if (
     value === "tidak_hadir" ||
+    value === "tidak hadir" ||
     value === "absent" ||
-    value === "tanpa keterangan"
+    value === "tanpa keterangan" ||
+    value === "alpa" ||
+    value === "alpha"
   ) {
     return "Tidak Hadir";
   }
@@ -49,7 +52,7 @@ function getStatusLabel(status) {
 }
 
 function getStatusStyle(status) {
-  const value = String(status || "").toLowerCase();
+  const value = String(status || "").toLowerCase().trim();
 
   if (value === "hadir" || value === "present") {
     return {
@@ -93,6 +96,16 @@ function getStatusStyle(status) {
 function formatDate(dateValue) {
   if (!dateValue) return "-";
 
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    const [year, month, day] = dateValue.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
   const date = new Date(dateValue);
 
   if (Number.isNaN(date.getTime())) {
@@ -109,16 +122,25 @@ function formatDate(dateValue) {
 function formatTime(dateValue) {
   if (!dateValue) return "-";
 
+  if (typeof dateValue === "string") {
+    const trimmed = dateValue.trim();
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
+      return trimmed.slice(0, 5).replace(":", ".");
+    }
+  }
+
   const date = new Date(dateValue);
 
   if (Number.isNaN(date.getTime())) {
     return String(dateValue);
   }
 
-  return date.toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return date
+    .toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    .replace(":", ".");
 }
 
 function StatCard({
@@ -200,16 +222,20 @@ export default function StudentDashboard() {
   const student =
     dashboard?.student ||
     dashboard?.siswa ||
+    dashboard?.data?.student ||
+    dashboard?.data?.siswa ||
     {};
 
   const studentName =
     student?.nama_siswa ||
     student?.name ||
+    student?.nama ||
     user?.name ||
     "Siswa";
 
   const className =
     student?.nama_kelas ||
+    student?.className ||
     student?.kelas ||
     student?.class_name ||
     "-";
@@ -224,10 +250,12 @@ export default function StudentDashboard() {
     dashboard?.todayAttendance ||
     dashboard?.attendanceToday ||
     dashboard?.kehadiran_hari_ini ||
+    dashboard?.data?.today ||
     null;
 
   const todayStatus =
     todayAttendance?.status ||
+    todayAttendance?.status_kehadiran ||
     dashboard?.today_status ||
     dashboard?.status_hari_ini ||
     null;
@@ -235,6 +263,7 @@ export default function StudentDashboard() {
   const todayTime =
     todayAttendance?.waktu_scan ||
     todayAttendance?.waktu_absen ||
+    todayAttendance?.scannedAt ||
     todayAttendance?.time ||
     null;
 
@@ -250,6 +279,7 @@ export default function StudentDashboard() {
   const summary =
     dashboard?.summary ||
     dashboard?.ringkasan ||
+    dashboard?.data?.summary ||
     {};
 
   const hadir =
@@ -264,6 +294,7 @@ export default function StudentDashboard() {
 
   const tidakHadir =
     summary?.tidak_hadir ??
+    summary?.tidakHadir ??
     summary?.absent ??
     0;
 
@@ -275,9 +306,13 @@ export default function StudentDashboard() {
   const history =
     dashboard?.recentAttendance ||
     dashboard?.recent_attendance ||
+    dashboard?.recentHistory ||
+    dashboard?.recent_history ||
     dashboard?.history ||
     dashboard?.attendance_history ||
     dashboard?.riwayat ||
+    dashboard?.data?.recentAttendance ||
+    dashboard?.data?.recentHistory ||
     [];
 
   const recentHistory = Array.isArray(history)
@@ -327,7 +362,7 @@ export default function StudentDashboard() {
               <AlertCircle className="h-5 w-5 shrink-0" />
 
               <span>
-                Gagal memuat dashboard siswa.
+                {error}
               </span>
             </div>
 
@@ -536,7 +571,8 @@ export default function StudentDashboard() {
               {recentHistory.map((item, index) => {
                 const itemStatus =
                   item?.status ||
-                  item?.status_kehadiran;
+                  item?.status_kehadiran ||
+                  item?.currentStatus;
 
                 const itemStyle =
                   getStatusStyle(itemStatus);
@@ -547,21 +583,29 @@ export default function StudentDashboard() {
                   item?.tanggal ||
                   item?.date ||
                   item?.waktu_scan ||
-                  item?.waktu_absen;
+                  item?.waktu_absen ||
+                  item?.created_at;
 
                 const time =
                   item?.waktu_scan ||
                   item?.waktu_absen ||
-                  item?.time;
+                  item?.time ||
+                  item?.scannedAt ||
+                  item?.scanTime;
+
+                const note =
+                  item?.keterangan ||
+                  item?.note ||
+                  "";
 
                 return (
                   <div
                     key={
                       item?.id_absensi ||
                       item?.id ||
-                      index
+                      `history-${index}`
                     }
-                    className="flex items-center justify-between gap-4 px-5 py-4"
+                    className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
                   >
                     <div className="flex min-w-0 items-center gap-3">
 
@@ -576,11 +620,22 @@ export default function StudentDashboard() {
                           {formatDate(date)}
                         </p>
 
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                          {time
-                            ? `Jam ${formatTime(time)}`
-                            : "Waktu tidak tersedia"}
-                        </p>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span>
+                            {time
+                              ? `Jam ${formatTime(time)}`
+                              : "Waktu tidak tersedia"}
+                          </span>
+
+                          {note && (
+                            <>
+                              <span>•</span>
+                              <span className="truncate italic">
+                                {note}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                     </div>

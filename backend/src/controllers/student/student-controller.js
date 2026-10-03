@@ -24,6 +24,7 @@ export async function getStudentDashboard(req, res) {
       student: dashboard.student,
       summary: dashboard.summary,
       today: dashboard.today,
+      recentAttendance: dashboard.recentAttendance,
     });
   } catch (error) {
     console.error("getStudentDashboard:", error);
