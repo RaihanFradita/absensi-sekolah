@@ -1,4 +1,5 @@
 import {
+  findAttendanceHistoryByUser,
   findStudentDashboardByUserId,
   findStudentProfileByUserId,
 } from "../../services/student/student-service.js";
@@ -68,3 +69,35 @@ export async function getStudentProfile(req, res) {
     });
   }
 }
+
+export const getMyAttendanceHistoryByUser = async (req, res) => {
+  try {
+    const id_siswa = req.user.id_siswa;
+    const { page, limit, date, status } = req.query;
+
+    const result = await findAttendanceHistoryByUser({
+      id_siswa,
+      page,
+      limit,
+      date,
+      status,
+    });
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+
+    if (statusCode === 500) {
+      console.error("getMyAttendanceHistory error:", error);
+    }
+
+    return res.status(statusCode).json({
+      success: false,
+      message:
+        statusCode === 500 ? "Terjadi kesalahan pada server" : error.message,
+    });
+  }
+};

@@ -2,6 +2,24 @@ import { CheckCircle2, Clock, XCircle, Circle, FileCheck2, HeartPulse } from 'lu
 import Badge from '../ui/Badge';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABEL } from '../../utils/constants';
 
+const STATUS_MAP = {
+  hadir: ATTENDANCE_STATUS.PRESENT,
+  present: ATTENDANCE_STATUS.PRESENT,
+  terlambat: ATTENDANCE_STATUS.LATE,
+  late: ATTENDANCE_STATUS.LATE,
+  izin: ATTENDANCE_STATUS.EXCUSED,
+  excused: ATTENDANCE_STATUS.EXCUSED,
+  sakit: ATTENDANCE_STATUS.SICK,
+  sick: ATTENDANCE_STATUS.SICK,
+  tidak_hadir: ATTENDANCE_STATUS.ABSENT,
+  "tidak hadir": ATTENDANCE_STATUS.ABSENT,
+  "tanpa keterangan": ATTENDANCE_STATUS.ABSENT,
+  absent: ATTENDANCE_STATUS.ABSENT,
+  alpa: ATTENDANCE_STATUS.ABSENT,
+  alpha: ATTENDANCE_STATUS.ABSENT,
+  not_yet: ATTENDANCE_STATUS.NOT_YET,
+};
+
 const CONFIG = {
   [ATTENDANCE_STATUS.PRESENT]: { tone: 'success', icon: CheckCircle2 },
   [ATTENDANCE_STATUS.LATE]: { tone: 'warning', icon: Clock },
@@ -12,12 +30,16 @@ const CONFIG = {
 };
 
 export default function AttendanceStatus({ status, className = '' }) {
-  const config = CONFIG[status] || CONFIG[ATTENDANCE_STATUS.NOT_YET];
+  const normalizedKey = String(status || '').toLowerCase().trim();
+  const canonicalStatus = STATUS_MAP[normalizedKey] || ATTENDANCE_STATUS.NOT_YET;
+  const config = CONFIG[canonicalStatus] || CONFIG[ATTENDANCE_STATUS.NOT_YET];
   const Icon = config.icon;
+  const label = ATTENDANCE_STATUS_LABEL[canonicalStatus] || status || 'Tidak diketahui';
+
   return (
     <Badge tone={config.tone} className={`gap-1 ${className}`}>
       <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-      {ATTENDANCE_STATUS_LABEL[status] || 'Tidak diketahui'}
+      {label}
     </Badge>
   );
 }

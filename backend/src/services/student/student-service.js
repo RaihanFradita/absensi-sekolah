@@ -1,5 +1,14 @@
 import { pool } from "../../config/database.js";
 
+const ALLOWED_STATUS = [
+  "hadir",
+  "terlambat",
+  "sakit",
+  "izin",
+  "tanpa keterangan",
+];
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
 export async function findStudentDashboardByUserId(id_siswa) {
   // =========================
   // DATA SISWA
@@ -151,3 +160,98 @@ export async function findStudentProfileByUserId(idUser) {
 
   return rows[0];
 }
+
+export const findAttendanceHistoryByUser = async ({
+  id_siswa,
+  page = 1,
+  limit = 10,
+  date,
+  status,
+}) => {
+  // sanitasi input supaya aman dan tidak negatif
+  const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+  const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+  const offset = (currentPage - 1) * perPage;
+
+  // validasi filter
+  if (date && !DATE_REGEX.test(date)) {
+    const err = new Error("Format tanggal tidak valid (gunakan yyyy-mm-dd");
+    err.statusCode = 400;
+    throw err;
+  }
+  if (status && !ALLOWED_STATUS.includes(status)) {
+    const err = new Error("Status tidak valid");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // WHERE dinamis, dipakai bersama oleh query COUNT dan query data
+  const conditions = ["s.id_siswa = ?"];
+  const params = [id_siswa];
+
+  if (date) {
+    conditions.push("se.tanggal = ?");
+    params.push(date);
+  }
+
+  if (status) {
+    conditions.push("a.status = ?");
+    params.push(status);
+  }
+
+  const whereClause = conditions.join(" AND ");
+
+  // hitung total data
+  const [[{ total }]] = await pool.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM absensi a
+    INNER JOIN sesi_absensi se ON
+    a.id_sesi = se.id_sesi
+    INNER JOIN siswa s ON
+    a.id_siswa = s.id_siswa
+    WHERE ${whereClause}
+    `,
+    params,
+  );
+
+  const [rows] = await pool.query(
+    `
+    SELECT
+      a.id_absensi,
+      a.id_sesi,
+      DATE_FORMAT(se.tanggal, '%Y-%m-%d') AS tanggal,
+      a.status,
+      a.waktu_scan,
+      a.waktu_catat,
+      a.keterangan,
+      k.nama_kelas,
+      k.tingkat
+    FROM absensi a
+    INNER JOIN sesi_absensi se
+      ON a.id_sesi = se.id_sesi
+    INNER JOIN siswa s
+      ON a.id_siswa = s.id_siswa
+    INNER JOIN kelas k
+      ON se.id_kelas = k.id_kelas
+    WHERE ${whereClause}
+    ORDER BY se.tanggal DESC, a.id_absensi DESC
+    LIMIT ? OFFSET ?
+  `,
+    [...params, perPage, offset],
+  );
+
+  const totalPages = Math.ceil(total / perPage);
+
+  return {
+    data: rows,
+    pagination: {
+      page: currentPage,
+      limit: perPage,
+      totalItems: total,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1,
+    },
+  };
+};

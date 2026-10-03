@@ -20,7 +20,7 @@ const ENDPOINTS = {
   STUDENT_DASHBOARD: "/students/dashboard",
   STUDENT_PROFILE: "/students/profile",
   SCAN_ATTENDANCE: "/attendance/sessions/scan",
-  ATTENDANCE_HISTORY: "/students/attendance-history",
+  ATTENDANCE_HISTORY: "/students/attendance-histori",
   TEACHER_DASHBOARD: "/teacher/dashboard",
   DUTY_DASHBOARD: "/duty/dashboard",
   ATTENDANCE_DAILY: "/attendance/sessions/daily",
@@ -54,7 +54,54 @@ async function getAttendanceHistory(params = {}) {
     await mockDelay();
     return getMockAttendanceHistory(params);
   }
-  return (await api.get(ENDPOINTS.ATTENDANCE_HISTORY, { params })).data;
+
+  const queryParams = {
+    page: params.page || 1,
+    limit: params.pageSize || params.limit || 10,
+    date: params.date || undefined,
+    status: params.status || undefined,
+  };
+
+  if (queryParams.status) {
+    const statusMap = {
+      present: "hadir",
+      late: "terlambat",
+      sick: "sakit",
+      excused: "izin",
+      absent: "tanpa keterangan",
+    };
+    if (statusMap[queryParams.status]) {
+      queryParams.status = statusMap[queryParams.status];
+    }
+  }
+
+  const response = await api.get(ENDPOINTS.ATTENDANCE_HISTORY, {
+    params: queryParams,
+  });
+
+  const payload = response?.data;
+  const rows = Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(payload?.rows)
+      ? payload.rows
+      : [];
+
+  const pagination = payload?.pagination || {};
+  const total = pagination.totalItems ?? payload?.total ?? rows.length;
+  const totalPages =
+    pagination.totalPages ??
+    Math.max(1, Math.ceil(total / (queryParams.limit || 10)));
+
+  return {
+    ...payload,
+    rows,
+    data: rows,
+    pagination,
+    total,
+    totalPages,
+    page: pagination.page ?? queryParams.page,
+    pageSize: pagination.limit ?? queryParams.limit,
+  };
 }
 
 async function scanAttendance(payload) {

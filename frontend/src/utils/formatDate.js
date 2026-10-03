@@ -3,8 +3,16 @@
 
 export function formatDate(value, options) {
   if (!value) return '-';
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
+  let date;
+  if (value instanceof Date) {
+    date = value;
+  } else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+    const [year, month, day] = value.trim().split('-').map(Number);
+    date = new Date(year, month - 1, day);
+  } else {
+    date = new Date(value);
+  }
+  if (Number.isNaN(date.getTime())) return String(value);
 
   return date.toLocaleDateString('id-ID', {
     day: 'numeric',
