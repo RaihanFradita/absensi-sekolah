@@ -8,7 +8,7 @@ export const signIn = async (data) => {
   if (!identifier || !data.password) {
     return {
       success: false,
-      message: "Username/NIS dan password wajib diisi",
+      message: "Username dan password wajib diisi",
     };
   }
 
@@ -19,7 +19,7 @@ export const signIn = async (data) => {
   if (users.length === 0) {
     return {
       success: false,
-      message: "Username/NIS atau password salah",
+      message: "Username atau password salah",
     };
   }
 
@@ -30,7 +30,7 @@ export const signIn = async (data) => {
   if (!isPassword) {
     return {
       success: false,
-      message: "Username/NIS atau password salah",
+      message: "Username atau password salah",
     };
   }
 

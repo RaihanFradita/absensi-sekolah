@@ -1,6 +1,5 @@
 import api from './api';
 import { AUTH_TOKEN_KEY, AUTH_USER_KEY } from '../utils/constants';
-import { MOCK_USERS, isMockMode, setMockMode, mockDelay } from './mockData';
 
 // Endpoint placeholder — sesuaikan dengan kontrak backend yang sebenarnya.
 const ENDPOINTS = {
@@ -37,46 +36,20 @@ async function login({ identifier, password }) {
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
   }
 
-  // Nonaktifkan mock mode ketika login sungguhan berhasil
-  setMockMode(false);
-
   return { token, user };
-}
-
-/**
- * MODE PRATINJAU — tidak memanggil backend sama sekali.
- * Hanya dipicu lewat tombol eksplisit "Coba tanpa backend" di halaman Login
- * (lihat src/pages/auth/Login.jsx), tidak pernah otomatis. Berguna untuk
- * melihat tampilan semua halaman sebelum backend sungguhan tersedia.
- */
-async function loginMock(role) {
-  await mockDelay(400);
-  const user = MOCK_USERS[role];
-  if (!user) throw new Error('Role pratinjau tidak dikenali.');
-
-  setMockMode(true);
-  localStorage.setItem(AUTH_TOKEN_KEY, `mock-token-${role}`);
-  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  return { token: `mock-token-${role}`, user };
 }
 
 async function logout() {
   try {
-    if (!isMockMode()) {
-      await api.post(ENDPOINTS.LOGOUT);
-    }
+    await api.post(ENDPOINTS.LOGOUT);
   } finally {
     // Selalu bersihkan sesi lokal walau request logout ke backend gagal.
     localStorage.removeItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(AUTH_USER_KEY);
-    setMockMode(false);
   }
 }
 
 async function getCurrentUser() {
-  if (isMockMode()) {
-    return getStoredUser();
-  }
   const { data } = await api.get(ENDPOINTS.ME);
   return data.user ?? data;
 }
@@ -98,12 +71,10 @@ function getToken() {
 function clearSession() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(AUTH_USER_KEY);
-  setMockMode(false);
 }
 
 const authService = {
   login,
-  loginMock,
   logout,
   getCurrentUser,
   getStoredUser,
