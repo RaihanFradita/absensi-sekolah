@@ -454,3 +454,110 @@ export const MOCK_DUTY_SCHEDULES = [
     period: new Date().toISOString().slice(0, 7),
   },
 ];
+
+const DUTY_TEACHER_KEY = "schoolattend_mock_duty_teachers";
+const defaultDutyTeachers = [
+  {
+    id: "dt-1",
+    id_guru_piket: "dt-1",
+    nip: "198503152010011002",
+    nama_guru: "Bapak Ahmad Fauzi, S.Pd",
+    username: "fauzi_piket",
+    hari_piket: "Senin",
+    no_hp: "081234567890",
+    status_aktif: 1,
+  },
+  {
+    id: "dt-2",
+    id_guru_piket: "dt-2",
+    nip: "199008222015032004",
+    nama_guru: "Ibu Siti Aminah, S.Pd",
+    username: "aminah_piket",
+    hari_piket: "Rabu",
+    no_hp: "081987654321",
+    status_aktif: 1,
+  },
+  {
+    id: "dt-3",
+    id_guru_piket: "dt-3",
+    nip: "198811122014021003",
+    nama_guru: "Bapak Bambang Hariyanto, S.Pd",
+    username: "bambang_piket",
+    hari_piket: "Jumat",
+    no_hp: "085712345678",
+    status_aktif: 1,
+  },
+];
+
+function loadDutyTeachers() {
+  try {
+    const raw = localStorage.getItem(DUTY_TEACHER_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  localStorage.setItem(DUTY_TEACHER_KEY, JSON.stringify(defaultDutyTeachers));
+  return defaultDutyTeachers;
+}
+
+function saveDutyTeachers(rows) {
+  localStorage.setItem(DUTY_TEACHER_KEY, JSON.stringify(rows));
+}
+
+export function getMockDutyTeachers({ search, status } = {}) {
+  let rows = loadDutyTeachers();
+  if (search) {
+    const q = search.toLowerCase();
+    rows = rows.filter(
+      (r) =>
+        r.nama_guru?.toLowerCase().includes(q) ||
+        r.nip?.includes(q) ||
+        r.username?.toLowerCase().includes(q)
+    );
+  }
+  if (status !== undefined && status !== "all" && status !== "") {
+    const activeVal = status === "active" || status === "1" ? 1 : 0;
+    rows = rows.filter((r) => r.status_aktif === activeVal);
+  }
+  return rows;
+}
+
+export function saveMockDutyTeacher(payload) {
+  const rows = loadDutyTeachers();
+  const newItem = {
+    id: `dt-${Date.now()}`,
+    id_guru_piket: `dt-${Date.now()}`,
+    nip: payload.nip || "-",
+    nama_guru: payload.nama_guru,
+    username: payload.username,
+    hari_piket: payload.hari_piket || "Senin",
+    no_hp: payload.no_hp || "-",
+    status_aktif: payload.status_aktif ?? 1,
+  };
+  const updated = [newItem, ...rows];
+  saveDutyTeachers(updated);
+  return newItem;
+}
+
+export function updateMockDutyTeacher(id, payload) {
+  const rows = loadDutyTeachers();
+  const index = rows.findIndex((r) => r.id === id || r.id_guru_piket === id);
+  if (index < 0) throw new Error("Data guru piket tidak ditemukan.");
+  const updatedItem = {
+    ...rows[index],
+    nip: payload.nip ?? rows[index].nip,
+    nama_guru: payload.nama_guru ?? rows[index].nama_guru,
+    username: payload.username ?? rows[index].username,
+    hari_piket: payload.hari_piket ?? rows[index].hari_piket,
+    no_hp: payload.no_hp ?? rows[index].no_hp,
+    status_aktif: payload.status_aktif ?? rows[index].status_aktif,
+  };
+  rows[index] = updatedItem;
+  saveDutyTeachers(rows);
+  return updatedItem;
+}
+
+export function deleteMockDutyTeacher(id) {
+  const rows = loadDutyTeachers();
+  const filtered = rows.filter((r) => r.id !== id && r.id_guru_piket !== id);
+  saveDutyTeachers(filtered);
+  return { success: true };
+}

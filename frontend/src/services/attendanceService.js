@@ -13,6 +13,10 @@ import {
   updateMockAttendanceStatus,
   MOCK_USERS,
   MOCK_DUTY_SCHEDULES,
+  getMockDutyTeachers,
+  saveMockDutyTeacher,
+  updateMockDutyTeacher,
+  deleteMockDutyTeacher,
 } from "./mockData";
 import { ATTENDANCE_STATUS, ROLES } from "../utils/constants";
 
@@ -380,6 +384,56 @@ async function saveDutySchedule(payload) {
   return (await api.post(ENDPOINTS.DUTY_SCHEDULES, payload)).data;
 }
 
+async function getDutyTeachers(params = {}) {
+  if (isMockMode()) {
+    await mockDelay();
+    return { rows: getMockDutyTeachers(params), data: getMockDutyTeachers(params) };
+  }
+  try {
+    const res = (await api.get("/admin/duty-teachers", { params })).data;
+    const rows = Array.isArray(res?.data) ? res.data : Array.isArray(res?.rows) ? res.rows : Array.isArray(res) ? res : [];
+    return { rows, data: rows };
+  } catch {
+    return { rows: getMockDutyTeachers(params), data: getMockDutyTeachers(params) };
+  }
+}
+
+async function createDutyTeacher(payload) {
+  if (isMockMode()) {
+    await mockDelay();
+    return saveMockDutyTeacher(payload);
+  }
+  try {
+    return (await api.post("/admin/duty-teachers/add", payload)).data;
+  } catch {
+    return saveMockDutyTeacher(payload);
+  }
+}
+
+async function updateDutyTeacher(id, payload) {
+  if (isMockMode()) {
+    await mockDelay();
+    return updateMockDutyTeacher(id, payload);
+  }
+  try {
+    return (await api.put(`/admin/duty-teachers/edit/${id}`, payload)).data;
+  } catch {
+    return updateMockDutyTeacher(id, payload);
+  }
+}
+
+async function deleteDutyTeacher(id) {
+  if (isMockMode()) {
+    await mockDelay();
+    return deleteMockDutyTeacher(id);
+  }
+  try {
+    return (await api.delete(`/admin/duty-teachers/${id}`)).data;
+  } catch {
+    return deleteMockDutyTeacher(id);
+  }
+}
+
 async function getTodayActiveSession() {
   if (isMockMode()) {
     await mockDelay();
@@ -412,4 +466,8 @@ export default {
   getAttendanceMonitor,
   getDutySchedules,
   saveDutySchedule,
+  getDutyTeachers,
+  createDutyTeacher,
+  updateDutyTeacher,
+  deleteDutyTeacher,
 };
