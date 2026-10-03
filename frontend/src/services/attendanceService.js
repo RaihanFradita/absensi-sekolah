@@ -24,6 +24,7 @@ const ENDPOINTS = {
   TEACHER_DASHBOARD: "/teacher/dashboard",
   DUTY_DASHBOARD: "/duty/dashboard",
   ATTENDANCE_DAILY: "/attendance/sessions/daily",
+  ATTENDANCE_MANUAL: "/attendance/manual",
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
   EXPORT_EXCEL: "/attendance/export.xlsx",
   CREATE_SESSION: "/attendance/sessions/add",
@@ -129,6 +130,16 @@ async function getDailyByClass(kelasId, tanggal) {
       params: { kelas_id: kelasId, tanggal },
     })
   ).data;
+}
+async function manualAttendance(payload) {
+  if (isMockMode()) {
+    await mockDelay(300);
+    return {
+      success: true,
+      message: "Absensi berhasil diperbarui (mode mock)",
+    };
+  }
+  return (await api.post(ENDPOINTS.ATTENDANCE_MANUAL, payload)).data;
 }
 async function updateAttendanceStatus(id, payload) {
   if (isMockMode()) {
@@ -343,6 +354,7 @@ export default {
   getDutyDashboard,
   getDailyAttendance,
   getDailyByClass,
+  manualAttendance,
   updateAttendanceStatus,
   exportAttendanceExcel,
   downloadBlob,

@@ -102,6 +102,7 @@ export default function AttendanceMonitor() {
   const [draftStatus, setDraftStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const classList = Array.isArray(classes) ? classes : classes?.data || [];
 
@@ -111,6 +112,15 @@ export default function AttendanceMonitor() {
       setClassId(String(classList[0].id || classList[0].id_kelas));
     }
   }, [classList, classId]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage("");
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const loadAttendance = useCallback(async () => {
     if (!classId) return;
@@ -158,6 +168,7 @@ export default function AttendanceMonitor() {
     const isValidOption = STATUS_OPTIONS.some((o) => o.value === row.status);
     setDraftStatus(isValidOption ? row.status : "hadir");
     setSaveError("");
+    setSuccessMessage("");
   };
 
   const cancelEdit = () => {
@@ -170,22 +181,33 @@ export default function AttendanceMonitor() {
     if (draftStatus === row.status) return cancelEdit();
     setIsSaving(true);
     setSaveError("");
+    setSuccessMessage("");
     try {
-      if (row.attendanceId) {
-        try {
-          await attendanceService.updateAttendanceStatus(row.attendanceId, {
-            status: draftStatus,
-          });
-        } catch (apiErr) {
-          console.warn("Update status via API gagal atau belum didukung backend:", apiErr);
-        }
+      const payload = {
+        id_siswa: row.studentId,
+        id_kelas: Number(classId),
+        tanggal: selectedDate,
+        status: draftStatus,
+      };
+
+      const response = await attendanceService.manualAttendance(payload);
+
+      if (response && response.success === false) {
+        throw new Error(response.message || "Gagal mengubah status kehadiran.");
       }
+
       setRows((prev) =>
         prev.map((r) => (r.id === row.id ? { ...r, status: draftStatus } : r)),
       );
+      setSuccessMessage(
+        response?.message || `Status absensi ${row.name} berhasil diperbarui.`,
+      );
       cancelEdit();
+
+      // Sinkronkan data absensi terbaru dari database
+      await loadAttendance();
     } catch (err) {
-      setSaveError(err?.message || "Gagal mengubah status.");
+      setSaveError(err?.message || "Gagal mengubah status absensi.");
     } finally {
       setIsSaving(false);
     }
@@ -357,8 +379,16 @@ export default function AttendanceMonitor() {
             subtitle={`${rows.length} siswa terdaftar di kelas`}
           />
           {saveError && (
-            <div className="mx-4 mb-2 rounded-lg bg-red-50 p-2.5 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
-              {saveError}
+            <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg bg-red-50 p-2.5 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{saveError}</span>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mx-4 mb-2 flex items-center gap-2 rounded-lg bg-emerald-50 p-2.5 text-sm text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>{successMessage}</span>
             </div>
           )}
 

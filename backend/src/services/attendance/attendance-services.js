@@ -286,6 +286,115 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
   }
 };
 
+export const manualAttendance = async ({
+  id_siswa,
+  id_kelas,
+  tanggal,
+  status,
+  keterangan = null,
+}) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. Cari sesi absensi
+    const [sessions] = await connection.query(
+      `
+      SELECT id_sesi
+      FROM sesi_absensi
+      WHERE id_kelas = ?
+        AND tanggal = ?
+        AND status != 'batal'
+      LIMIT 1
+      `,
+      [id_kelas, tanggal],
+    );
+
+    if (sessions.length === 0) {
+      throw new Error("Sesi absensi belum dibuka");
+    }
+
+    const id_sesi = sessions[0].id_sesi;
+
+    // 2. Pastikan siswa berada di kelas tersebut
+    const [students] = await connection.query(
+      `
+      SELECT id_siswa
+      FROM siswa
+      WHERE id_siswa = ?
+        AND id_kelas = ?
+      `,
+      [id_siswa, id_kelas],
+    );
+
+    if (students.length === 0) {
+      throw new Error("Siswa tidak terdaftar di kelas ini");
+    }
+
+    // 3. Cek apakah siswa sudah memiliki absensi
+    const [existing] = await connection.query(
+      `
+      SELECT id_absensi
+      FROM absensi
+      WHERE id_sesi = ?
+        AND id_siswa = ?
+      LIMIT 1
+      `,
+      [id_sesi, id_siswa],
+    );
+
+    // 4. Kalau sudah ada → UPDATE
+    if (existing.length > 0) {
+      await connection.query(
+        `
+        UPDATE absensi
+        SET status = ?,
+            keterangan = ?
+        WHERE id_absensi = ?
+        `,
+        [status, keterangan, existing[0].id_absensi],
+      );
+    }
+
+    // 5. Kalau belum ada → INSERT
+    else {
+      await connection.query(
+        `
+        INSERT INTO absensi (
+          id_sesi,
+          id_siswa,
+          status,
+          waktu_scan,
+          keterangan
+        )
+        VALUES (?, ?, ?, NULL, ?)
+        `,
+        [id_sesi, id_siswa, status, keterangan],
+      );
+    }
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message:
+        existing.length > 0
+          ? "Absensi berhasil diperbarui"
+          : "Absensi manual berhasil dibuat",
+    };
+  } catch (error) {
+    await connection.rollback();
+
+    return {
+      success: false,
+      message: error.message || "Terjadi kesalahan server",
+    };
+  } finally {
+    connection.release();
+  }
+};
+
 export const getDailyByClass = async ({ kelasId, tanggal }) => {
   const getTodayWIB = () =>
     new Date().toLocaleDateString("en-CA", {

@@ -5,6 +5,7 @@ import {
   endSessionById,
   scanQrAbsensi,
   getDailyByClass,
+  manualAttendance,
 } from "../../services/attendance/attendance-services.js";
 import { getIO } from "../../socket.js";
 
@@ -200,6 +201,40 @@ export const scanAbsensi = async (req, res) => {
       success: false,
       message: "Tejadi kesalahan server",
       error: error.message,
+    });
+  }
+};
+
+export const createManualAttendance = async (req, res) => {
+  try {
+    const { id_siswa, id_kelas, tanggal, status } = req.body;
+
+    // validasi input wajib
+    if (!id_siswa || !id_kelas || !tanggal || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "Data absensi belum lengkap",
+      });
+    }
+
+    const result = await manualAttendance({
+      id_siswa,
+      id_kelas,
+      tanggal,
+      status,
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.log("Manual attendance error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server",
     });
   }
 };
