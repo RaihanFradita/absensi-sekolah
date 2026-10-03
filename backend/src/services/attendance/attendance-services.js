@@ -17,7 +17,7 @@ export const createNewSession = async ({
     const [existingSession] = await connection.query(
       `
         SELECT id_sesi FROM sesi_absensi
-        WHERE id_guru = ? AND id_kelas = ? AND tanggal = ? AND status = 'aktif'
+        WHERE id_guru = ? AND id_kelas = ? AND tanggal = ? 
         FOR UPDATE
         `,
       [id_guru, id_kelas, today],
