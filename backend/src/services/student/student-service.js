@@ -1,6 +1,6 @@
 import { pool } from "../../config/database.js";
 
-export async function findStudentDashboardByUserId(idUser) {
+export async function findStudentDashboardByUserId(id_siswa) {
   // =========================
   // DATA SISWA
   // =========================
@@ -8,19 +8,16 @@ export async function findStudentDashboardByUserId(idUser) {
     `
       SELECT
         s.id_siswa,
-        s.id_user,
         s.nama_siswa,
-        s.id_kelas,
-        s.status_aktif,
         k.nama_kelas,
         k.tingkat
       FROM siswa s
       INNER JOIN kelas k
         ON s.id_kelas = k.id_kelas
-      WHERE s.id_user = ?
+      WHERE s.id_siswa = ?
       LIMIT 1
     `,
-    [idUser],
+    [id_siswa],
   );
 
   const student = studentRows[0];
@@ -35,11 +32,11 @@ export async function findStudentDashboardByUserId(idUser) {
   const [attendanceRows] = await pool.query(
     `
       SELECT
-        a.status
-      FROM absensi a
-      WHERE a.id_siswa = ?
+        status
+      FROM absensi
+      WHERE id_siswa = ?
     `,
-    [student.id_siswa],
+    [id_siswa],
   );
 
   let present = 0;
@@ -54,10 +51,8 @@ export async function findStudentDashboardByUserId(idUser) {
     } else if (status === "terlambat") {
       late++;
     } else if (
-      status === "tidak_hadir" ||
-      status === "tidak hadir" ||
-      status === "alpha" ||
-      status === "alpa" ||
+      status === "sakit" ||
+      status === "izin" ||
       status === "tanpa keterangan"
     ) {
       absent++;
@@ -72,18 +67,16 @@ export async function findStudentDashboardByUserId(idUser) {
       SELECT
         a.id_absensi,
         a.status,
-        a.waktu_absen,
-        a.waktu_scan
+        a.waktu_scan,
+        a.keterangan
       FROM absensi a
+      INNER JOIN sesi_absensi s
+        ON a.id_sesi = s.id_sesi
       WHERE a.id_siswa = ?
-        AND DATE(
-          COALESCE(a.waktu_scan, a.waktu_absen)
-        ) = CURDATE()
-      ORDER BY
-        COALESCE(a.waktu_scan, a.waktu_absen) DESC
+        AND s.tanggal = CURDATE()
       LIMIT 1
     `,
-    [student.id_siswa],
+    [id_siswa],
   );
 
   const today = todayRows[0] || null;
@@ -96,15 +89,17 @@ export async function findStudentDashboardByUserId(idUser) {
       SELECT
         a.id_absensi,
         a.status,
-        a.waktu_absen,
-        a.waktu_scan
+        a.waktu_scan,
+        a.keterangan,
+        s.tanggal
       FROM absensi a
+      INNER JOIN sesi_absensi s
+        ON a.id_sesi = s.id_sesi
       WHERE a.id_siswa = ?
-      ORDER BY
-        COALESCE(a.waktu_scan, a.waktu_absen) DESC
+      ORDER BY s.tanggal DESC, a.waktu_scan DESC
       LIMIT 5
     `,
-    [student.id_siswa],
+    [id_siswa],
   );
 
   // =========================

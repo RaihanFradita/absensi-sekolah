@@ -5,12 +5,12 @@ import {
 
 export async function getStudentDashboard(req, res) {
   try {
-    const idUser = req.user.id_user;
+    const id_siswa = req.user.id_siswa;
 
     console.log("USER DARI TOKEN:", req.user);
-    console.log("ID USER:", idUser);
+    console.log("ID USER:", id_siswa);
 
-    const dashboard = await findStudentDashboardByUserId(idUser);
+    const dashboard = await findStudentDashboardByUserId(id_siswa);
 
     if (!dashboard) {
       return res.status(404).json({
