@@ -1,2 +1,5 @@
-import DutyDashboard from './DutyDashboard';
-export default function NotScanned(){return <DutyDashboard onlyNotScanned title="Siswa Belum Scan"/>;}
+import DutyRecap from "./DutyRecap";
+
+export default function NotScanned() {
+  return <DutyRecap onlyNotScanned title="Siswa Belum Scan" />;
+}

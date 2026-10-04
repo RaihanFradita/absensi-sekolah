@@ -8,6 +8,7 @@ import { admin } from "./routes/admin-routes.js";
 import { student } from "./routes/student-routes.js";
 import { attandance } from "./routes/attendance-routes.js";
 import { teacher } from "./routes/teacher-routes.js";
+import { picketTeacher } from "./routes/picket-teacher-routes.js";
 
 export const app = express();
 
@@ -27,4 +28,5 @@ app.use("/api/auth", auth);
 app.use("/api/admin", admin);
 app.use("/api/students", student);
 app.use("/api/teacher", teacher);
+app.use("/api/picket-teacher", picketTeacher);
 app.use("/api/attendance", attandance);

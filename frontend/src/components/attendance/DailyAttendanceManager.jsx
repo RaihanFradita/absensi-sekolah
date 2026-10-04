@@ -52,22 +52,35 @@ export default function DailyAttendanceManager({
           activeStatus === "total" || r.currentStatus === activeStatus;
 
         const q = search.trim().toLowerCase();
+        const name = (r.student?.name || r.nama_siswa || "").toLowerCase();
+        const nis = (r.student?.nis || r.nis || "").toLowerCase();
+        const searchOk = !q || name.includes(q) || nis.includes(q);
 
-        const searchOk = !q || r.student?.name?.toLowerCase().includes(q);
+        const rowClass = (r.student?.className || r.nama_kelas || "").trim();
+        const classOk = !className || rowClass === className.trim();
 
-        return statusOk && searchOk;
+        return statusOk && searchOk && classOk;
       }),
-    [rows, activeStatus, search],
+    [rows, activeStatus, search, className],
   );
 
+  // Rows setelah filter kelas (untuk stat count agar sinkron dgn filter kelas)
+  const classFilteredRows = useMemo(() => {
+    if (!className) return rows;
+    return rows.filter((r) => {
+      const rowClass = (r.student?.className || r.nama_kelas || "").trim();
+      return rowClass === className.trim();
+    });
+  }, [rows, className]);
+
   const count = (status) =>
-    rows.filter((r) => r.currentStatus === status).length;
+    classFilteredRows.filter((r) => r.currentStatus === status).length;
 
   const stats = [
     {
       key: "total",
       label: "Total Siswa",
-      value: rows.length,
+      value: classFilteredRows.length,
     },
     {
       key: "present",
@@ -93,6 +106,11 @@ export default function DailyAttendanceManager({
       key: "sick",
       label: "Sakit",
       value: count(ATTENDANCE_STATUS.SICK),
+    },
+    {
+      key: "not_yet",
+      label: "Belum Absen",
+      value: count(ATTENDANCE_STATUS.NOT_YET),
     },
   ];
 
@@ -226,7 +244,12 @@ export default function DailyAttendanceManager({
                   >
                     {/* Nama */}
                     <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                      {row.student?.name}
+                      {row.student?.name || row.nama_siswa}
+                      {row.student?.nis && (
+                        <div className="text-xs font-normal text-slate-400">
+                          NIS: {row.student.nis}
+                        </div>
+                      )}
 
                       {row.changedBy && (
                         <div className="mt-1 flex items-center gap-1 text-[11px] font-normal text-slate-400">
@@ -237,7 +260,7 @@ export default function DailyAttendanceManager({
                     </td>
 
                     {/* Kelas */}
-                    <td className="px-4 py-3">{row.student?.className}</td>
+                    <td className="px-4 py-3">{row.student?.className || row.nama_kelas}</td>
 
                     {/* Jam Scan */}
                     <td className="px-4 py-3 font-mono">

@@ -26,7 +26,8 @@ const ENDPOINTS = {
   SCAN_ATTENDANCE: "/attendance/sessions/scan",
   ATTENDANCE_HISTORY: "/students/attendance-histori",
   TEACHER_DASHBOARD: "/teacher/dashboard",
-  DUTY_DASHBOARD: "/duty/dashboard",
+  DUTY_DASHBOARD: "/picket-teacher/dashboard",
+  DUTY_DAILY: "/picket-teacher/daily",
   ATTENDANCE_DAILY: "/attendance/sessions/daily",
   ATTENDANCE_MANUAL: "/attendance/manual",
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
@@ -167,6 +168,13 @@ async function getDutyDashboard(params = {}) {
     return getMockDutyDashboard();
   }
   return (await api.get(ENDPOINTS.DUTY_DASHBOARD, { params })).data;
+}
+async function getDutyDaily(params = {}) {
+  if (isMockMode()) {
+    await mockDelay();
+    return { rows: getMockAttendanceRows(params) };
+  }
+  return (await api.get(ENDPOINTS.DUTY_DAILY, { params })).data;
 }
 async function getDailyAttendance(params = {}) {
   if (isMockMode()) {
@@ -456,6 +464,7 @@ export default {
   getAttendanceHistory,
   getTeacherDashboard,
   getDutyDashboard,
+  getDutyDaily,
   getDailyAttendance,
   getDailyByClass,
   manualAttendance,
