@@ -129,7 +129,10 @@ export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
   };
 };
 
-export const findTodayActiveSessionByTeacherId = async ({ id_guru, id_kelas = null }) => {
+export const findTodayActiveSessionByTeacherId = async ({
+  id_guru,
+  id_kelas = null,
+}) => {
   const today = new Date().toISOString().split("T")[0];
 
   // Jika id_kelas dikirim, filter berdasarkan kelas; jika tidak, ambil sesi aktif manapun
@@ -439,6 +442,30 @@ export const getDailyByClass = async ({ kelasId, tanggal }) => {
   );
 
   console.log(rows);
+
+  return rows;
+};
+
+export const getKehadiranKelasTanggal = async ({ id_kelas, tanggal }) => {
+  const [rows] = await pool.query(
+    `
+    SELECT s.nis,
+            s.nama_siswa,
+            CONCAT(k.tingkat, ' ', k.nama_kelas) AS kelas,
+            a.waktu_scan,
+            a.keterangan,
+            COALESCE(a.status, 'belum absen') AS status
+     FROM siswa s
+     JOIN kelas k ON k.id_kelas = s.id_kelas
+     LEFT JOIN sesi_absensi sa
+            ON sa.id_kelas = s.id_kelas AND sa.tanggal = ?
+     LEFT JOIN absensi a
+            ON a.id_sesi = sa.id_sesi AND a.id_siswa = s.id_siswa
+     WHERE s.id_kelas = ? AND s.status_aktif = 1
+     ORDER BY s.nama_siswa
+    `,
+    [tanggal, id_kelas],
+  );
 
   return rows;
 };
