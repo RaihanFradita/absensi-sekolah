@@ -338,7 +338,7 @@ export default function AttendanceMonitor() {
 
             <Button
               size="sm"
-              variant="secondary"
+              variant="success"
               icon={FileSpreadsheet}
               onClick={handleExport}
               isLoading={isExporting}
