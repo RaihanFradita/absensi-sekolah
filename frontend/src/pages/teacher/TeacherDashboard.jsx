@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   GraduationCap,
@@ -12,7 +12,8 @@ import {
   UserX,
   QrCode,
   X,
-  Edit2
+  Edit2,
+  HeartPulse,
 } from "lucide-react";
 import PageContainer from "../../components/layout/PageContainer";
 import Loading from "../../components/ui/Loading";
@@ -32,6 +33,12 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // State kelas — classIdRef dipakai di dalam load agar tidak masuk deps
+  // sehingga tidak menyebabkan loop useCallback/useEffect
+  const [classId, setClassId] = useState("");
+  const [classes, setClasses] = useState([]);
+  const classIdRef = useRef(""); // mirror classId, selalu up-to-date
+
   const [activeSession, setActiveSession] = useState(null);
 
   // Table state
@@ -45,13 +52,33 @@ export default function TeacherDashboard() {
   const [editStatus, setEditStatus] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
+  /**
+   * load hanya bergantung pada `date`.
+   * classId dibaca lewat classIdRef agar perubahan kelas tidak membutuhkan
+   * pembuatan ulang fungsi (dan tidak memicu useEffect loop).
+   */
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const dashboard = await attendanceService.getTeacherDashboard({ date });
+      const dashboard = await attendanceService.getTeacherDashboard({
+        date,
+        id_kelas: classIdRef.current || undefined,
+      });
       setData(dashboard);
+
+      // Perbarui daftar kelas dari respons (tetap sinkron tiap load)
+      if (Array.isArray(dashboard.classes) && dashboard.classes.length) {
+        setClasses(dashboard.classes);
+      }
+
+      // Inisialisasi classId dari server sekali saja (saat classIdRef masih kosong)
+      // Tidak memicu double fetch karena classId bukan dep useCallback ini
+      if (!classIdRef.current && dashboard.class?.id_kelas) {
+        classIdRef.current = String(dashboard.class.id_kelas);
+        setClassId(String(dashboard.class.id_kelas));
+      }
     } catch (e) {
       console.error("TeacherDashboard:", e);
       setError(e?.message || "Gagal memuat data dashboard guru.");
@@ -60,34 +87,53 @@ export default function TeacherDashboard() {
     }
 
     try {
-      const sessionRes = await attendanceService.getTodayActiveSession();
+      const sessionRes = await attendanceService.getTodayActiveSession(
+        classIdRef.current ? { id_kelas: classIdRef.current } : {},
+      );
       if (sessionRes?.success && sessionRes?.data) {
         setActiveSession(sessionRes.data);
       } else {
         setActiveSession(null);
       }
-    } catch (e) {
-      // It's normal for this to fail (e.g. 404) if there's no active session
+    } catch {
+      // Wajar jika tidak ada sesi aktif (404 / network)
       setActiveSession(null);
     }
-  }, [date]);
+  }, [date]); // ← hanya date; classId dikelola via ref
 
   useEffect(() => {
     load();
   }, [load]);
 
+  /**
+   * Handler perubahan dropdown kelas.
+   * Update ref + state, reset halaman, lalu trigger load secara manual.
+   */
+  const handleClassChange = (e) => {
+    const val = e.target.value;
+    classIdRef.current = val;
+    setClassId(val);
+    setPage(1);
+    load();
+  };
+
   // Filtering & Pagination
   const students = data?.students ?? [];
   const filteredStudents = useMemo(() => {
     return students.filter((s) => {
-      const matchName = s.nama_siswa.toLowerCase().includes(search.toLowerCase());
+      const matchName = s.nama_siswa
+        .toLowerCase()
+        .includes(search.toLowerCase());
       const matchStatus = statusFilter ? s.status === statusFilter : true;
       return matchName && matchStatus;
     });
   }, [students, search, statusFilter]);
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-  const paginatedStudents = filteredStudents.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const paginatedStudents = filteredStudents.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
+  );
 
   // Mapping nilai UI → nilai ENUM di database
   const STATUS_TO_DB = {
@@ -120,7 +166,10 @@ export default function TeacherDashboard() {
 
   if (loading && !data) {
     return (
-      <PageContainer title="Dashboard Guru Kelas" description="Memuat informasi kelas...">
+      <PageContainer
+        title="Dashboard Kehadiran"
+        description="Memuat informasi kehadiran..."
+      >
         <Loading label="Memuat dashboard..." />
       </PageContainer>
     );
@@ -128,48 +177,98 @@ export default function TeacherDashboard() {
 
   if (error && !data) {
     return (
-      <PageContainer title="Dashboard Guru Kelas">
-        <EmptyState title="Gagal memuat data dashboard." description={error} action={<Button onClick={load}>Coba Lagi</Button>} />
+      <PageContainer title="Dashboard Kehadiran">
+        <EmptyState
+          title="Gagal memuat data dashboard."
+          description={error}
+          action={<Button onClick={load}>Coba Lagi</Button>}
+        />
       </PageContainer>
     );
   }
 
   if (data && !data.class) {
     return (
-      <PageContainer title={`Halo, ${user?.name || data?.teacher?.nama_guru} 👋`} description="Dashboard Guru Kelas">
-        <EmptyState title="Tidak ada kelas yang ditugaskan." description="Anda belum ditugaskan sebagai wali kelas untuk kelas manapun." />
+      <PageContainer
+        title="Dashboard Kehadiran"
+        description={`Halo, ${user?.name} 👋`}
+      >
+        <EmptyState
+          title="Belum ada data kelas"
+          description="Tidak ada kelas aktif yang tersedia saat ini."
+        />
       </PageContainer>
     );
   }
 
   if (!data) return null;
 
-  const { teacher, class: classData, summary } = data;
-  const { hadir = 0, terlambat = 0, izin = 0, tidak_hadir = 0, total = 0 } = summary || {};
+  const { class: classData, summary } = data;
+  const {
+    hadir = 0,
+    terlambat = 0,
+    izin = 0,
+    sakit = 0,
+    tidak_hadir = 0,
+    total = 0,
+  } = summary || {};
   const hadirDanTerlambat = hadir + terlambat;
-  const persentase = total > 0 ? ((hadirDanTerlambat / total) * 100).toFixed(1) : 0;
+  const persentase =
+    total > 0 ? ((hadirDanTerlambat / total) * 100).toFixed(1) : 0;
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case "hadir": 
-        return <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Hadir</span>;
-      case "terlambat": 
-        return <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Terlambat</span>;
-      case "izin": 
-        return <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">Izin</span>;
-      case "sakit": 
-        return <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">Sakit</span>;
-      default: 
-        return <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Tidak Hadir</span>;
+      case "hadir":
+        return (
+          <span className="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+            Hadir
+          </span>
+        );
+      case "terlambat":
+        return (
+          <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+            Terlambat
+          </span>
+        );
+      case "izin":
+        return (
+          <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">
+            Izin
+          </span>
+        );
+      case "sakit":
+        return (
+          <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-600/20">
+            Sakit
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
+            Tidak Hadir
+          </span>
+        );
     }
   };
 
   const formatTime = (timeStr) => {
     if (!timeStr) return "-";
-    return new Date(timeStr).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+    return new Date(timeStr).toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
-  const belumAbsenStudents = students.filter(s => s.status === "tidak_hadir" || !s.status);
+  const belumAbsenStudents = students.filter(
+    (s) => s.status === "tidak_hadir" || !s.status,
+  );
+
+  // Label tanggal terpilih untuk judul kartu kehadiran
+  const dateLabel = new Date(`${date}T00:00:00`).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <PageContainer
@@ -177,17 +276,39 @@ export default function TeacherDashboard() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Selamat datang, Pak/Bu {teacher.nama_guru} 👋
+              Halo, {user?.name} 👋
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Wali Kelas {classData.nama_kelas}
+              Dashboard Kehadiran — Rekap kehadiran {classData.tingkat}
+              {classData.nama_kelas}
             </p>
           </div>
-          <div className="mt-4 sm:mt-0">
+
+          {/* Filter Tanggal & Kelas */}
+          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-0">
+            {/* Dropdown kelas */}
+            <select
+              id="select-kelas"
+              value={classId}
+              onChange={handleClassChange}
+              className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+            >
+              {classes.map((c) => (
+                <option key={c.id_kelas} value={String(c.id_kelas)}>
+                  {c.tingkat}
+                  {c.nama_kelas}
+                </option>
+              ))}
+            </select>
+
+            {/* Input tanggal */}
             <Input
               type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setPage(1);
+              }}
               className="w-full sm:w-auto"
             />
           </div>
@@ -197,39 +318,58 @@ export default function TeacherDashboard() {
       <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-12">
         {/* KOLOM KIRI (UTAMA) */}
         <div className="space-y-6 xl:col-span-8">
-          
           {/* STATISTIK */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Card padding="p-4" className="flex flex-col items-center justify-center text-center">
+            <Card
+              padding="p-4"
+              className="flex flex-col items-center justify-center text-center"
+            >
               <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                 <CheckCircle className="h-6 w-6" />
               </div>
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">{hadir}</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                {hadir}
+              </p>
               <p className="text-sm font-medium text-slate-500">Hadir</p>
             </Card>
-            
-            <Card padding="p-4" className="flex flex-col items-center justify-center text-center">
+
+            <Card
+              padding="p-4"
+              className="flex flex-col items-center justify-center text-center"
+            >
               <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
                 <Clock className="h-6 w-6" />
               </div>
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">{terlambat}</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                {terlambat}
+              </p>
               <p className="text-sm font-medium text-slate-500">Terlambat</p>
             </Card>
-            
-            <Card padding="p-4" className="flex flex-col items-center justify-center text-center">
+
+            <Card
+              padding="p-4"
+              className="flex flex-col items-center justify-center text-center"
+            >
               <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                 <FileText className="h-6 w-6" />
               </div>
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">{izin}</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                {izin}
+              </p>
               <p className="text-sm font-medium text-slate-500">Izin</p>
             </Card>
-            
-            <Card padding="p-4" className="flex flex-col items-center justify-center text-center">
-              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                <XCircle className="h-6 w-6" />
+
+            <Card
+              padding="p-4"
+              className="flex flex-col items-center justify-center text-center"
+            >
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                <HeartPulse className="h-6 w-6" />
               </div>
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">{tidak_hadir}</p>
-              <p className="text-sm font-medium text-slate-500">Tidak Hadir</p>
+              <p className="text-3xl font-bold text-slate-900 dark:text-white">
+                {sakit}
+              </p>
+              <p className="text-sm font-medium text-slate-500">Sakit</p>
             </Card>
           </div>
 
@@ -237,24 +377,36 @@ export default function TeacherDashboard() {
           <Card padding="p-0" className="overflow-hidden">
             <div className="border-b border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Daftar Kehadiran Siswa</h2>
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-white">
+                  Daftar Kehadiran Siswa
+                </h2>
                 <div className="flex items-center gap-2">
                   <Input
                     placeholder="Cari nama siswa..."
                     value={search}
-                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                    startAdornment={<Search className="h-4 w-4 text-slate-400" />}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPage(1);
+                    }}
+                    startAdornment={
+                      <Search className="h-4 w-4 text-slate-400" />
+                    }
                     className="w-full sm:w-56"
                   />
                   <select
+                    id="filter-status"
                     className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
                     value={statusFilter}
-                    onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setPage(1);
+                    }}
                   >
                     <option value="">Semua Status</option>
                     <option value="hadir">Hadir</option>
                     <option value="terlambat">Terlambat</option>
                     <option value="izin">Izin</option>
+                    <option value="sakit">Sakit</option>
                     <option value="tidak_hadir">Tidak Hadir</option>
                   </select>
                 </div>
@@ -262,7 +414,9 @@ export default function TeacherDashboard() {
             </div>
 
             {students.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">Belum ada data siswa.</div>
+              <div className="p-8 text-center text-slate-500">
+                Belum ada data siswa.
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600 dark:text-slate-300">
@@ -278,15 +432,31 @@ export default function TeacherDashboard() {
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                     {paginatedStudents.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-5 py-8 text-center text-slate-500">Tidak ada siswa yang cocok dengan pencarian.</td>
+                        <td
+                          colSpan="5"
+                          className="px-5 py-8 text-center text-slate-500"
+                        >
+                          Tidak ada siswa yang cocok dengan pencarian.
+                        </td>
                       </tr>
                     ) : (
                       paginatedStudents.map((s, idx) => (
-                        <tr key={s.id_siswa} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                          <td className="px-5 py-3">{(page - 1) * itemsPerPage + idx + 1}</td>
-                          <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">{s.nama_siswa}</td>
-                          <td className="px-5 py-3">{formatTime(s.waktu_absen)}</td>
-                          <td className="px-5 py-3">{getStatusBadge(s.status)}</td>
+                        <tr
+                          key={s.id_siswa}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        >
+                          <td className="px-5 py-3">
+                            {(page - 1) * itemsPerPage + idx + 1}
+                          </td>
+                          <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">
+                            {s.nama_siswa}
+                          </td>
+                          <td className="px-5 py-3">
+                            {formatTime(s.waktu_absen)}
+                          </td>
+                          <td className="px-5 py-3">
+                            {getStatusBadge(s.status)}
+                          </td>
                           <td className="px-5 py-3 text-right">
                             <button
                               onClick={() => {
@@ -313,18 +483,31 @@ export default function TeacherDashboard() {
                   Halaman {page} dari {totalPages}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} icon={ChevronLeft}>Sebelumnya</Button>
-                  <Button variant="secondary" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Selanjutnya <ChevronRight className="ml-1 h-4 w-4" /></Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    icon={ChevronLeft}
+                  >
+                    Sebelumnya
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                  >
+                    Selanjutnya <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             )}
           </Card>
-
         </div>
 
         {/* KOLOM KANAN (SIDEBAR) */}
         <div className="space-y-6 xl:col-span-4">
-          
           {/* INFO KELAS */}
           <Card>
             <CardHeader title="Informasi Kelas" />
@@ -333,31 +516,44 @@ export default function TeacherDashboard() {
                 <GraduationCap className="h-7 w-7" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Kelas {classData.nama_kelas}</h3>
-                <p className="text-sm text-slate-500">Tingkat {classData.tingkat}</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  Kelas {classData.nama_kelas}
+                </h3>
+                <p className="text-sm text-slate-500">
+                  Tingkat {classData.tingkat}
+                </p>
               </div>
             </div>
             <div className="mt-5 space-y-3 text-sm text-slate-600 dark:text-slate-300">
               <div className="flex justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
                 <span className="text-slate-500">Jumlah Siswa</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{total} Siswa</span>
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {total} Siswa
+                </span>
               </div>
               <div className="flex justify-between pb-1">
-                <span className="text-slate-500">Wali Kelas</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{teacher.nama_guru}</span>
+                <span className="text-slate-500">Tidak Hadir</span>
+                <span className="font-semibold text-red-600 dark:text-red-400">
+                  {tidak_hadir} Siswa
+                </span>
               </div>
             </div>
           </Card>
 
           {/* PERSENTASE KEHADIRAN */}
           <Card>
-            <CardHeader title="Kehadiran Hari Ini" />
+            <CardHeader title={`Kehadiran — ${dateLabel}`} />
             <div className="mt-2">
               <div className="flex items-end gap-1">
-                <span className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">{persentase}%</span>
+                <span className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+                  {persentase}%
+                </span>
               </div>
               <p className="mt-2 text-sm text-slate-500">
-                <strong className="font-semibold text-slate-900 dark:text-slate-200">{hadirDanTerlambat}</strong> dari {total} siswa sudah melakukan absensi.
+                <strong className="font-semibold text-slate-900 dark:text-slate-200">
+                  {hadirDanTerlambat}
+                </strong>{" "}
+                dari {total} siswa sudah melakukan absensi.
               </p>
               <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
@@ -379,19 +575,31 @@ export default function TeacherDashboard() {
                 <>
                   <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                     <span className="relative flex h-2 w-2">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                     </span>
                     Sesi QR Aktif
                   </div>
-                  <Button fullWidth onClick={() => navigate(`/teacher/sessions/${activeSession.kode_qr}`)}>
+                  <Button
+                    fullWidth
+                    onClick={() =>
+                      navigate(`/teacher/sessions/${activeSession.kode_qr}`)
+                    }
+                  >
                     Lihat QR Code
                   </Button>
                 </>
               ) : (
                 <>
-                  <p className="mb-5 text-sm text-slate-500">Belum ada sesi QR yang sedang aktif.</p>
-                  <Button fullWidth onClick={() => navigate("/teacher/sessions/create")}>
+                  <p className="mb-5 text-sm text-slate-500">
+                    Belum ada sesi QR yang sedang aktif.
+                  </p>
+                  <Button
+                    fullWidth
+                    onClick={() =>
+                      navigate(`/teacher/sessions/create?id_kelas=${classId}`)
+                    }
+                  >
                     Buka QR Kehadiran
                   </Button>
                 </>
@@ -400,7 +608,7 @@ export default function TeacherDashboard() {
           </Card>
 
           {/* SISWA BELUM ABSEN */}
-          <Card>
+          {/* <Card>
             <CardHeader title="Siswa Belum Absen" />
             <div className="mt-2">
               {belumAbsenStudents.length === 0 ? (
@@ -408,8 +616,12 @@ export default function TeacherDashboard() {
                   <div className="mb-3 rounded-full bg-emerald-50 p-2 dark:bg-emerald-900/20">
                     <CheckCircle className="h-8 w-8 text-emerald-500" />
                   </div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">Hebat!</p>
-                  <p className="mt-1 text-sm text-slate-500">Semua siswa sudah melakukan absensi.</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    Hebat!
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Semua siswa sudah melakukan absensi.
+                  </p>
                 </div>
               ) : (
                 <>
@@ -423,19 +635,23 @@ export default function TeacherDashboard() {
                   </div>
                   <ul className="max-h-60 space-y-2 overflow-y-auto pr-2">
                     {belumAbsenStudents.map((s) => (
-                      <li key={s.id_siswa} className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300">
+                      <li
+                        key={s.id_siswa}
+                        className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-2.5 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300"
+                      >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700">
                           <UserX className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                         </div>
-                        <span className="truncate font-medium">{s.nama_siswa}</span>
+                        <span className="truncate font-medium">
+                          {s.nama_siswa}
+                        </span>
                       </li>
                     ))}
                   </ul>
                 </>
               )}
             </div>
-          </Card>
-          
+          </Card> */}
         </div>
       </div>
 
@@ -444,52 +660,75 @@ export default function TeacherDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm transition-opacity">
           <div className="w-full max-w-md animate-fade-in rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900">
             <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Ubah Status Kehadiran</h3>
-              <button onClick={() => setEditingStudent(null)} className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                Ubah Status Kehadiran
+              </h3>
+              <button
+                onClick={() => setEditingStudent(null)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="mb-6 space-y-4 text-sm">
               <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
                 <div className="mb-2 flex justify-between">
                   <span className="text-slate-500">Nama Siswa</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{editingStudent.nama_siswa}</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {editingStudent.nama_siswa}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Tanggal Absensi</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{date}</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {date}
+                  </span>
                 </div>
               </div>
 
               <div>
-                <label className="mb-2 block font-medium text-slate-700 dark:text-slate-300">Pilih Status Baru</label>
+                <label className="mb-2 block font-medium text-slate-700 dark:text-slate-300">
+                  Pilih Status Baru
+                </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {['hadir', 'terlambat', 'izin', 'tidak_hadir'].map((statusOption) => (
-                    <button
-                      key={statusOption}
-                      onClick={() => setEditStatus(statusOption)}
-                      className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium transition-colors ${
-                        editStatus === statusOption 
-                          ? 'border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400' 
-                          : 'border-slate-200 text-slate-600 hover:border-brand-200 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      {statusOption === 'hadir' && 'Hadir'}
-                      {statusOption === 'terlambat' && 'Terlambat'}
-                      {statusOption === 'izin' && 'Izin'}
-                      {statusOption === 'tidak_hadir' && 'Tidak Hadir'}
-                    </button>
-                  ))}
+                  {["hadir", "terlambat", "izin", "sakit", "tidak_hadir"].map(
+                    (statusOption) => (
+                      <button
+                        key={statusOption}
+                        onClick={() => setEditStatus(statusOption)}
+                        className={`flex items-center justify-center rounded-lg border p-3 text-sm font-medium transition-colors ${
+                          editStatus === statusOption
+                            ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400"
+                            : "border-slate-200 text-slate-600 hover:border-brand-200 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        {statusOption === "hadir" && "Hadir"}
+                        {statusOption === "terlambat" && "Terlambat"}
+                        {statusOption === "izin" && "Izin"}
+                        {statusOption === "sakit" && "Sakit"}
+                        {statusOption === "tidak_hadir" && "Tidak Hadir"}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button variant="secondary" className="flex-1" onClick={() => setEditingStudent(null)} disabled={isUpdating}>
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setEditingStudent(null)}
+                disabled={isUpdating}
+              >
                 Batal
               </Button>
-              <Button className="flex-1" onClick={handleUpdateStatus} isLoading={isUpdating}>
+              <Button
+                className="flex-1"
+                onClick={handleUpdateStatus}
+                isLoading={isUpdating}
+              >
                 Simpan Perubahan
               </Button>
             </div>

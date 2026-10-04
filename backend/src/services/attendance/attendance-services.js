@@ -129,17 +129,21 @@ export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
   };
 };
 
-export const findTodayActiveSessionByTeacherId = async ({ id_guru }) => {
+export const findTodayActiveSessionByTeacherId = async ({ id_guru, id_kelas = null }) => {
   const today = new Date().toISOString().split("T")[0];
-  const [result] = await pool.query(
-    `
-      SELECT * FROM sesi_absensi 
-      WHERE id_guru = ? AND tanggal = ? AND status = 'aktif'
-      ORDER BY id_sesi DESC
-      LIMIT 1
-    `,
-    [id_guru, today],
-  );
+
+  // Jika id_kelas dikirim, filter berdasarkan kelas; jika tidak, ambil sesi aktif manapun
+  const query = id_kelas
+    ? `SELECT * FROM sesi_absensi
+       WHERE id_guru = ? AND tanggal = ? AND status = 'aktif' AND id_kelas = ?
+       ORDER BY id_sesi DESC LIMIT 1`
+    : `SELECT * FROM sesi_absensi
+       WHERE id_guru = ? AND tanggal = ? AND status = 'aktif'
+       ORDER BY id_sesi DESC LIMIT 1`;
+
+  const params = id_kelas ? [id_guru, today, id_kelas] : [id_guru, today];
+
+  const [result] = await pool.query(query, params);
 
   if (result.length === 0) {
     return {

@@ -74,7 +74,11 @@ export const getTodayActiveSession = async (req, res) => {
       });
     }
 
-    const result = await findTodayActiveSessionByTeacherId({ id_guru });
+    // Opsional: filter sesi aktif berdasarkan kelas tertentu
+    const idKelasParam = req.query.id_kelas;
+    const id_kelas = idKelasParam ? Number(idKelasParam) || null : null;
+
+    const result = await findTodayActiveSessionByTeacherId({ id_guru, id_kelas });
     if (!result.success) {
       return res.status(200).json({
         success: false,

@@ -1,18 +1,18 @@
-import {
-  findAllClass,
-  findTeacherProfile,
-} from "../../services/admin/admin-teacher-service.js";
 import { findTeacherDashboardByUserId } from "../../services/teacher/teacher-service.js";
+import { findAllClass, findTeacherProfile } from "../../services/admin/admin-teacher-service.js";
+
+// Helper: validasi format YYYY-MM-DD
+const isValidDate = (str) => {
+  if (!str || !/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  const d = new Date(`${str}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === str;
+};
 
 export async function getTeacherDashboard(req, res) {
   console.log("getTeacherDashboard TERPANGGIL");
 
   try {
-    console.log("USER DARI TOKEN:", req.user);
-
-    const idUser = req.user.id_user;
-
-    console.log("ID USER:", idUser);
+    const idUser = req.user?.id_user;
 
     if (!idUser) {
       return res.status(401).json({
@@ -21,24 +21,39 @@ export async function getTeacherDashboard(req, res) {
       });
     }
 
-    const date = req.query.date || new Date().toISOString().slice(0, 10);
+    // Validasi date
+    const dateParam = req.query.date;
+    const date = dateParam || new Date().toISOString().slice(0, 10);
 
-    console.log("TANGGAL DASHBOARD:", date);
-
-    const dashboard = await findTeacherDashboardByUserId(idUser, date);
-
-    console.log("HASIL DASHBOARD GURU:", dashboard);
-
-    if (!dashboard) {
-      return res.status(404).json({
+    if (dateParam && !isValidDate(dateParam)) {
+      return res.status(400).json({
         success: false,
-        message: "Data dashboard guru tidak ditemukan.",
+        message: "Format tanggal tidak valid. Gunakan YYYY-MM-DD.",
       });
     }
 
+    // Validasi id_kelas (opsional)
+    const idKelasParam = req.query.id_kelas;
+    let idKelas = null;
+    if (idKelasParam !== undefined && idKelasParam !== "") {
+      idKelas = Number(idKelasParam);
+      if (!Number.isInteger(idKelas) || idKelas <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "id_kelas harus berupa angka positif.",
+        });
+      }
+    }
+
+    console.log("TANGGAL DASHBOARD:", date, "| ID KELAS:", idKelas);
+
+    const dashboard = await findTeacherDashboardByUserId(idUser, date, idKelas);
+
+    console.log("HASIL DASHBOARD GURU:", dashboard);
+
     return res.json({
       success: true,
-      teacher: dashboard.teacher,
+      classes: dashboard.classes || [],
       class: dashboard.class,
       summary: dashboard.summary,
       students: dashboard.students || [],

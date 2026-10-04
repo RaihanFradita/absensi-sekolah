@@ -434,7 +434,7 @@ async function deleteDutyTeacher(id) {
   }
 }
 
-async function getTodayActiveSession() {
+async function getTodayActiveSession(params = {}) {
   if (isMockMode()) {
     await mockDelay();
     return {
@@ -443,7 +443,7 @@ async function getTodayActiveSession() {
       data: null,
     };
   }
-  return (await api.get(ENDPOINTS.TODAY_SESSION)).data;
+  return (await api.get(ENDPOINTS.TODAY_SESSION, { params })).data;
 }
 
 export default {
