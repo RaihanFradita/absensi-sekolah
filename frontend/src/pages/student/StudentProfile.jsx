@@ -40,39 +40,24 @@ export default function StudentProfile() {
 
   const fetchProfile = useCallback(
     () => attendanceService.getStudentProfile(),
-    []
+    [],
   );
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useAttendance(fetchProfile);
+  const { data, isLoading, error, refetch } = useAttendance(fetchProfile);
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const student = data?.student || data || null;
 
   const studentName =
-    student?.nama_siswa ||
-    student?.name ||
-    user?.name ||
-    "Siswa";
+    student?.nama_siswa || student?.name || user?.name || "Siswa";
 
-  const username =
-    student?.username ||
-    user?.username ||
-    "-";
+  const username = student?.username || user?.username || "-";
 
-  const className =
-    student?.nama_kelas ||
-    student?.className ||
-    "-";
+  const className = `${student?.tingkat}${student?.nama_kelas}` || "-";
 
   const isActive =
-    student?.status_aktif === undefined ||
-    student?.status_aktif === null
+    student?.status_aktif === undefined || student?.status_aktif === null
       ? true
       : Number(student.status_aktif) === 1;
 
@@ -92,22 +77,18 @@ export default function StudentProfile() {
       description="Informasi akun dan data siswa pada sistem absensi sekolah."
     >
       <div className="space-y-6">
-
         {/* =========================
             HEADER PROFIL
         ========================== */}
         <Card>
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-
             <div className="flex items-center gap-4">
-
               {/* ICON PROFIL, TANPA FOTO */}
               <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
                 <UserCircle className="h-11 w-11" />
               </div>
 
               <div className="min-w-0">
-
                 {isLoading ? (
                   <>
                     <div className="h-6 w-48 animate-pulse rounded-md bg-slate-200 dark:bg-slate-700" />
@@ -117,7 +98,6 @@ export default function StudentProfile() {
                 ) : (
                   <>
                     <div className="flex flex-wrap items-center gap-2">
-
                       <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                         {studentName}
                       </h2>
@@ -138,7 +118,6 @@ export default function StudentProfile() {
                           Tidak Aktif
                         </span>
                       )}
-
                     </div>
 
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -146,7 +125,6 @@ export default function StudentProfile() {
                     </p>
                   </>
                 )}
-
               </div>
             </div>
 
@@ -162,7 +140,6 @@ export default function StudentProfile() {
             >
               Keluar
             </Button>
-
           </div>
         </Card>
 
@@ -171,13 +148,10 @@ export default function StudentProfile() {
         ========================== */}
         {error && (
           <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400 sm:flex-row sm:items-center">
-
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 shrink-0" />
 
-              <span>
-                Gagal mengambil profil siswa.
-              </span>
+              <span>Gagal mengambil profil siswa.</span>
             </div>
 
             <Button
@@ -189,7 +163,6 @@ export default function StudentProfile() {
             >
               Coba Lagi
             </Button>
-
           </div>
         )}
 
@@ -198,49 +171,27 @@ export default function StudentProfile() {
         ========================== */}
         {!isLoading && !error && student && (
           <Card>
-
             <CardHeader
               title="Informasi Siswa"
               subtitle="Data identitas siswa yang terdaftar di sistem."
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
+              <InfoItem icon={User} label="Nama Lengkap" value={studentName} />
 
-              <InfoItem
-                icon={User}
-                label="Nama Lengkap"
-                value={studentName}
-              />
+              <InfoItem icon={School} label="Kelas" value={className} />
 
-              <InfoItem
-                icon={School}
-                label="Kelas"
-                value={className}
-              />
+              <InfoItem icon={User} label="Username" value={username} />
 
-              <InfoItem
-                icon={User}
-                label="Username"
-                value={username}
-              />
-
-              <InfoItem
-                icon={ShieldCheck}
-                label="Role"
-                value="Siswa"
-              />
-
+              <InfoItem icon={ShieldCheck} label="Role" value="Siswa" />
             </div>
-
           </Card>
         )}
 
         {/* =========================
             LOADING
         ========================== */}
-        {isLoading && (
-          <Loading label="Memuat profil siswa..." />
-        )}
+        {isLoading && <Loading label="Memuat profil siswa..." />}
 
         {/* =========================
             DATA KOSONG
@@ -250,17 +201,12 @@ export default function StudentProfile() {
             title="Profil siswa tidak ditemukan"
             description="Data profil siswa belum tersedia."
             action={
-              <Button
-                variant="secondary"
-                icon={RefreshCw}
-                onClick={refetch}
-              >
+              <Button variant="secondary" icon={RefreshCw} onClick={refetch}>
                 Coba Lagi
               </Button>
             }
           />
         )}
-
       </div>
     </PageContainer>
   );
