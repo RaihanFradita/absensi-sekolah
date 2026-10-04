@@ -273,10 +273,10 @@ export default function TeacherDashboard() {
   return (
     <PageContainer
       title={
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Halo, {user?.name} 👋
+              Halo, {user?.name}
             </h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Dashboard Kehadiran — Rekap kehadiran {classData.tingkat}
@@ -285,7 +285,7 @@ export default function TeacherDashboard() {
           </div>
 
           {/* Filter Tanggal & Kelas */}
-          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-0">
+          <div className="mt-4 flex items-center gap-2 sm:mt-0">
             {/* Dropdown kelas */}
             <select
               id="select-kelas"
