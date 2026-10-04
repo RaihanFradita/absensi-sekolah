@@ -18,7 +18,13 @@ function buildUrl(path, params) {
 }
 
 async function request(path, options = {}) {
-  const { method = "GET", body, params, headers = {} } = options;
+  const {
+    method = "GET",
+    body,
+    params,
+    headers = {},
+    responseType,
+  } = options;
 
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
   console.log("API Request:", path);
@@ -47,7 +53,13 @@ async function request(path, options = {}) {
 
   const contentType = response.headers.get("content-type");
 
-  if (contentType?.includes("application/json")) {
+  if (
+    responseType === "blob" ||
+    contentType?.includes("application/vnd") ||
+    contentType?.includes("application/octet-stream")
+  ) {
+    data = await response.blob();
+  } else if (contentType?.includes("application/json")) {
     data = await response.json();
   } else {
     data = await response.text();
@@ -84,6 +96,7 @@ const api = {
       method: "GET",
       params: options.params,
       headers: options.headers,
+      responseType: options.responseType,
     });
   },
 

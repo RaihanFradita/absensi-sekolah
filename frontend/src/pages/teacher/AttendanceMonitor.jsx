@@ -11,6 +11,7 @@ import {
   HeartPulse,
   FileText,
   AlertCircle,
+  FileSpreadsheet,
 } from "lucide-react";
 import PageContainer from "../../components/layout/PageContainer";
 import Card, { CardHeader } from "../../components/ui/Card";
@@ -95,6 +96,7 @@ export default function AttendanceMonitor() {
   const [classId, setClassId] = useState("");
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState("");
 
   // state edit status
@@ -162,6 +164,22 @@ export default function AttendanceMonitor() {
   useEffect(() => {
     loadAttendance();
   }, [loadAttendance]);
+
+  const handleExport = async () => {
+    if (!classId) return;
+    setIsExporting(true);
+    try {
+      const file = await attendanceService.exportAttendanceExcel({
+        id_kelas: Number(classId),
+        tanggal: selectedDate,
+      });
+      attendanceService.downloadBlob(file);
+    } catch (err) {
+      setError(err?.message || "Gagal mengunduh file Excel kehadiran.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const startEdit = (row) => {
     setEditingId(row.id);
@@ -316,6 +334,17 @@ export default function AttendanceMonitor() {
               isLoading={isLoading}
             >
               Muat Ulang
+            </Button>
+
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={FileSpreadsheet}
+              onClick={handleExport}
+              isLoading={isExporting}
+              disabled={!classId || isLoading || isClassesLoading || isExporting}
+            >
+              Export Excel
             </Button>
           </div>
         </div>

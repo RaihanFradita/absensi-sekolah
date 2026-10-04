@@ -245,7 +245,10 @@ async function exportAttendanceExcel(params = {}) {
     params,
     responseType: "blob",
   });
-  const disposition = response.headers?.["content-disposition"] || "";
+  const disposition =
+    response.headers?.get?.("content-disposition") ||
+    response.headers?.["content-disposition"] ||
+    "";
   const m = disposition.match(/filename="?([^";]+)"?/i);
   return {
     blob: response.data,
