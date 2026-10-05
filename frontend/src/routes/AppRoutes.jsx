@@ -25,12 +25,8 @@ import Teachers from "../pages/admin/Teachers";
 import Classes from "../pages/admin/Classes";
 import Subjects from "../pages/admin/Subjects";
 import Schedules from "../pages/admin/Schedules";
-import AttendanceReports from "../pages/admin/AttendanceReports";
 import DutySchedules from "../pages/admin/DutySchedules";
-import UserRoles from "../pages/admin/UserRoles";
 import AttendanceSessions from "../pages/admin/AttendanceSessions";
-import StudentAccounts from "../pages/admin/StudentAccounts";
-import TeacherAccounts from "../pages/admin/TeacherAccounts";
 
 import { ROLES } from "../utils/constants";
 import useAuth from "../hooks/useAuth";
@@ -123,22 +119,6 @@ export default function AppRoutes() {
 
             <Route path="/admin/classes" element={<Classes />} />
 
-            <Route path="/admin/user-roles" element={<UserRoles />} />
-
-            {/* ==================== AKUN & ROLE ==================== */}
-
-            <Route path="/admin/accounts" element={<UserRoles />} />
-
-            <Route
-              path="/admin/accounts/students"
-              element={<StudentAccounts />}
-            />
-
-            <Route
-              path="/admin/accounts/teachers"
-              element={<TeacherAccounts />}
-            />
-
             {/* ==================== ADMIN LAINNYA ==================== */}
 
             <Route path="/admin/duty-schedules" element={<DutySchedules />} />
@@ -152,7 +132,6 @@ export default function AppRoutes() {
 
             <Route path="/admin/schedules" element={<Schedules />} />
 
-            <Route path="/admin/reports" element={<AttendanceReports />} />
           </Route>
         </Route>
       </Route>

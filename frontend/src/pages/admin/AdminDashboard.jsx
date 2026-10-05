@@ -4,8 +4,6 @@ import {
   GraduationCap,
   School,
   CalendarDays,
-  FileBarChart,
-  UserCog,
   ArrowRight,
 } from 'lucide-react';
 
@@ -32,22 +30,10 @@ const items = [
     icon: School,
   },
   {
-    to: '/admin/user-roles',
-    label: 'Kelola Akun Pengguna',
-    desc: 'Atur hak akses siswa, guru kelas, guru piket, admin.',
-    icon: UserCog,
-  },
-  {
     to: '/admin/duty-schedules',
     label: 'Jadwal Guru Piket',
     desc: 'Atur assignment piket per tanggal/bulan tanpa membuat akun ulang.',
     icon: CalendarDays,
-  },
-  {
-    to: '/admin/reports',
-    label: 'Data Absensi',
-    desc: 'Lihat, koreksi, dan ekspor rekap kehadiran harian.',
-    icon: FileBarChart,
   },
 ];
 
