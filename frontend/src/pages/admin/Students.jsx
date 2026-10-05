@@ -363,13 +363,40 @@ export default function Students() {
 
   // FORM CHANGE
 
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+  // };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    // Jika yang diubah adalah nama_siswa dan BUKAN sedang dalam mode Edit
+    if (name === "nama_siswa" && !isEditMode) {
+      // generate username (kecil semua) dan tanpa spasi
+      const generatedUsername = value.toLowerCase().replace(/\s+/g, "");
+
+      // generate password (smp4#(nama depan))
+      const firstName = value.trim().split(" ")[0].toLowerCase();
+      const generatedPassword = firstName ? `smp4#${firstName}` : "";
+
+      setFormData((prev) => ({
+        ...prev,
+        nama_siswa: value,
+        username: generatedUsername,
+        password: generatedPassword,
+      }));
+    } else {
+      // Untuk input lain atau saat mode edit, jalankan fungsi normal
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // =========================================================
@@ -820,7 +847,8 @@ export default function Students() {
                   type="button"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={
-                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                    !pagination.hasNextPage ||
+                    page >= (pagination.totalPage || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Selanjutnya"
@@ -832,7 +860,8 @@ export default function Students() {
                   type="button"
                   onClick={() => handlePageChange(pagination.totalPage || 1)}
                   disabled={
-                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                    !pagination.hasNextPage ||
+                    page >= (pagination.totalPage || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Terakhir"
