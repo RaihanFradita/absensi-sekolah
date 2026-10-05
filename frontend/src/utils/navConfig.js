@@ -72,12 +72,7 @@ export const NAV_ITEMS = {
   [ROLES.DUTY_TEACHER]: [
     {
       to: '/duty/dashboard',
-      label: 'Piket Hari Ini',
-      icon: LayoutDashboard,
-    },
-    {
-      to: '/duty/recap',
-      label: 'Rekap Harian',
+      label: 'Dashboard Piket',
       icon: FileBarChart,
     },
   ],

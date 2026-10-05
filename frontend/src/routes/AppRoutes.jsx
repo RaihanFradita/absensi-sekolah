@@ -18,8 +18,6 @@ import AttendanceSession from "../pages/teacher/AttendanceSession";
 import AttendanceMonitor from "../pages/teacher/AttendanceMonitor";
 
 import DutyDashboard from "../pages/duty/DutyDashboard";
-import NotScanned from "../pages/duty/NotScanned";
-import DutyRecap from "../pages/duty/DutyRecap";
 
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import Students from "../pages/admin/Students";
@@ -112,10 +110,6 @@ export default function AppRoutes() {
 
           <Route element={<RoleRoute allowedRoles={[ROLES.DUTY_TEACHER]} />}>
             <Route path="/duty/dashboard" element={<DutyDashboard />} />
-
-            <Route path="/duty/not-scanned" element={<NotScanned />} />
-
-            <Route path="/duty/recap" element={<DutyRecap />} />
           </Route>
 
           {/* ==================== ADMIN ==================== */}
