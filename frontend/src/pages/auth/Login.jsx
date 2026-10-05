@@ -1,13 +1,7 @@
 import { useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Eye,
-  EyeOff,
-  IdCard,
-  Lock,
-  AlertCircle,
-} from "lucide-react";
+import { Eye, EyeOff, IdCard, Lock, AlertCircle } from "lucide-react";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import useAuth from "../../hooks/useAuth";
@@ -44,6 +38,12 @@ export default function Login() {
 
     try {
       const user = await login({ identifier: identifier.trim(), password });
+      console.log(user);
+
+      if (user?.mustChangePassword) {
+        navigate("/ganti-password", { replace: true, state: { from } });
+        return;
+      }
       // Redirect berdasarkan role dari backend, atau kembali ke halaman asal jika ada.
       navigate(from || ROLE_HOME[user?.role] || "/", { replace: true });
     } catch (error) {

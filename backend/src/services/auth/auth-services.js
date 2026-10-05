@@ -1,5 +1,5 @@
 import { pool } from "../../config/database.js";
-import bcrypt from "bcrypt";
+import bcrypt, { hash } from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const signIn = async (data) => {
@@ -40,6 +40,7 @@ export const signIn = async (data) => {
     id_user: userId,
     username: currentUser.username,
     role: currentUser.role,
+    mustChangePassword: Boolean(currentUser.must_change_password),
   };
 
   if (currentUser.role === "guru") {
@@ -107,6 +108,71 @@ export const signIn = async (data) => {
   return {
     success: true,
     message: "Login berhasil",
+    user: payload,
+    accessToken,
+  };
+};
+
+export const changePassword = async (reqUser, data) => {
+  const { oldPassword, newPassword } = data;
+
+  if (!oldPassword || !newPassword) {
+    return { success: false, message: "Password lama dan baru wajib diisi" };
+  }
+
+  if (newPassword.length < 6) {
+    return { success: false, message: "Password baru minimal 6 karakter" };
+  }
+
+  if (oldPassword === newPassword) {
+    return {
+      success: false,
+      message: "Password baru tidak boleh sama dengan password lama",
+    };
+  }
+
+  const [users] = await pool.query(
+    `
+    SELECT password FROM users WHERE id_user = ?
+    `,
+    [reqUser.id_user],
+  );
+
+  if (users.length === 0) {
+    return {
+      success: false,
+      message: "User tidak ditemukan",
+    };
+  }
+
+  const isMatch = await bcrypt.compare(oldPassword, users[0].password);
+
+  if (!isMatch) {
+    return {
+      success: false,
+      message: "Password lama salah",
+    };
+  }
+
+  const hashPassword = await bcrypt.hash(newPassword, 10);
+
+  await pool.query(
+    `
+    UPDATE users SET password = ?, must_change_password = 0 WHERE id_user = ?
+    `,
+    [hashPassword, reqUser.id_user],
+  );
+
+  const { iat, exp, ...basePayload } = reqUser;
+  const payload = { ...basePayload, mustChangePassword: false };
+
+  const accessToken = jwt.sign(payload, process.env.SECRET_KEY, {
+    expiresIn: "7d",
+  });
+
+  return {
+    success: true,
+    message: "Password berhasil diganti",
     user: payload,
     accessToken,
   };

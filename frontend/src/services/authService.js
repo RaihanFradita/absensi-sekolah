@@ -6,6 +6,7 @@ const ENDPOINTS = {
   LOGIN: '/auth/login',
   LOGOUT: '/auth/logout',
   ME: '/auth/me',
+  CHANGE_PASSWORD: '/auth/change-password',
 };
 
 /**
@@ -68,6 +69,29 @@ function getToken() {
   return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
+async function changePassword({ oldPassword, newPassword }) {
+  const { data } = await api.post(ENDPOINTS.CHANGE_PASSWORD, {
+    oldPassword,
+    newPassword,
+  });
+
+  const token =
+    data.token ||
+    data.accessToken ||
+    data.data?.token ||
+    data.data?.accessToken;
+  const user = data.user || data.data?.user;
+
+  if (token) {
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+  }
+  if (user) {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  }
+
+  return { data, user, token };
+}
+
 function clearSession() {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(AUTH_USER_KEY);
@@ -80,6 +104,7 @@ const authService = {
   getStoredUser,
   getToken,
   clearSession,
+  changePassword,
 };
 
 export default authService;

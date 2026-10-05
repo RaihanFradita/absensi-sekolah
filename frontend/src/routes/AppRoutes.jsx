@@ -37,6 +37,8 @@ import TeacherAccounts from "../pages/admin/TeacherAccounts";
 import { ROLES } from "../utils/constants";
 import useAuth from "../hooks/useAuth";
 import AttendanceScan from "../pages/student/AttendanceScan";
+import RequireAuth from "./RequireAuth";
+import GantiPassword from "../pages/auth/GantiPassword";
 
 function RootRedirect() {
   const { isAuthenticated, role } = useAuth();
@@ -61,6 +63,11 @@ export default function AppRoutes() {
       {/* ==================== AUTHENTICATION ==================== */}
 
       <Route path="/login" element={<Login />} />
+
+      {/* GANTI PASSWORD WAJIB */}
+      <Route element={<RequireAuth />}>
+        <Route path="/ganti-password" element={<GantiPassword />} />
+      </Route>
 
       {/* ==================== ROOT ==================== */}
 
