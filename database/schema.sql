@@ -65,7 +65,7 @@ CREATE TABLE kelas (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id_kelas),
-    UNIQUE KEY uq_kelas_tahun (nama_kelas, tahun_ajaran)
+    UNIQUE KEY uq_tingkat_nama (tingkat, nama_kelas)
 ) ENGINE=InnoDB;
 
 CREATE TABLE siswa (

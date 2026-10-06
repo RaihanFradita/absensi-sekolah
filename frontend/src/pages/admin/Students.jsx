@@ -40,6 +40,12 @@ const EMPTY_FORM = {
   password: "",
 };
 
+const formatClassOption = ({ tingkat, nama_kelas }) => {
+  const name = String(nama_kelas || "");
+  const description = name.startsWith("MM") ? " (Multi Media)" : "";
+  return `Kelas ${tingkat}: ${name}${description}`;
+};
+
 export default function Students() {
   const { showToast } = useToast();
 
@@ -687,7 +693,7 @@ export default function Students() {
               <option value="">Semua kelas</option>
               {classes.map((classItem) => (
                 <option key={classItem.id_kelas} value={String(classItem.id_kelas)}>
-                  Kelas {classItem.tingkat} - {classItem.nama_kelas}
+                  {formatClassOption(classItem)}
                 </option>
               ))}
             </select>
@@ -1040,18 +1046,12 @@ export default function Students() {
                       </option>
 
                       {classes.map((kelasItem) => {
-                        const classLabel = kelasItem.tingkat
-                          ? `Kelas ${kelasItem.tingkat} - ${
-                              kelasItem.nama_kelas
-                            }`
-                          : kelasItem.nama_kelas;
-
                         return (
                           <option
                             key={kelasItem.id_kelas}
                             value={kelasItem.id_kelas}
                           >
-                            {classLabel}
+                            {formatClassOption(kelasItem)}
                           </option>
                         );
                       })}
