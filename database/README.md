@@ -69,3 +69,13 @@ Semua akun development menggunakan password `123456`.
 ## Status
 
 Schema dan seed data disiapkan untuk mendukung pengembangan dan pengujian frontend serta backend sistem absensi.
+
+### Memperbarui database yang sudah ada
+
+Jalankan migrasi pada database `absensi_siswa`:
+
+```sh
+mysql -u <user> -p absensi_siswa < database/migrations/20261006_add_gender.sql
+```
+
+Migrasi menambahkan kolom `jenis_kelamin` pada tabel `guru` dan `siswa` jika belum tersedia, dan aman dijalankan ulang.

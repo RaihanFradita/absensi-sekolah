@@ -18,8 +18,6 @@ export const MOCK_USERS = {
     id: "u-student-1",
     name: "Raihan Pratama",
     role: ROLES.STUDENT,
-    nis: "2425100123",
-    nisn: "0091234567",
     className: "VIII-A",
   },
   [ROLES.TEACHER]: {
@@ -53,76 +51,16 @@ function timeOf(iso) {
 }
 
 export const MOCK_STUDENTS = [
-  {
-    id: "s1",
-    nis: "2425100123",
-    nisn: "0091234567",
-    name: "Raihan Pratama",
-    className: "VIII-A",
-  },
-  {
-    id: "s2",
-    nis: "2425100124",
-    nisn: "0091234568",
-    name: "Keysa Aulia",
-    className: "VIII-A",
-  },
-  {
-    id: "s3",
-    nis: "2425100125",
-    nisn: "0091234569",
-    name: "Fajar Ramadhan",
-    className: "VIII-A",
-  },
-  {
-    id: "s4",
-    nis: "2425100126",
-    nisn: "0091234570",
-    name: "Nadia Putri",
-    className: "VIII-A",
-  },
-  {
-    id: "s5",
-    nis: "2425100127",
-    nisn: "0091234571",
-    name: "Bintang Akbar",
-    className: "VIII-A",
-  },
-  {
-    id: "s6",
-    nis: "2425100128",
-    nisn: "0091234572",
-    name: "Dimas Saputra",
-    className: "VIII-A",
-  },
-  {
-    id: "s7",
-    nis: "2425100201",
-    nisn: "0091234601",
-    name: "Salsa Nabila",
-    className: "VIII-B",
-  },
-  {
-    id: "s8",
-    nis: "2425100202",
-    nisn: "0091234602",
-    name: "Aulia Rahma",
-    className: "VIII-B",
-  },
-  {
-    id: "s9",
-    nis: "2425100301",
-    nisn: "0091234701",
-    name: "Raka Mahendra",
-    className: "IX-A",
-  },
-  {
-    id: "s10",
-    nis: "2425100302",
-    nisn: "0091234702",
-    name: "Nisa Khairunnisa",
-    className: "IX-A",
-  },
+  { id: "s1", name: "Raihan Pratama", className: "VIII-A" },
+  { id: "s2", name: "Keysa Aulia", className: "VIII-A" },
+  { id: "s3", name: "Fajar Ramadhan", className: "VIII-A" },
+  { id: "s4", name: "Nadia Putri", className: "VIII-A" },
+  { id: "s5", name: "Bintang Akbar", className: "VIII-A" },
+  { id: "s6", name: "Dimas Saputra", className: "VIII-A" },
+  { id: "s7", name: "Salsa Nabila", className: "VIII-B" },
+  { id: "s8", name: "Aulia Rahma", className: "VIII-B" },
+  { id: "s9", name: "Raka Mahendra", className: "IX-A" },
+  { id: "s10", name: "Nisa Khairunnisa", className: "IX-A" },
 ];
 
 const defaultAttendance = [
@@ -242,7 +180,7 @@ export function getMockAttendanceRows({ className, status, search } = {}) {
     const q = search.toLowerCase();
     rows = rows.filter(
       (r) =>
-        r.student?.name.toLowerCase().includes(q) || r.student?.nis.includes(q),
+        r.student?.name.toLowerCase().includes(q),
     );
   }
   return rows;
@@ -460,7 +398,6 @@ const defaultDutyTeachers = [
   {
     id: "dt-1",
     id_guru_piket: "dt-1",
-    nip: "198503152010011002",
     nama_guru: "Bapak Ahmad Fauzi, S.Pd",
     username: "fauzi_piket",
     hari_piket: "Senin",
@@ -470,7 +407,6 @@ const defaultDutyTeachers = [
   {
     id: "dt-2",
     id_guru_piket: "dt-2",
-    nip: "199008222015032004",
     nama_guru: "Ibu Siti Aminah, S.Pd",
     username: "aminah_piket",
     hari_piket: "Rabu",
@@ -480,7 +416,6 @@ const defaultDutyTeachers = [
   {
     id: "dt-3",
     id_guru_piket: "dt-3",
-    nip: "198811122014021003",
     nama_guru: "Bapak Bambang Hariyanto, S.Pd",
     username: "bambang_piket",
     hari_piket: "Jumat",
@@ -509,7 +444,6 @@ export function getMockDutyTeachers({ search, status } = {}) {
     rows = rows.filter(
       (r) =>
         r.nama_guru?.toLowerCase().includes(q) ||
-        r.nip?.includes(q) ||
         r.username?.toLowerCase().includes(q)
     );
   }
@@ -525,7 +459,6 @@ export function saveMockDutyTeacher(payload) {
   const newItem = {
     id: `dt-${Date.now()}`,
     id_guru_piket: `dt-${Date.now()}`,
-    nip: payload.nip || "-",
     nama_guru: payload.nama_guru,
     username: payload.username,
     hari_piket: payload.hari_piket || "Senin",
@@ -543,7 +476,6 @@ export function updateMockDutyTeacher(id, payload) {
   if (index < 0) throw new Error("Data guru piket tidak ditemukan.");
   const updatedItem = {
     ...rows[index],
-    nip: payload.nip ?? rows[index].nip,
     nama_guru: payload.nama_guru ?? rows[index].nama_guru,
     username: payload.username ?? rows[index].username,
     hari_piket: payload.hari_piket ?? rows[index].hari_piket,

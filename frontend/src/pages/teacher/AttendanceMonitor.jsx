@@ -11,6 +11,7 @@ import {
   HeartPulse,
   FileText,
   AlertCircle,
+  FileSpreadsheet,
 } from "lucide-react";
 import PageContainer from "../../components/layout/PageContainer";
 import Card, { CardHeader } from "../../components/ui/Card";
@@ -95,6 +96,7 @@ export default function AttendanceMonitor() {
   const [classId, setClassId] = useState("");
   const [rows, setRows] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState("");
 
   // state edit status
@@ -141,11 +143,10 @@ export default function AttendanceMonitor() {
 
       setRows(
         list.map((r) => ({
-          id: r.id_siswa ?? r.id_absensi ?? `${r.nis}-${r.nama_siswa}`,
+          id: r.id_siswa ?? r.id_absensi ?? r.nama_siswa,
           studentId: r.id_siswa,
           attendanceId: r.id_absensi || null,
           name: r.nama_siswa || "-",
-          nis: r.nis || "-",
           className: r.nama_kelas || "-",
           time: r.waktu_scan || null,
           status: normalizeStatus(r.status),
@@ -162,6 +163,22 @@ export default function AttendanceMonitor() {
   useEffect(() => {
     loadAttendance();
   }, [loadAttendance]);
+
+  const handleExport = async () => {
+    if (!classId) return;
+    setIsExporting(true);
+    try {
+      const file = await attendanceService.exportAttendanceExcel({
+        id_kelas: Number(classId),
+        tanggal: selectedDate,
+      });
+      attendanceService.downloadBlob(file);
+    } catch (err) {
+      setError(err?.message || "Gagal mengunduh file Excel kehadiran.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const startEdit = (row) => {
     setEditingId(row.id);
@@ -317,6 +334,17 @@ export default function AttendanceMonitor() {
             >
               Muat Ulang
             </Button>
+
+            <Button
+              size="sm"
+              variant="success"
+              icon={FileSpreadsheet}
+              onClick={handleExport}
+              isLoading={isExporting}
+              disabled={!classId || isLoading || isClassesLoading || isExporting}
+            >
+              Export Excel
+            </Button>
           </div>
         </div>
 
@@ -419,7 +447,6 @@ export default function AttendanceMonitor() {
                 <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800">
                   <tr>
                     <th className="px-4 py-3 font-medium">Nama Siswa</th>
-                    <th className="px-4 py-3 font-medium">NIS</th>
                     <th className="px-4 py-3 font-medium">Kelas</th>
                     <th className="px-4 py-3 font-medium">Waktu Absen</th>
                     <th className="px-4 py-3 font-medium">Status</th>
@@ -436,9 +463,6 @@ export default function AttendanceMonitor() {
                       >
                         <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
                           {row.name}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                          {row.nis}
                         </td>
                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                           {row.className}

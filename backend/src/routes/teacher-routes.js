@@ -1,6 +1,9 @@
 import express from "express";
 
-import { verifyToken } from "../middleware/auth-middleware.js";
+import {
+  requirePasswordChange,
+  verifyToken,
+} from "../middleware/auth-middleware.js";
 
 import {
   getAllClass,
@@ -11,6 +14,7 @@ import {
 export const teacher = express.Router();
 
 teacher.use(verifyToken);
+teacher.use(requirePasswordChange);
 
 teacher.get("/class", getAllClass);
 teacher.get("/dashboard", getTeacherDashboard);

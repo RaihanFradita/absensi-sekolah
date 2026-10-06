@@ -19,7 +19,9 @@ import attendanceService from "../../services/attendanceService";
 import useAuth from "../../hooks/useAuth";
 
 function getStatusLabel(status) {
-  const value = String(status || "").toLowerCase().trim();
+  const value = String(status || "")
+    .toLowerCase()
+    .trim();
 
   if (value === "hadir" || value === "present") {
     return "Hadir";
@@ -52,7 +54,9 @@ function getStatusLabel(status) {
 }
 
 function getStatusStyle(status) {
-  const value = String(status || "").toLowerCase().trim();
+  const value = String(status || "")
+    .toLowerCase()
+    .trim();
 
   if (value === "hadir" || value === "present") {
     return {
@@ -143,13 +147,7 @@ function formatTime(dateValue) {
     .replace(":", ".");
 }
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  description,
-  iconClassName,
-}) {
+function StatCard({ icon: Icon, label, value, description, iconClassName }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-4">
@@ -192,8 +190,7 @@ export default function StudentDashboard() {
       setIsLoading(true);
       setError("");
 
-      const response =
-        await attendanceService.getStudentDashboard();
+      const response = await attendanceService.getStudentDashboard();
 
       const result = response?.data ?? response;
 
@@ -201,10 +198,7 @@ export default function StudentDashboard() {
     } catch (err) {
       console.error("Gagal memuat dashboard siswa:", err);
 
-      setError(
-        err?.message ||
-          "Gagal mengambil data dashboard siswa."
-      );
+      setError(err?.message || "Gagal mengambil data dashboard siswa.");
     } finally {
       setIsLoading(false);
     }
@@ -233,12 +227,7 @@ export default function StudentDashboard() {
     user?.name ||
     "Siswa";
 
-  const className =
-    student?.nama_kelas ||
-    student?.className ||
-    student?.kelas ||
-    student?.class_name ||
-    "-";
+  const className = `${student?.tingkat}${student?.className}` || "-";
 
   /*
    * =========================
@@ -282,21 +271,12 @@ export default function StudentDashboard() {
     dashboard?.data?.summary ||
     {};
 
-  const hadir =
-    summary?.hadir ??
-    summary?.present ??
-    0;
+  const hadir = summary?.hadir ?? summary?.present ?? 0;
 
-  const terlambat =
-    summary?.terlambat ??
-    summary?.late ??
-    0;
+  const terlambat = summary?.terlambat ?? summary?.late ?? 0;
 
   const tidakHadir =
-    summary?.tidak_hadir ??
-    summary?.tidakHadir ??
-    summary?.absent ??
-    0;
+    summary?.tidak_hadir ?? summary?.tidakHadir ?? summary?.absent ?? 0;
 
   /*
    * =========================
@@ -315,14 +295,11 @@ export default function StudentDashboard() {
     dashboard?.data?.recentHistory ||
     [];
 
-  const recentHistory = Array.isArray(history)
-    ? history.slice(0, 5)
-    : [];
+  const recentHistory = Array.isArray(history) ? history.slice(0, 5) : [];
 
   return (
     <PageContainer>
       <div className="space-y-6">
-
         {/* =====================================
             HEADER
         ====================================== */}
@@ -361,9 +338,7 @@ export default function StudentDashboard() {
             <div className="flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
               <AlertCircle className="h-5 w-5 shrink-0" />
 
-              <span>
-                {error}
-              </span>
+              <span>{error}</span>
             </div>
 
             <Button
@@ -382,11 +357,9 @@ export default function StudentDashboard() {
             INFO SISWA + SCAN
         ====================================== */}
         <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
-
           {/* DATA SISWA */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex items-center gap-4">
-
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-400">
                 <UserCircle className="h-8 w-8" />
               </div>
@@ -407,7 +380,6 @@ export default function StudentDashboard() {
                   <span>Siswa</span>
                 </div>
               </div>
-
             </div>
           </div>
 
@@ -431,23 +403,19 @@ export default function StudentDashboard() {
               </p>
             </div>
           </button>
-
         </div>
 
         {/* =====================================
             STATUS HARI INI
         ====================================== */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-
             <div>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
                 Status Kehadiran Hari Ini
               </p>
 
               <div className="mt-3 flex items-center gap-3">
-
                 <div
                   className={`flex h-12 w-12 items-center justify-center rounded-xl ${statusStyle.wrapper}`}
                 >
@@ -465,7 +433,6 @@ export default function StudentDashboard() {
                       : "Belum ada catatan kehadiran hari ini"}
                   </p>
                 </div>
-
               </div>
             </div>
 
@@ -478,7 +445,6 @@ export default function StudentDashboard() {
                 {formatDate(new Date())}
               </p>
             </div>
-
           </div>
         </div>
 
@@ -497,7 +463,6 @@ export default function StudentDashboard() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
-
             <StatCard
               icon={CheckCircle2}
               label="Hadir"
@@ -521,7 +486,6 @@ export default function StudentDashboard() {
               description="Tidak tercatat hadir"
               iconClassName="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
             />
-
           </div>
         </div>
 
@@ -529,9 +493,7 @@ export default function StudentDashboard() {
             RIWAYAT TERBARU
         ====================================== */}
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-
           <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
-
             <div>
               <div className="flex items-center gap-2">
                 <History className="h-5 w-5 text-brand-600 dark:text-brand-400" />
@@ -553,7 +515,6 @@ export default function StudentDashboard() {
             >
               Lihat Semua
             </button>
-
           </div>
 
           {isLoading ? (
@@ -567,15 +528,11 @@ export default function StudentDashboard() {
             </div>
           ) : recentHistory.length > 0 ? (
             <div className="divide-y divide-slate-200 dark:divide-slate-800">
-
               {recentHistory.map((item, index) => {
                 const itemStatus =
-                  item?.status ||
-                  item?.status_kehadiran ||
-                  item?.currentStatus;
+                  item?.status || item?.status_kehadiran || item?.currentStatus;
 
-                const itemStyle =
-                  getStatusStyle(itemStatus);
+                const itemStyle = getStatusStyle(itemStatus);
 
                 const ItemIcon = itemStyle.icon;
 
@@ -593,22 +550,14 @@ export default function StudentDashboard() {
                   item?.scannedAt ||
                   item?.scanTime;
 
-                const note =
-                  item?.keterangan ||
-                  item?.note ||
-                  "";
+                const note = item?.keterangan || item?.note || "";
 
                 return (
                   <div
-                    key={
-                      item?.id_absensi ||
-                      item?.id ||
-                      `history-${index}`
-                    }
+                    key={item?.id_absensi || item?.id || `history-${index}`}
                     className="flex items-center justify-between gap-4 px-5 py-4 transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-
                       <div
                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${itemStyle.wrapper}`}
                       >
@@ -630,14 +579,11 @@ export default function StudentDashboard() {
                           {note && (
                             <>
                               <span>•</span>
-                              <span className="truncate italic">
-                                {note}
-                              </span>
+                              <span className="truncate italic">{note}</span>
                             </>
                           )}
                         </div>
                       </div>
-
                     </div>
 
                     <span
@@ -648,11 +594,9 @@ export default function StudentDashboard() {
                   </div>
                 );
               })}
-
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center px-5 py-12 text-center">
-
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
                 <History className="h-6 w-6" />
               </div>
@@ -664,12 +608,9 @@ export default function StudentDashboard() {
               <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">
                 Riwayat kehadiran akan muncul setelah kamu melakukan scan QR.
               </p>
-
             </div>
           )}
-
         </div>
-
       </div>
     </PageContainer>
   );

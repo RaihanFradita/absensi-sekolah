@@ -1,5 +1,8 @@
 import express from "express";
-import { verifyToken } from "../middleware/auth-middleware.js";
+import {
+  requirePasswordChange,
+  verifyToken,
+} from "../middleware/auth-middleware.js";
 import {
   getMyAttendanceHistoryByUser,
   getStudentDashboard,
@@ -8,6 +11,9 @@ import {
 
 export const student = express.Router();
 
-student.get("/profile", verifyToken, getStudentProfile);
-student.get("/dashboard", verifyToken, getStudentDashboard);
-student.get("/attendance-histori", verifyToken, getMyAttendanceHistoryByUser);
+student.use(verifyToken);
+student.use(requirePasswordChange);
+
+student.get("/profile", getStudentProfile);
+student.get("/dashboard", getStudentDashboard);
+student.get("/attendance-histori", getMyAttendanceHistoryByUser);

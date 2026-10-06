@@ -18,6 +18,8 @@ import AttendanceSession from "../pages/teacher/AttendanceSession";
 import AttendanceMonitor from "../pages/teacher/AttendanceMonitor";
 
 import DutyDashboard from "../pages/duty/DutyDashboard";
+import DutyRecap from "../pages/duty/DutyRecap";
+import NotScanned from "../pages/duty/NotScanned";
 
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import Students from "../pages/admin/Students";
@@ -31,6 +33,8 @@ import AttendanceSessions from "../pages/admin/AttendanceSessions";
 import { ROLES } from "../utils/constants";
 import useAuth from "../hooks/useAuth";
 import AttendanceScan from "../pages/student/AttendanceScan";
+import RequireAuth from "./RequireAuth";
+import GantiPassword from "../pages/auth/GantiPassword";
 
 function RootRedirect() {
   const { isAuthenticated, role } = useAuth();
@@ -55,6 +59,11 @@ export default function AppRoutes() {
       {/* ==================== AUTHENTICATION ==================== */}
 
       <Route path="/login" element={<Login />} />
+
+      {/* GANTI PASSWORD WAJIB */}
+      <Route element={<RequireAuth />}>
+        <Route path="/ganti-password" element={<GantiPassword />} />
+      </Route>
 
       {/* ==================== ROOT ==================== */}
 
@@ -106,6 +115,8 @@ export default function AppRoutes() {
 
           <Route element={<RoleRoute allowedRoles={[ROLES.DUTY_TEACHER]} />}>
             <Route path="/duty/dashboard" element={<DutyDashboard />} />
+            <Route path="/duty/recap" element={<DutyRecap />} />
+            <Route path="/duty/not-scanned" element={<NotScanned />} />
           </Route>
 
           {/* ==================== ADMIN ==================== */}

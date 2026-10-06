@@ -59,13 +59,12 @@ export const insertTeacher = async (data) => {
       `
         INSERT INTO guru (
           id_user,
-          nip,
           nama_guru,
           jenis_kelamin
         )
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?)
       `,
-      [idUser, data.nip, data.nama_guru, data.jenis_kelamin],
+      [idUser, data.nama_guru, data.jenis_kelamin],
     );
 
     // Simpan semua perubahan
@@ -104,7 +103,6 @@ export const findAllTeacher = async ({ page = 1, limit = 10 } = {}) => {
     SELECT
       g.id_guru,
       g.id_user,
-      g.nip,
       g.nama_guru,
       g.jenis_kelamin,
       g.status_aktif,
@@ -200,11 +198,10 @@ export const updateTeacherById = async (data) => {
       `
         UPDATE guru
         SET nama_guru = ?,
-        jenis_kelamin = ?,
-        nip = ?
+        jenis_kelamin = ?
         WHERE id_guru = ?
       `,
-      [data.nama_guru, data.jenis_kelamin, data.nip, data.id_guru],
+      [data.nama_guru, data.jenis_kelamin, data.id_guru],
     );
 
     if (updateGuru.affectedRows === 0) {
@@ -280,8 +277,13 @@ export const softDeleteTeacher = async (data) => {
 export const findAllClass = async () => {
   try {
     const [kelas] = await pool.query(
-      "SELECT * FROM kelas WHERE status_aktif = ?",
-      [1],
+      `SELECT
+      id_kelas,
+      nama_kelas,
+      tingkat
+    FROM kelas
+    WHERE status_aktif = 1
+    ORDER BY tingkat ASC, nama_kelas ASC`,
     );
 
     return {
@@ -306,7 +308,6 @@ export const findTeacherProfile = async (idUser) => {
     `
     SELECT
       g.id_guru,
-      g.nip,
       g.nama_guru,
       g.jenis_kelamin,
       g.status_aktif,
@@ -334,7 +335,6 @@ export const findTeacherProfile = async (idUser) => {
       id_guru: guru.id_guru,
       nama_guru: guru.nama_guru,
       jenis_kelamin: guru.jenis_kelamin,
-      nip: guru.nip || null,
       username: guru.username,
       role: guru.role,
       status_aktif: guru.status_aktif === 1,

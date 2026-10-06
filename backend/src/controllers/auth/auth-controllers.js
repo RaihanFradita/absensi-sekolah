@@ -1,4 +1,4 @@
-import { signIn } from "../../services/auth/auth-services.js";
+import { changePassword, signIn } from "../../services/auth/auth-services.js";
 
 export const login = async (req, res) => {
   const { username, identifier, password } = req.body;
@@ -68,6 +68,24 @@ export const getMe = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Gagal mengambil data user",
+    });
+  }
+};
+
+export const changePasswordController = async (req, res) => {
+  try {
+    const result = await changePassword(req.user, req.body);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error("changePassword error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan pada server",
     });
   }
 };

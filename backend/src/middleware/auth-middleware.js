@@ -55,3 +55,14 @@ export const requireRole = (...allowedRoles) => {
     next();
   };
 };
+
+export const requirePasswordChange = (req, res, next) => {
+  if (req.user?.mustChangePassword) {
+    return res.status(403).json({
+      success: false,
+      code: "MUST_CHANGE_PASSWORD",
+      message: "Silakan ganti password terlebih dahulu",
+    });
+  }
+  next();
+};

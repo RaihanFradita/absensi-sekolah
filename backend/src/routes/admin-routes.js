@@ -28,8 +28,11 @@ import {
   getAllPicketTeachers,
   getPicketTeacherById,
 } from "../controllers/admin/admin-picket-teacher-controller.js";
+import { verifyToken } from "../middleware/auth-middleware.js";
 
 export const admin = express.Router();
+
+admin.use(verifyToken);
 
 // route guru
 admin.get("/teacher/", getAllTeachers);

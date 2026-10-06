@@ -52,6 +52,28 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const changePassword = useCallback(async ({ oldPassword, newPassword }) => {
+    setIsAuthenticating(true);
+    setAuthError(null);
+    try {
+      const result = await authService.changePassword({ oldPassword, newPassword });
+      if (result.user) {
+        setUser(result.user);
+      }
+      return result;
+    } catch (error) {
+      const message = error?.message || 'Gagal mengubah password.';
+      setAuthError(message);
+      throw error;
+    } finally {
+      setIsAuthenticating(false);
+    }
+  }, []);
+
+  const updateUser = useCallback((updatedUser) => {
+    setUser(updatedUser);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -64,8 +86,10 @@ export function AuthProvider({ children }) {
       authError,
       login,
       logout,
+      changePassword,
+      updateUser,
     }),
-    [user, isAuthenticating, authError, login, logout]
+    [user, isAuthenticating, authError, login, logout, changePassword, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

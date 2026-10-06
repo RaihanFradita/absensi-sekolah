@@ -9,6 +9,8 @@ const VARIANTS = {
     'bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
   danger:
     'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:bg-red-300',
+  success:
+    'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:bg-emerald-300 dark:bg-emerald-600 dark:hover:bg-emerald-700 dark:disabled:bg-emerald-900',
 };
 
 const SIZES = {

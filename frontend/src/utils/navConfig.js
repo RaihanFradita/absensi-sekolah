@@ -74,6 +74,16 @@ export const NAV_ITEMS = {
       label: 'Dashboard Piket',
       icon: FileBarChart,
     },
+    {
+      to: '/duty/recap',
+      label: 'Rekap Harian',
+      icon: ClipboardCheck,
+    },
+    {
+      to: '/duty/not-scanned',
+      label: 'Belum Scan',
+      icon: CalendarDays,
+    },
   ],
 
   // ==================== ADMIN ====================

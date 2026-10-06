@@ -18,6 +18,8 @@ const STATUS_MAP = {
   alpa: ATTENDANCE_STATUS.ABSENT,
   alpha: ATTENDANCE_STATUS.ABSENT,
   not_yet: ATTENDANCE_STATUS.NOT_YET,
+  "belum absen": ATTENDANCE_STATUS.NOT_YET,
+  "belum_absen": ATTENDANCE_STATUS.NOT_YET,
 };
 
 const CONFIG = {

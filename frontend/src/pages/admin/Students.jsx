@@ -88,13 +88,22 @@ export default function Students() {
       if (response?.success && response?.data) {
         setStudents(response.data);
         if (response.pagination) {
-          setPagination(response.pagination);
+          const totalPage =
+            response.pagination.totalPage ||
+            response.pagination.totalPages ||
+            1;
+          setPagination({
+            ...response.pagination,
+            totalPage,
+            totalPages: totalPage,
+          });
         } else {
           setPagination({
             page: targetPage,
             limit: targetLimit,
             totalItems: response.data.length,
             totalPage: 1,
+            totalPages: 1,
             hasNextPage: false,
             hasPrevPage: false,
           });
@@ -102,7 +111,15 @@ export default function Students() {
       } else if (response?.students) {
         setStudents(response.students);
         if (response.pagination) {
-          setPagination(response.pagination);
+          const totalPage =
+            response.pagination.totalPage ||
+            response.pagination.totalPages ||
+            1;
+          setPagination({
+            ...response.pagination,
+            totalPage,
+            totalPages: totalPage,
+          });
         }
       } else if (Array.isArray(response)) {
         setStudents(response);
@@ -166,11 +183,16 @@ export default function Students() {
     fetchClasses();
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
   // =========================================================
   // HANDLERS PAGINATION
   // =========================================================
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= (pagination.totalPage || 1)) {
+    const totalPages = pagination.totalPage || pagination.totalPages || 1;
+    if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
   };
@@ -182,7 +204,7 @@ export default function Students() {
   };
 
   const renderPageNumbers = () => {
-    const totalPages = pagination.totalPage || 1;
+    const totalPages = pagination.totalPage || pagination.totalPages || 1;
     const pages = [];
 
     let startPage = Math.max(1, page - 1);
@@ -369,10 +391,28 @@ export default function Students() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    // Jika yang diubah adalah nama_siswa dan BUKAN sedang dalam mode Edit
+    if (name === "nama_siswa" && !isEditMode) {
+      // generate username (kecil semua) dan tanpa spasi
+      const generatedUsername = value.toLowerCase().replace(/\s+/g, "");
+
+      // generate password (smp4#(nama depan))
+      const firstName = value.trim().split(" ")[0].toLowerCase();
+      const generatedPassword = firstName ? `smp4#${firstName}` : "";
+
+      setFormData((prev) => ({
+        ...prev,
+        nama_siswa: value,
+        username: generatedUsername,
+        password: generatedPassword,
+      }));
+    } else {
+      // Untuk input lain atau saat mode edit, jalankan fungsi normal
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // =========================================================
@@ -829,7 +869,8 @@ export default function Students() {
                   type="button"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={
-                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                    !pagination.hasNextPage ||
+                    page >= (pagination.totalPage || pagination.totalPages || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Selanjutnya"
@@ -839,9 +880,14 @@ export default function Students() {
 
                 <button
                   type="button"
-                  onClick={() => handlePageChange(pagination.totalPage || 1)}
+                  onClick={() =>
+                    handlePageChange(
+                      pagination.totalPage || pagination.totalPages || 1
+                    )
+                  }
                   disabled={
-                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                    !pagination.hasNextPage ||
+                    page >= (pagination.totalPage || pagination.totalPages || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Terakhir"

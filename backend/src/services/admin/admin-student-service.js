@@ -55,22 +55,19 @@ export const insertStudents = async ({
 
     const idUser = insertUser.insertId;
 
-    /*
-     * Kolom nis tetap ada di database,
-     * tetapi tidak digunakan sebagai input.
-     *
-     * Untuk sementara isi NULL.
-     */
     await connection.query(
       `
       INSERT INTO siswa (
         id_user,
-        nis,
         nama_siswa,
         id_kelas,
         jenis_kelamin
       )
+<<<<<<< HEAD
       VALUES (?, NULL, ?, ?, ?)
+=======
+      VALUES (?, ?, ?)
+>>>>>>> 0aafc20a47d2d1f19036c3a2934c5e02a295ddd4
       `,
       [idUser, namaSiswa, idKelas, jenisKelamin],
     );
@@ -136,6 +133,7 @@ export async function findAllStudents({ page = 1, limit = 10 } = {}) {
       page: currentPage,
       limit: perPage,
       totalItems: total,
+      totalPage: totalPages,
       totalPages,
       hasNextPage: currentPage < totalPages,
       hasPrevPage: currentPage > 1,
@@ -217,7 +215,7 @@ export const updateStudentById = async ({
       };
     }
 
-    // Update data siswa tanpa NIS
+    // Update data siswa
     const [updateSiswa] = await connection.query(
       `
       UPDATE siswa

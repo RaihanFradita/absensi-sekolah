@@ -26,7 +26,8 @@ const ENDPOINTS = {
   SCAN_ATTENDANCE: "/attendance/sessions/scan",
   ATTENDANCE_HISTORY: "/students/attendance-histori",
   TEACHER_DASHBOARD: "/teacher/dashboard",
-  DUTY_DASHBOARD: "/duty/dashboard",
+  DUTY_DASHBOARD: "/picket-teacher/dashboard",
+  DUTY_DAILY: "/picket-teacher/daily",
   ATTENDANCE_DAILY: "/attendance/sessions/daily",
   ATTENDANCE_MANUAL: "/attendance/manual",
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
@@ -168,6 +169,13 @@ async function getDutyDashboard(params = {}) {
   }
   return (await api.get(ENDPOINTS.DUTY_DASHBOARD, { params })).data;
 }
+async function getDutyDaily(params = {}) {
+  if (isMockMode()) {
+    await mockDelay();
+    return { rows: getMockAttendanceRows(params) };
+  }
+  return (await api.get(ENDPOINTS.DUTY_DAILY, { params })).data;
+}
 async function getDailyAttendance(params = {}) {
   if (isMockMode()) {
     await mockDelay();
@@ -206,7 +214,6 @@ async function exportAttendanceExcel(params = {}) {
     const rows = getMockAttendanceRows(params);
     const header = [
       "No",
-      "NIS/NISN",
       "Nama siswa",
       "Kelas",
       "Tanggal absensi",
@@ -218,7 +225,6 @@ async function exportAttendanceExcel(params = {}) {
     ];
     const body = rows.map((r, i) => [
       i + 1,
-      `${r.student.nis}/${r.student.nisn}`,
       r.student.name,
       r.student.className,
       r.date,
@@ -245,7 +251,10 @@ async function exportAttendanceExcel(params = {}) {
     params,
     responseType: "blob",
   });
-  const disposition = response.headers?.["content-disposition"] || "";
+  const disposition =
+    response.headers?.get?.("content-disposition") ||
+    response.headers?.["content-disposition"] ||
+    "";
   const m = disposition.match(/filename="?([^";]+)"?/i);
   return {
     blob: response.data,
@@ -434,7 +443,7 @@ async function deleteDutyTeacher(id) {
   }
 }
 
-async function getTodayActiveSession() {
+async function getTodayActiveSession(params = {}) {
   if (isMockMode()) {
     await mockDelay();
     return {
@@ -443,7 +452,7 @@ async function getTodayActiveSession() {
       data: null,
     };
   }
-  return (await api.get(ENDPOINTS.TODAY_SESSION)).data;
+  return (await api.get(ENDPOINTS.TODAY_SESSION, { params })).data;
 }
 
 export default {
@@ -453,6 +462,7 @@ export default {
   getAttendanceHistory,
   getTeacherDashboard,
   getDutyDashboard,
+  getDutyDaily,
   getDailyAttendance,
   getDailyByClass,
   manualAttendance,

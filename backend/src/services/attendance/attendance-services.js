@@ -129,17 +129,24 @@ export const findActiveSessionByTeacherId = async ({ id_guru, kode_qr }) => {
   };
 };
 
-export const findTodayActiveSessionByTeacherId = async ({ id_guru }) => {
+export const findTodayActiveSessionByTeacherId = async ({
+  id_guru,
+  id_kelas = null,
+}) => {
   const today = new Date().toISOString().split("T")[0];
-  const [result] = await pool.query(
-    `
-      SELECT * FROM sesi_absensi 
-      WHERE id_guru = ? AND tanggal = ? AND status = 'aktif'
-      ORDER BY id_sesi DESC
-      LIMIT 1
-    `,
-    [id_guru, today],
-  );
+
+  // Jika id_kelas dikirim, filter berdasarkan kelas; jika tidak, ambil sesi aktif manapun
+  const query = id_kelas
+    ? `SELECT * FROM sesi_absensi
+       WHERE id_guru = ? AND tanggal = ? AND status = 'aktif' AND id_kelas = ?
+       ORDER BY id_sesi DESC LIMIT 1`
+    : `SELECT * FROM sesi_absensi
+       WHERE id_guru = ? AND tanggal = ? AND status = 'aktif'
+       ORDER BY id_sesi DESC LIMIT 1`;
+
+  const params = id_kelas ? [id_guru, today, id_kelas] : [id_guru, today];
+
+  const [result] = await pool.query(query, params);
 
   if (result.length === 0) {
     return {
@@ -211,7 +218,6 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
       `
   SELECT
     s.id_siswa,
-    s.nis,
     s.nama_siswa,
     k.tingkat,
     k.nama_kelas
@@ -267,7 +273,6 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
         siswa: {
           id_siswa: siswa.id_siswa,
           nama_siswa: siswa.nama_siswa,
-          nis: siswa.nis,
           kelas: `${siswa.tingkat}${siswa.nama_kelas}`,
         },
       },
@@ -408,7 +413,6 @@ export const getDailyByClass = async ({ kelasId, tanggal }) => {
     SELECT
       s.id_siswa,
       s.nama_siswa,
-      s.nis,
       kl.nama_kelas,
       a.id_absensi,
       a.waktu_scan,
@@ -435,6 +439,29 @@ export const getDailyByClass = async ({ kelasId, tanggal }) => {
   );
 
   console.log(rows);
+
+  return rows;
+};
+
+export const getKehadiranKelasTanggal = async ({ id_kelas, tanggal }) => {
+  const [rows] = await pool.query(
+    `
+    SELECT s.nama_siswa,
+            CONCAT(k.tingkat, ' ', k.nama_kelas) AS kelas,
+            a.waktu_scan,
+            a.keterangan,
+            COALESCE(a.status, 'belum absen') AS status
+     FROM siswa s
+     JOIN kelas k ON k.id_kelas = s.id_kelas
+     LEFT JOIN sesi_absensi sa
+            ON sa.id_kelas = s.id_kelas AND sa.tanggal = ?
+     LEFT JOIN absensi a
+            ON a.id_sesi = sa.id_sesi AND a.id_siswa = s.id_siswa
+     WHERE s.id_kelas = ? AND s.status_aktif = 1
+     ORDER BY s.nama_siswa
+    `,
+    [tanggal, id_kelas],
+  );
 
   return rows;
 };
