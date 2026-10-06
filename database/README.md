@@ -79,3 +79,11 @@ mysql -u <user> -p absensi_siswa < database/migrations/20261006_add_gender.sql
 ```
 
 Migrasi menambahkan kolom `jenis_kelamin` pada tabel `guru` dan `siswa` jika belum tersedia, dan aman dijalankan ulang.
+
+Untuk melengkapi opsi rombel aktif kelas 7–9 (MM1, MM2, A–F), jalankan:
+
+```sh
+mysql -u <user> -p absensi_siswa < database/migrations/20261006_seed_standard_classes.sql
+```
+
+Migrasi ini mempertahankan ID kelas dan penempatan siswa yang sudah ada, serta mengaktifkan kembali rombel standar jika sebelumnya dinonaktifkan.

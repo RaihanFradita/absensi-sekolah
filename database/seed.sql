@@ -31,43 +31,30 @@ INSERT INTO users (id_user, username, password, role, status_aktif) VALUES
 INSERT INTO admin (id_admin, id_user, nama_admin, status_aktif) VALUES
 (1, 1, 'Administrator Sekolah', 1);
 
-<<<<<<< HEAD
-INSERT INTO guru (id_guru, id_user, nip, nama_guru, jenis_kelamin, status_aktif) VALUES
-(1, 2, '19780101001', 'Budi Santoso', 'Laki-laki', 1),
-(2, 3, '19820512002', 'Siti Aminah', 'Perempuan', 1);
-=======
-INSERT INTO guru (id_guru, id_user, nama_guru, status_aktif) VALUES
-(1, 2, 'Budi Santoso', 1),
-(2, 3, 'Siti Aminah', 1);
->>>>>>> 0aafc20a47d2d1f19036c3a2934c5e02a295ddd4
+INSERT INTO guru (id_guru, id_user, nama_guru, jenis_kelamin, status_aktif) VALUES
+(1, 2, 'Budi Santoso', 'Laki-laki', 1),
+(2, 3, 'Siti Aminah', 'Perempuan', 1);
 
-INSERT INTO kelas (id_kelas, nama_kelas, tingkat, tahun_ajaran, status_aktif) VALUES
-(1, '7A', 7, '2026/2027', 1),
-(2, '7B', 7, '2026/2027', 1),
-(3, '8A', 8, '2026/2027', 1);
+INSERT INTO kelas (id_kelas, nama_kelas, tingkat, status_aktif) VALUES
+(1, 'MM1', 7, 1), (2, 'MM2', 7, 1),
+(3, 'A', 7, 1), (4, 'B', 7, 1), (5, 'C', 7, 1), (6, 'D', 7, 1), (7, 'E', 7, 1), (8, 'F', 7, 1),
+(9, 'MM1', 8, 1), (10, 'MM2', 8, 1),
+(11, 'A', 8, 1), (12, 'B', 8, 1), (13, 'C', 8, 1), (14, 'D', 8, 1), (15, 'E', 8, 1), (16, 'F', 8, 1),
+(17, 'MM1', 9, 1), (18, 'MM2', 9, 1),
+(19, 'A', 9, 1), (20, 'B', 9, 1), (21, 'C', 9, 1), (22, 'D', 9, 1), (23, 'E', 9, 1), (24, 'F', 9, 1);
 
-<<<<<<< HEAD
-INSERT INTO siswa (id_siswa, id_user, nis, nama_siswa, id_kelas, jenis_kelamin, status_aktif) VALUES
-(1, 7, '2607001', 'Andi Pratama', 1, 'Laki-laki', 1),
-(2, 8, '2607002', 'Budi Setiawan', 1, 'Laki-laki', 1),
-(3, 9, '2607003', 'Citra Lestari', 1, 'Perempuan', 1),
-(4, 10, '2607004', 'Dina Maharani', 2, 'Perempuan', 1),
-(5, 11, '2607005', 'Eko Saputra', 2, 'Laki-laki', 1),
-(6, 12, '2608001', 'Fajar Ramadhan', 3, 'Laki-laki', 1);
-=======
-INSERT INTO siswa (id_siswa, id_user, nama_siswa, id_kelas, status_aktif) VALUES
-(1, 7, 'Andi Pratama', 1, 1),
-(2, 8, 'Budi Setiawan', 1, 1),
-(3, 9, 'Citra Lestari', 1, 1),
-(4, 10, 'Dina Maharani', 2, 1),
-(5, 11, 'Eko Saputra', 2, 1),
-(6, 12, 'Fajar Ramadhan', 3, 1);
->>>>>>> 0aafc20a47d2d1f19036c3a2934c5e02a295ddd4
+INSERT INTO siswa (id_siswa, id_user, nama_siswa, id_kelas, jenis_kelamin, status_aktif) VALUES
+(1, 7, 'Andi Pratama', 3, 'Laki-laki', 1),
+(2, 8, 'Budi Setiawan', 3, 'Laki-laki', 1),
+(3, 9, 'Citra Lestari', 3, 'Perempuan', 1),
+(4, 10, 'Dina Maharani', 4, 'Perempuan', 1),
+(5, 11, 'Eko Saputra', 4, 'Laki-laki', 1),
+(6, 12, 'Fajar Ramadhan', 11, 'Laki-laki', 1);
 
 INSERT INTO sesi_absensi
 (id_sesi, id_guru, id_kelas, tanggal, kode_qr, waktu_buka, waktu_tutup, status)
 VALUES
-(1, 1, 1, '2026-09-19', 'QR-7A-19092026',
+(1, 1, 3, '2026-09-19', 'QR-7A-19092026',
  '2026-09-19 07:00:00', '2026-09-19 08:00:00', 'tutup');
 
 INSERT INTO absensi

@@ -41,7 +41,10 @@ export const findAllClass = async ({ page = 1, limit = 10 } = {}) => {
 
   // ambil daata sesuai halaman
   const [rows] = await pool.query(
-    `SELECT id_kelas, nama_kelas, tingkat, status_aktif FROM kelas ORDER BY tingkat ASC, nama_kelas ASC, id_kelas ASC
+    `SELECT id_kelas, nama_kelas, tingkat, status_aktif FROM kelas
+    ORDER BY tingkat ASC,
+      FIELD(nama_kelas, 'MM1', 'MM2', 'A', 'B', 'C', 'D', 'E', 'F'),
+      id_kelas ASC
     LIMIT ? OFFSET ?`,
     [perPage, offset],
   );

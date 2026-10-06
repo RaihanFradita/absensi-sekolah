@@ -748,8 +748,8 @@ export default function Classes() {
                 >
                   <option value="">-- Pilih Rombel --</option>
                   {[
-                    ["MM1", "MM1 (Multimedia)"],
-                    ["MM2", "MM2 (Multimedia)"],
+                    ["MM1", "MM1 (Multi Media)"],
+                    ["MM2", "MM2 (Multi Media)"],
                     ...["A", "B", "C", "D", "E", "F"].map((name) => [name, name]),
                   ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>

@@ -12,7 +12,9 @@ export async function findAllActiveClasses() {
       tingkat
     FROM kelas
     WHERE status_aktif = 1
-    ORDER BY tingkat ASC, nama_kelas ASC`,
+    ORDER BY tingkat ASC,
+      FIELD(nama_kelas, 'MM1', 'MM2', 'A', 'B', 'C', 'D', 'E', 'F'),
+      id_kelas ASC`,
   );
   return rows;
 }
