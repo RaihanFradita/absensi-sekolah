@@ -13,14 +13,16 @@ export const createNewSession = async ({
 
     const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd
 
-    // cek apakah guru sudah punya sesi 'aktif' di kelas dan tanggal yang sama
+    // cek apakah kelas ini sudah punya sesi QR hari ini (oleh guru manapun)
     const [existingSession] = await connection.query(
       `
-        SELECT id_sesi FROM sesi_absensi
-        WHERE id_guru = ? AND id_kelas = ? AND tanggal = ? 
-        FOR UPDATE
-        `,
-      [id_guru, id_kelas, today],
+      SELECT id_sesi, id_guru, kode_qr, waktu_buka, batas_terlambat, status
+      FROM sesi_absensi
+      WHERE id_kelas = ? AND tanggal = ?
+      LIMIT 1
+      FOR UPDATE
+      `,
+      [id_kelas, today],
     );
 
     if (existingSession.length > 0) {

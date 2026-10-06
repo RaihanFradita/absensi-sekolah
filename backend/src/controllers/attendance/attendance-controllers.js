@@ -70,6 +70,7 @@ export const createSession = async (req, res, next) => {
 
     res.status(201).json(result);
   } catch (error) {
+    console.log(error);
     if (error.statusCode) {
       return res.status(error.statusCode).json({
         success: false,
@@ -342,13 +343,7 @@ export const exportKehadiranExcel = async (req, res) => {
     ws.getCell("F6").value = count("tanpa keterangan");
 
     const HEADER_ROW = 8;
-    const headers = [
-      "No",
-      "Nama Siswa",
-      "Kelas",
-      "Waktu Absen",
-      "Status",
-    ];
+    const headers = ["No", "Nama Siswa", "Kelas", "Waktu Absen", "Status"];
     ws.getRow(HEADER_ROW).values = headers;
     ws.getRow(HEADER_ROW).eachCell((c) => {
       c.font = { bold: true, color: { argb: "FFFFFFFF" } };
