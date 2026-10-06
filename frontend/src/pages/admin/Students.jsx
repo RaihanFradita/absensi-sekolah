@@ -408,7 +408,7 @@ export default function Students() {
       // generate username (kecil semua) dan tanpa spasi
       const generatedUsername = value.toLowerCase().replace(/\s+/g, "");
 
-      // generate password (smp4#(nama depan))
+      // generate password
       const firstName = value.trim().split(" ")[0].toLowerCase();
       const generatedPassword = firstName ? `smp4#${firstName}` : "";
 
@@ -693,7 +693,7 @@ export default function Students() {
               <option value="">Semua kelas</option>
               {classes.map((classItem) => (
                 <option key={classItem.id_kelas} value={String(classItem.id_kelas)}>
-                  {formatClassOption(classItem)}
+                  Kelas {classItem.tingkat} - {classItem.nama_kelas}
                 </option>
               ))}
             </select>
@@ -911,7 +911,7 @@ export default function Students() {
                   type="button"
                   onClick={() =>
                     handlePageChange(
-                      pagination.totalPage || pagination.totalPages || 1
+                      pagination.totalPage || pagination.totalPages || 1,
                     )
                   }
                   disabled={
@@ -999,9 +999,23 @@ export default function Students() {
                 />
 
                 <div>
-                  <label htmlFor="student-gender" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">Gender <span className="text-red-500">*</span></label>
-                  <select id="student-gender" name="jenis_kelamin" value={formData.jenis_kelamin} onChange={handleInputChange} required className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                    <option value="">-- Pilih Gender --</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
+                  <label
+                    htmlFor="student-gender"
+                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200"
+                  >
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="student-gender"
+                    name="jenis_kelamin"
+                    value={formData.jenis_kelamin}
+                    onChange={handleInputChange}
+                    required
+                    className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="">-- Pilih Gender --</option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
                   </select>
                 </div>
 
@@ -1012,7 +1026,7 @@ export default function Students() {
                   icon={AtSign}
                   value={formData.username}
                   onChange={handleInputChange}
-                  placeholder="Contoh: ahmad_siswa"
+                  placeholder="Username digenerate otomatis"
                   required
                 />
 
@@ -1070,7 +1084,7 @@ export default function Students() {
                   placeholder={
                     isEditMode
                       ? "Kosongkan jika tidak ingin mengubah password"
-                      : "Masukkan password untuk akun siswa"
+                      : "Password digenerate otomatis"
                   }
                   required={!isEditMode}
                 />

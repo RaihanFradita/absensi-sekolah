@@ -34,6 +34,10 @@ export const signIn = async (data) => {
     };
   }
 
+  if (currentUser.status_aktif !== 1) {
+    return { success: false, message: "Akun sudah tidak aktif" };
+  }
+
   const userId = currentUser.id_user;
 
   let payload = {

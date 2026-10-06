@@ -210,13 +210,14 @@ export default function Teachers() {
   const filteredTeachers = useMemo(() => {
     return teachers.filter((teacher) => {
       const keyword = search.toLowerCase().trim();
-      const matchSearch = 
-       !keyword ||
-       String(teacher.nama_guru || "")
-        .toLowerCase().includes(keyword) ||
+      const matchSearch =
+        !keyword ||
+        String(teacher.nama_guru || "")
+          .toLowerCase()
+          .includes(keyword) ||
         String(teacher.username || "")
-        .toLowerCase()
-        .includes(keyword);
+          .toLowerCase()
+          .includes(keyword);
 
       const isActive = Number(teacher.status_aktif ?? 1) === 1;
       let matchStatus = true;
@@ -288,10 +289,29 @@ export default function Teachers() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // jika yang diubah adalah nama_guru dan bukan dalam mode edit
+    if (name === "nama_guru" && !isEditMode) {
+      // genearte username (kecil semua) dan tanpa spasi
+      const generatedUsername = value.toLowerCase().replace(/\s+/g, "");
+
+      // generate password
+      const firstName = value.trim().split(" ")[0].toLowerCase();
+      const generatedPassword = firstName ? `smp4#${firstName}` : "";
+
+      setFormData((prev) => ({
+        ...prev,
+        nama_guru: value,
+        username: generatedUsername,
+        password: generatedPassword,
+      }));
+    } else {
+      // untuk input lain atau saat mode edit
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // ==============================
@@ -332,7 +352,7 @@ export default function Teachers() {
 
         const response = await adminTeacherServices.updateTeacher(
           formData.id_guru,
-          payload
+          payload,
         );
 
         if (response && response.success === false) {
@@ -364,7 +384,7 @@ export default function Teachers() {
     } catch (error) {
       console.error("Gagal menyimpan data guru:", error);
       setFormError(
-        error?.message || "Terjadi kesalahan saat menyimpan data guru."
+        error?.message || "Terjadi kesalahan saat menyimpan data guru.",
       );
     } finally {
       setIsSaving(false);
@@ -385,7 +405,7 @@ export default function Teachers() {
     try {
       const response = await adminTeacherServices.deactivateTeacher(
         deleteTarget.id_guru,
-        deleteTarget.id_user
+        deleteTarget.id_user,
       );
 
       if (response && response.success === false) {
@@ -395,10 +415,9 @@ export default function Teachers() {
         return;
       }
 
-      showToast(
-        `Guru "${deleteTarget.nama_guru}" berhasil dinonaktifkan!`,
-        { tone: "success" }
-      );
+      showToast(`Guru "${deleteTarget.nama_guru}" berhasil dinonaktifkan!`, {
+        tone: "success",
+      });
       setDeleteTarget(null);
       await fetchTeachers();
     } catch (error) {
@@ -672,7 +691,8 @@ export default function Teachers() {
                   type="button"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={
-                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                    !pagination.hasNextPage ||
+                    page >= (pagination.totalPage || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Selanjutnya"
@@ -684,7 +704,8 @@ export default function Teachers() {
                   type="button"
                   onClick={() => handlePageChange(pagination.totalPage || 1)}
                   disabled={
-                    !pagination.hasNextPage || page >= (pagination.totalPage || 1)
+                    !pagination.hasNextPage ||
+                    page >= (pagination.totalPage || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Terakhir"
@@ -761,9 +782,23 @@ export default function Teachers() {
                 />
 
                 <div>
-                  <label htmlFor="teacher-gender" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">Gender <span className="text-red-500">*</span></label>
-                  <select id="teacher-gender" name="jenis_kelamin" value={formData.jenis_kelamin} onChange={handleInputChange} required className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
-                    <option value="">-- Pilih Gender --</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
+                  <label
+                    htmlFor="teacher-gender"
+                    className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200"
+                  >
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="teacher-gender"
+                    name="jenis_kelamin"
+                    value={formData.jenis_kelamin}
+                    onChange={handleInputChange}
+                    required
+                    className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  >
+                    <option value="">-- Pilih Gender --</option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
                   </select>
                 </div>
 
