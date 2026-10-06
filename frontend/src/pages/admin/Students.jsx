@@ -567,6 +567,8 @@ export default function Students() {
     }
   };
 
+  console.log(students);
+
   // =========================================================
   // RENDER
   // =========================================================
@@ -681,7 +683,10 @@ export default function Students() {
             >
               <option value="">Semua kelas</option>
               {classes.map((classItem) => (
-                <option key={classItem.id_kelas} value={String(classItem.id_kelas)}>
+                <option
+                  key={classItem.id_kelas}
+                  value={String(classItem.id_kelas)}
+                >
                   Kelas {classItem.tingkat} - {classItem.nama_kelas}
                 </option>
               ))}
@@ -726,6 +731,10 @@ export default function Students() {
 
                       <th className="px-4 py-3.5">Nama Siswa</th>
 
+                      <th className="px-4 py-3.5">Jenis Kelamin</th>
+
+                      <th className="px-4 py-3.5">Username</th>
+
                       <th className="px-4 py-3.5">Kelas</th>
 
                       <th className="px-4 py-3.5 text-center">Status</th>
@@ -769,6 +778,22 @@ export default function Students() {
                                 {studentName}
                               </span>
                             </div>
+                          </td>
+
+                          {/* JENIS KELAMIN */}
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                              {student.jenis_kelamin
+                                ? student.jenis_kelamin
+                                : "-"}
+                            </span>
+                          </td>
+
+                          {/* USERNAME */}
+                          <td className="px-4 py-3.5">
+                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                              @{student.username}
+                            </span>
                           </td>
 
                           {/* KELAS */}
