@@ -402,7 +402,7 @@ export default function Students() {
       // generate username (kecil semua) dan tanpa spasi
       const generatedUsername = value.toLowerCase().replace(/\s+/g, "");
 
-      // generate password (smp4#(nama depan))
+      // generate password
       const firstName = value.trim().split(" ")[0].toLowerCase();
       const generatedPassword = firstName ? `smp4#${firstName}` : "";
 
