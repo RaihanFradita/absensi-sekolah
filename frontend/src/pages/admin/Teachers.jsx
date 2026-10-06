@@ -33,6 +33,7 @@ const EMPTY_FORM = {
   id_guru: null,
   id_user: null,
   nama_guru: "",
+  jenis_kelamin: "",
   username: "",
   password: "",
 };
@@ -247,6 +248,7 @@ export default function Teachers() {
       id_guru: teacherId,
       id_user: teacher.id_user || null,
       nama_guru: teacher.nama_guru || "",
+      jenis_kelamin: teacher.jenis_kelamin || "",
       username: teacher.username || "",
       password: "",
     });
@@ -261,6 +263,7 @@ export default function Teachers() {
           id_guru: detail.id_guru || teacherId,
           id_user: detail.id_user || teacher.id_user || null,
           nama_guru: detail.nama_guru || "",
+          jenis_kelamin: detail.jenis_kelamin || "",
           username: detail.username || "",
           password: "",
         });
@@ -302,6 +305,10 @@ export default function Teachers() {
       setFormError("Nama guru wajib diisi!");
       return;
     }
+    if (!formData.jenis_kelamin) {
+      setFormError("Gender wajib dipilih!");
+      return;
+    }
 
     if (!formData.username.trim()) {
       setFormError("Username wajib diisi!");
@@ -320,6 +327,7 @@ export default function Teachers() {
           id_user: formData.id_user,
           username: formData.username.trim(),
           nama_guru: formData.nama_guru.trim(),
+          jenis_kelamin: formData.jenis_kelamin,
         };
 
         const response = await adminTeacherServices.updateTeacher(
@@ -336,6 +344,7 @@ export default function Teachers() {
       } else {
         const payload = {
           nama_guru: formData.nama_guru.trim(),
+          jenis_kelamin: formData.jenis_kelamin,
           username: formData.username.trim(),
           password: formData.password,
         };
@@ -750,6 +759,13 @@ export default function Teachers() {
                   placeholder="Contoh: Budi Santoso, S.Pd."
                   required
                 />
+
+                <div>
+                  <label htmlFor="teacher-gender" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">Gender <span className="text-red-500">*</span></label>
+                  <select id="teacher-gender" name="jenis_kelamin" value={formData.jenis_kelamin} onChange={handleInputChange} required className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                    <option value="">-- Pilih Gender --</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
 
                 <Input
                   label="Username Akun"

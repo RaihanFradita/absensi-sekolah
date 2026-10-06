@@ -6,6 +6,7 @@ export const insertStudents = async ({
   idKelas,
   username,
   password,
+  jenisKelamin,
 }) => {
   const connection = await pool.getConnection();
 
@@ -66,11 +67,12 @@ export const insertStudents = async ({
         id_user,
         nis,
         nama_siswa,
-        id_kelas
+        id_kelas,
+        jenis_kelamin
       )
-      VALUES (?, NULL, ?, ?)
+      VALUES (?, NULL, ?, ?, ?)
       `,
-      [idUser, namaSiswa, idKelas],
+      [idUser, namaSiswa, idKelas, jenisKelamin],
     );
 
     await connection.commit();
@@ -109,6 +111,7 @@ export async function findAllStudents({ page = 1, limit = 10 } = {}) {
       s.id_siswa,
       s.id_user,
       s.nama_siswa,
+      s.jenis_kelamin,
       s.id_kelas,
       k.nama_kelas,
       k.tingkat,
@@ -147,6 +150,7 @@ export async function findStudentById(id) {
       s.id_siswa,
       s.id_user,
       s.nama_siswa,
+      s.jenis_kelamin,
       s.id_kelas,
       u.username,
       k.nama_kelas,
@@ -172,6 +176,7 @@ export const updateStudentById = async ({
   username,
   password,
   idKelas,
+  jenisKelamin,
 }) => {
   const connection = await pool.getConnection();
 
@@ -216,10 +221,10 @@ export const updateStudentById = async ({
     const [updateSiswa] = await connection.query(
       `
       UPDATE siswa
-      SET nama_siswa = ?, id_kelas = ?
+      SET nama_siswa = ?, id_kelas = ?, jenis_kelamin = ?
       WHERE id_siswa = ?
       `,
-      [namaSiswa, idKelas, id_siswa],
+      [namaSiswa, idKelas, jenisKelamin, id_siswa],
     );
 
     if (updateSiswa.affectedRows === 0) {

@@ -212,6 +212,8 @@ export default function StudentProfile() {
                 value={studentName}
               />
 
+              <InfoItem icon={User} label="Gender" value={student?.jenis_kelamin} />
+
               <InfoItem
                 icon={School}
                 label="Kelas"

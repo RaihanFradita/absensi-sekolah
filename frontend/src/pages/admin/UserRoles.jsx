@@ -48,7 +48,7 @@ export default function UserRoles() {
           </h2>
 
           <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-            Kelola akun guru, informasi NIP, status akun,
+            Kelola akun guru, status akun,
             dan informasi penugasan guru.
           </p>
 

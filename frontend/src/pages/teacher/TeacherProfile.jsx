@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   UserCircle,
   BadgeCheck,
-  Hash,
   User,
   ShieldCheck,
   LogOut,
@@ -73,7 +72,6 @@ export default function TeacherProfile() {
   const displayName =
     profile?.nama_guru || user?.name || user?.fullName || "Guru";
   const displayUsername = profile?.username || user?.username || "-";
-  const displayNip = profile?.nip || "-";
   const displayStatus = profile?.status_aktif;
 
   return (
@@ -169,7 +167,7 @@ export default function TeacherProfile() {
 
           {isLoading ? (
             <div className="grid gap-4 p-4 sm:grid-cols-2">
-              {[...Array(4)].map((_, i) => (
+              {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
                   className="h-20 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800"
@@ -183,11 +181,7 @@ export default function TeacherProfile() {
                 label="Nama Lengkap"
                 value={displayName}
               />
-              <InfoItem
-                icon={Hash}
-                label="NIP"
-                value={displayNip}
-              />
+              <InfoItem icon={User} label="Gender" value={profile?.jenis_kelamin} />
               <InfoItem
                 icon={User}
                 label="Username"

@@ -11,7 +11,6 @@ const previewStudents = [
     id_siswa: 1,
     id_user: 7,
     username: "andi",
-    nis: "2607001",
     nama_siswa: "Andi Pratama",
     nama_kelas: "7A",
     status_aktif: 1,
@@ -113,7 +112,7 @@ export default function StudentAccounts() {
         <div className="flex flex-col gap-4">
           <Input
             label="Cari siswa"
-            placeholder="Cari nama, username, NIS, atau kelas..."
+            placeholder="Cari nama, username, atau kelas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             icon={Search}
@@ -131,7 +130,6 @@ export default function StudentAccounts() {
                 <tr>
                   <th className="px-4 py-3">Nama Siswa</th>
                   <th className="px-4 py-3">Username</th>
-                  <th className="px-4 py-3">NIS</th>
                   <th className="px-4 py-3">Kelas</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Aksi</th>
@@ -175,7 +173,7 @@ export default function StudentAccounts() {
                 {filteredStudents.length === 0 && (
                   <tr>
                     <td
-                      colSpan="6"
+                      colSpan="5"
                       className="px-4 py-8 text-center text-slate-500"
                     >
                       Siswa tidak ditemukan.

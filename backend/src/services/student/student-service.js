@@ -18,6 +18,7 @@ export async function findStudentDashboardByUserId(id_siswa) {
       SELECT
         s.id_siswa,
         s.nama_siswa,
+        s.jenis_kelamin,
         k.nama_kelas,
         k.tingkat
       FROM siswa s
@@ -141,6 +142,7 @@ export async function findStudentProfileByUserId(idUser) {
         s.id_siswa,
         s.id_user,
         s.nama_siswa,
+      s.jenis_kelamin,
         s.id_kelas,
         k.nama_kelas,
         k.tingkat,

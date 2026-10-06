@@ -60,11 +60,12 @@ export const insertTeacher = async (data) => {
         INSERT INTO guru (
           id_user,
           nip,
-          nama_guru
+          nama_guru,
+          jenis_kelamin
         )
-        VALUES (?, ?, ?)
+        VALUES (?, ?, ?, ?)
       `,
-      [idUser, data.nip, data.nama_guru],
+      [idUser, data.nip, data.nama_guru, data.jenis_kelamin],
     );
 
     // Simpan semua perubahan
@@ -105,6 +106,7 @@ export const findAllTeacher = async ({ page = 1, limit = 10 } = {}) => {
       g.id_user,
       g.nip,
       g.nama_guru,
+      g.jenis_kelamin,
       g.status_aktif,
       u.username,
       u.role
@@ -141,6 +143,7 @@ export const findTeacherById = async (id_guru) => {
         g.id_guru,
         g.id_user,
         g.nama_guru,
+        g.jenis_kelamin,
         g.status_aktif,
         u.username,
         u.role
@@ -197,10 +200,11 @@ export const updateTeacherById = async (data) => {
       `
         UPDATE guru
         SET nama_guru = ?,
+        jenis_kelamin = ?,
         nip = ?
         WHERE id_guru = ?
       `,
-      [data.nama_guru, data.nip, data.id_guru],
+      [data.nama_guru, data.jenis_kelamin, data.nip, data.id_guru],
     );
 
     if (updateGuru.affectedRows === 0) {
@@ -304,6 +308,7 @@ export const findTeacherProfile = async (idUser) => {
       g.id_guru,
       g.nip,
       g.nama_guru,
+      g.jenis_kelamin,
       g.status_aktif,
       u.username,
       u.role
@@ -328,6 +333,7 @@ export const findTeacherProfile = async (idUser) => {
     data: {
       id_guru: guru.id_guru,
       nama_guru: guru.nama_guru,
+      jenis_kelamin: guru.jenis_kelamin,
       nip: guru.nip || null,
       username: guru.username,
       role: guru.role,

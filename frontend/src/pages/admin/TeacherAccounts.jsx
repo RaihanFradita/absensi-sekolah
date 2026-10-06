@@ -59,7 +59,7 @@ export default function TeacherAccounts() {
   return (
     <PageContainer
       title="Kelola Akun Guru"
-      description="Kelola akun login guru, informasi NIP, wali kelas, dan status akun."
+      description="Kelola akun login guru, wali kelas, dan status akun."
       action={
         <Button
           variant="secondary"
@@ -74,7 +74,7 @@ export default function TeacherAccounts() {
       <Card>
         <Input
           label="Cari guru"
-          placeholder="Cari nama, username, NIP, atau kelas..."
+          placeholder="Cari nama, username, atau kelas..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           icon={Search}

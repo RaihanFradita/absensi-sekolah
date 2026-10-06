@@ -735,20 +735,24 @@ export default function Classes() {
             {/* Modal Form */}
             <form onSubmit={handleSubmit} className="mt-4 space-y-4">
               <div>
-                <Input
-                  label="Nama Kelas"
+                <label htmlFor="nama_kelas" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Rombel Kelas <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="nama_kelas"
                   name="nama_kelas"
-                  icon={School}
-                  placeholder="Contoh: VII A, VIII B, IX C"
                   value={formData.nama_kelas}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      nama_kelas: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, nama_kelas: e.target.value }))}
+                  className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-brand-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   required
-                />
+                >
+                  <option value="">-- Pilih Rombel --</option>
+                  {[
+                    ["MM1", "MM1 (Multimedia)"],
+                    ["MM2", "MM2 (Multimedia)"],
+                    ...["A", "B", "C", "D", "E", "F"].map((name) => [name, name]),
+                  ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   💡 Nama kelas akan otomatis disimpan dalam format huruf kapital.
                 </p>

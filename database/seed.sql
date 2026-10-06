@@ -31,22 +31,22 @@ INSERT INTO users (id_user, username, password, role, status_aktif) VALUES
 INSERT INTO admin (id_admin, id_user, nama_admin, status_aktif) VALUES
 (1, 1, 'Administrator Sekolah', 1);
 
-INSERT INTO guru (id_guru, id_user, nip, nama_guru, status_aktif) VALUES
-(1, 2, '19780101001', 'Budi Santoso', 1),
-(2, 3, '19820512002', 'Siti Aminah', 1);
+INSERT INTO guru (id_guru, id_user, nip, nama_guru, jenis_kelamin, status_aktif) VALUES
+(1, 2, '19780101001', 'Budi Santoso', 'Laki-laki', 1),
+(2, 3, '19820512002', 'Siti Aminah', 'Perempuan', 1);
 
 INSERT INTO kelas (id_kelas, nama_kelas, tingkat, tahun_ajaran, status_aktif) VALUES
 (1, '7A', 7, '2026/2027', 1),
 (2, '7B', 7, '2026/2027', 1),
 (3, '8A', 8, '2026/2027', 1);
 
-INSERT INTO siswa (id_siswa, id_user, nis, nama_siswa, id_kelas, status_aktif) VALUES
-(1, 7, '2607001', 'Andi Pratama', 1, 1),
-(2, 8, '2607002', 'Budi Setiawan', 1, 1),
-(3, 9, '2607003', 'Citra Lestari', 1, 1),
-(4, 10, '2607004', 'Dina Maharani', 2, 1),
-(5, 11, '2607005', 'Eko Saputra', 2, 1),
-(6, 12, '2608001', 'Fajar Ramadhan', 3, 1);
+INSERT INTO siswa (id_siswa, id_user, nis, nama_siswa, id_kelas, jenis_kelamin, status_aktif) VALUES
+(1, 7, '2607001', 'Andi Pratama', 1, 'Laki-laki', 1),
+(2, 8, '2607002', 'Budi Setiawan', 1, 'Laki-laki', 1),
+(3, 9, '2607003', 'Citra Lestari', 1, 'Perempuan', 1),
+(4, 10, '2607004', 'Dina Maharani', 2, 'Perempuan', 1),
+(5, 11, '2607005', 'Eko Saputra', 2, 'Laki-laki', 1),
+(6, 12, '2608001', 'Fajar Ramadhan', 3, 'Laki-laki', 1);
 
 INSERT INTO sesi_absensi
 (id_sesi, id_guru, id_kelas, tanggal, kode_qr, waktu_buka, waktu_tutup, status)

@@ -34,8 +34,8 @@ const EMPTY_FORM = {
   id_siswa: null,
   id_user: null,
   username: "",
-  nis: "",
   nama_siswa: "",
+  jenis_kelamin: "",
   id_kelas: "",
   password: "",
 };
@@ -311,6 +311,7 @@ export default function Students() {
       id_user: student.id_user || null,
       username: student.username || "",
       nama_siswa: student.nama_siswa || student.name || "",
+      jenis_kelamin: student.jenis_kelamin || "",
       id_kelas: student.id_kelas || "",
       password: "",
     });
@@ -336,6 +337,7 @@ export default function Students() {
           username: studentDetail.username || "",
 
           nama_siswa: studentDetail.nama_siswa || studentDetail.name || "",
+          jenis_kelamin: studentDetail.jenis_kelamin || "",
 
           id_kelas: studentDetail.id_kelas || "",
 
@@ -387,6 +389,10 @@ export default function Students() {
       setFormError("Nama siswa wajib diisi!");
       return;
     }
+    if (!formData.jenis_kelamin) {
+      setFormError("Gender wajib dipilih!");
+      return;
+    }
 
     // Validasi username
     if (!formData.username.trim()) {
@@ -419,6 +425,7 @@ export default function Students() {
             id_user: formData.id_user,
             username: formData.username,
             nama_siswa: formData.nama_siswa,
+            jenis_kelamin: formData.jenis_kelamin,
             id_kelas: Number(formData.id_kelas),
           };
 
@@ -443,6 +450,7 @@ export default function Students() {
             username: formData.username,
 
             nama_siswa: formData.nama_siswa,
+            jenis_kelamin: formData.jenis_kelamin,
 
             id_kelas: Number(formData.id_kelas),
 
@@ -914,6 +922,13 @@ export default function Students() {
                   placeholder="Contoh: Ahmad Fadilah"
                   required
                 />
+
+                <div>
+                  <label htmlFor="student-gender" className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-200">Gender <span className="text-red-500">*</span></label>
+                  <select id="student-gender" name="jenis_kelamin" value={formData.jenis_kelamin} onChange={handleInputChange} required className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                    <option value="">-- Pilih Gender --</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
 
                 {/* USERNAME */}
                 <Input

@@ -8,13 +8,13 @@ import {
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
-  const { namaSiswa, nama_siswa, idKelas, id_kelas, username, password } =
+  const { namaSiswa, nama_siswa, idKelas, id_kelas, username, password, jenis_kelamin } =
     req.body;
 
   const finalNamaSiswa = namaSiswa || nama_siswa;
   const finalIdKelas = idKelas || id_kelas;
 
-  if (!finalNamaSiswa || !finalIdKelas || !username || !password) {
+  if (!finalNamaSiswa || !finalIdKelas || !username || !password || !jenis_kelamin) {
     return res.status(400).json({
       success: false,
       message:
@@ -28,6 +28,7 @@ export const createStudent = async (req, res) => {
       idKelas: finalIdKelas,
       username,
       password,
+      jenisKelamin: jenis_kelamin,
     });
 
     if (!result.success) {
@@ -104,6 +105,7 @@ export const editStundent = async (req, res) => {
     idKelas,
     id_kelas,
     password,
+    jenis_kelamin,
   } = req.body;
 
   const finalNamaSiswa = namaSiswa || nama_siswa;
@@ -131,7 +133,7 @@ export const editStundent = async (req, res) => {
     finalIdUser = existingStudent.id_user;
   }
 
-  if (!finalIdUser || !username || !finalNamaSiswa || !finalIdKelas) {
+  if (!finalIdUser || !username || !finalNamaSiswa || !finalIdKelas || !jenis_kelamin) {
     return res.status(400).json({
       success: false,
       message: "Semua field (Nama Siswa, Username, Kelas) wajib diisi",
@@ -146,6 +148,7 @@ export const editStundent = async (req, res) => {
       idKelas: finalIdKelas,
       username,
       password,
+      jenisKelamin: jenis_kelamin,
     });
 
     if (!result.success) {

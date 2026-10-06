@@ -7,9 +7,9 @@ import {
 } from "../../services/admin/admin-teacher-service.js";
 
 export const createTeacher = async (req, res) => {
-  const { username, password, nama_guru } = req.body;
+  const { username, password, nama_guru, jenis_kelamin } = req.body;
 
-  if (!username || !password || !nama_guru) {
+  if (!username || !password || !nama_guru || !jenis_kelamin) {
     return res.status(400).json({
       success: false,
       message: "Semua field wajib diisi!",
@@ -21,6 +21,7 @@ export const createTeacher = async (req, res) => {
       username,
       password,
       nama_guru,
+      jenis_kelamin,
     });
 
     if (!result.success) {
@@ -78,7 +79,7 @@ export const getTeacherById = async (req, res) => {
 
 export const editTeacher = async (req, res) => {
   const { id_guru } = req.params;
-  const { id_user, username, nama_guru } = req.body;
+  const { id_user, username, nama_guru, jenis_kelamin } = req.body;
 
   if (!id_guru) {
     return res.status(400).json({
@@ -87,7 +88,7 @@ export const editTeacher = async (req, res) => {
     });
   }
 
-  if (!id_user || !username || !nama_guru) {
+  if (!id_user || !username || !nama_guru || !jenis_kelamin) {
     return res.status(400).json({
       success: false,
       message: "Semua field wajib diisi",
@@ -100,6 +101,7 @@ export const editTeacher = async (req, res) => {
       id_user,
       username,
       nama_guru,
+      jenis_kelamin,
     });
 
     if (!result.success) {
