@@ -18,8 +18,6 @@ import AttendanceSession from "../pages/teacher/AttendanceSession";
 import AttendanceMonitor from "../pages/teacher/AttendanceMonitor";
 
 import DutyDashboard from "../pages/duty/DutyDashboard";
-import NotScanned from "../pages/duty/NotScanned";
-import DutyRecap from "../pages/duty/DutyRecap";
 
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import Students from "../pages/admin/Students";
@@ -27,12 +25,8 @@ import Teachers from "../pages/admin/Teachers";
 import Classes from "../pages/admin/Classes";
 import Subjects from "../pages/admin/Subjects";
 import Schedules from "../pages/admin/Schedules";
-import AttendanceReports from "../pages/admin/AttendanceReports";
 import DutySchedules from "../pages/admin/DutySchedules";
-import UserRoles from "../pages/admin/UserRoles";
 import AttendanceSessions from "../pages/admin/AttendanceSessions";
-import StudentAccounts from "../pages/admin/StudentAccounts";
-import TeacherAccounts from "../pages/admin/TeacherAccounts";
 
 import { ROLES } from "../utils/constants";
 import useAuth from "../hooks/useAuth";
@@ -119,10 +113,6 @@ export default function AppRoutes() {
 
           <Route element={<RoleRoute allowedRoles={[ROLES.DUTY_TEACHER]} />}>
             <Route path="/duty/dashboard" element={<DutyDashboard />} />
-
-            <Route path="/duty/not-scanned" element={<NotScanned />} />
-
-            <Route path="/duty/recap" element={<DutyRecap />} />
           </Route>
 
           {/* ==================== ADMIN ==================== */}
@@ -135,22 +125,6 @@ export default function AppRoutes() {
             <Route path="/admin/teachers" element={<Teachers />} />
 
             <Route path="/admin/classes" element={<Classes />} />
-
-            <Route path="/admin/user-roles" element={<UserRoles />} />
-
-            {/* ==================== AKUN & ROLE ==================== */}
-
-            <Route path="/admin/accounts" element={<UserRoles />} />
-
-            <Route
-              path="/admin/accounts/students"
-              element={<StudentAccounts />}
-            />
-
-            <Route
-              path="/admin/accounts/teachers"
-              element={<TeacherAccounts />}
-            />
 
             {/* ==================== ADMIN LAINNYA ==================== */}
 
@@ -165,7 +139,6 @@ export default function AppRoutes() {
 
             <Route path="/admin/schedules" element={<Schedules />} />
 
-            <Route path="/admin/reports" element={<AttendanceReports />} />
           </Route>
         </Route>
       </Route>

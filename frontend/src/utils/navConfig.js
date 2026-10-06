@@ -9,7 +9,6 @@ import {
   School,
   FileBarChart,
   ClipboardCheck,
-  UserCog,
   CalendarDays,
   UserCheck,
 } from 'lucide-react';
@@ -72,12 +71,7 @@ export const NAV_ITEMS = {
   [ROLES.DUTY_TEACHER]: [
     {
       to: '/duty/dashboard',
-      label: 'Piket Hari Ini',
-      icon: LayoutDashboard,
-    },
-    {
-      to: '/duty/recap',
-      label: 'Rekap Harian',
+      label: 'Dashboard Piket',
       icon: FileBarChart,
     },
   ],
@@ -109,16 +103,6 @@ export const NAV_ITEMS = {
       to: '/admin/classes',
       label: 'Kelas',
       icon: School,
-    },
-    {
-      to: '/admin/user-roles',
-      label: 'Kelola Akun',
-      icon: UserCog,
-    },
-    {
-      to: '/admin/reports',
-      label: 'Data Absensi',
-      icon: FileBarChart,
     },
   ],
 };

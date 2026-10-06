@@ -34,6 +34,7 @@ const EMPTY_FORM = {
   id_siswa: null,
   id_user: null,
   username: "",
+  nis: "",
   nama_siswa: "",
   id_kelas: "",
   password: "",
@@ -362,15 +363,6 @@ export default function Students() {
   };
 
   // FORM CHANGE
-
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target;
-
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     [name]: value,
-  //   }));
-  // };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
