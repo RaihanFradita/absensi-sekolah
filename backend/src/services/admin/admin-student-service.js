@@ -63,11 +63,7 @@ export const insertStudents = async ({
         id_kelas,
         jenis_kelamin
       )
-<<<<<<< HEAD
-      VALUES (?, NULL, ?, ?, ?)
-=======
-      VALUES (?, ?, ?)
->>>>>>> 0aafc20a47d2d1f19036c3a2934c5e02a295ddd4
+      VALUES (?, ?, ?, ?)
       `,
       [idUser, namaSiswa, idKelas, jenisKelamin],
     );
@@ -86,11 +82,14 @@ export const insertStudents = async ({
   }
 };
 
-export async function findAllStudents({ page = 1, limit = 10 } = {}) {
+export async function findAllStudents({ page = 1, limit = 10, classId } = {}) {
   // sanitasi input suapaya aman dan tidak negatif
   const currentPage = Math.max(parseInt(page, 10) || 1, 1);
   const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
   const offset = (currentPage - 1) * perPage;
+  const selectedClassId = classId ? Number(classId) : null;
+  const classFilter = selectedClassId ? "WHERE s.id_kelas = ?" : "";
+  const classParams = selectedClassId ? [selectedClassId] : [];
 
   // Hitung total data
   const [[{ total }]] = await pool.query(`
@@ -100,7 +99,8 @@ export async function findAllStudents({ page = 1, limit = 10 } = {}) {
       ON s.id_kelas = k.id_kelas
     INNER JOIN users u
       ON s.id_user = u.id_user
-  `);
+    ${classFilter}
+  `, classParams);
 
   const [rows] = await pool.query(
     `
@@ -119,10 +119,11 @@ export async function findAllStudents({ page = 1, limit = 10 } = {}) {
       ON s.id_kelas = k.id_kelas
     INNER JOIN users u
       ON s.id_user = u.id_user
+    ${classFilter}
     ORDER BY s.nama_siswa ASC, s.id_siswa ASC
     LIMIT ? OFFSET ?
   `,
-    [perPage, offset],
+    [...classParams, perPage, offset],
   );
 
   const totalPages = Math.ceil(total / perPage);

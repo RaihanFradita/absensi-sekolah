@@ -48,8 +48,24 @@ export const createStudent = async (req, res) => {
 
 export async function getStudents(req, res) {
   try {
-    const { page, limit } = req.query;
-    const { data, pagination } = await findAllStudents({ page, limit });
+    const { page, limit, classId } = req.query;
+    const parsedClassId = classId === undefined || classId === "" ? undefined : Number(classId);
+
+    if (
+      parsedClassId !== undefined &&
+      (!Number.isInteger(parsedClassId) || parsedClassId <= 0)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "ID kelas harus berupa angka positif.",
+      });
+    }
+
+    const { data, pagination } = await findAllStudents({
+      page,
+      limit,
+      classId: parsedClassId,
+    });
 
     res.json({
       success: true,

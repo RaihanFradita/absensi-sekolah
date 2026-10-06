@@ -51,6 +51,7 @@ export default function Students() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [classFilter, setClassFilter] = useState("");
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -76,13 +77,18 @@ export default function Students() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchStudents = async (targetPage = page, targetLimit = limit) => {
+  const fetchStudents = async (
+    targetPage = page,
+    targetLimit = limit,
+    targetClassId = classFilter,
+  ) => {
     setLoading(true);
 
     try {
       const response = await studentService.getStudents({
         page: targetPage,
         limit: targetLimit,
+        classId: targetClassId || undefined,
       });
 
       if (response?.success && response?.data) {
@@ -176,8 +182,8 @@ export default function Students() {
   // =========================================================
 
   useEffect(() => {
-    fetchStudents(page, limit);
-  }, [page, limit]);
+    fetchStudents(page, limit, classFilter);
+  }, [page, limit, classFilter]);
 
   useEffect(() => {
     fetchClasses();
@@ -661,13 +667,30 @@ export default function Students() {
               SEARCH
           ================================================= */}
 
-          <div className="mt-4">
+          <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
             <Input
               icon={Search}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Cari berdasarkan nama siswa atau kelas..."
             />
+            <select
+              value={classFilter}
+              onChange={(e) => {
+                setClassFilter(e.target.value);
+                setPage(1);
+              }}
+              disabled={loadingClasses}
+              aria-label="Filter berdasarkan kelas"
+              className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <option value="">Semua kelas</option>
+              {classes.map((classItem) => (
+                <option key={classItem.id_kelas} value={String(classItem.id_kelas)}>
+                  Kelas {classItem.tingkat} - {classItem.nama_kelas}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* =================================================
