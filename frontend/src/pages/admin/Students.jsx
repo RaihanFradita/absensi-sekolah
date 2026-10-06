@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
 import {
   Plus,
   Search,
@@ -50,6 +51,7 @@ export default function Students() {
   const [loadingClasses, setLoadingClasses] = useState(false);
 
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 400);
   const [statusFilter, setStatusFilter] = useState("all");
   const [classFilter, setClassFilter] = useState("");
 
@@ -81,6 +83,7 @@ export default function Students() {
     targetPage = page,
     targetLimit = limit,
     targetClassId = classFilter,
+    targetSearch = debouncedSearch,
   ) => {
     setLoading(true);
 
@@ -89,6 +92,7 @@ export default function Students() {
         page: targetPage,
         limit: targetLimit,
         classId: targetClassId || undefined,
+        search: targetSearch || undefined,
       });
 
       if (response?.success && response?.data) {
@@ -182,16 +186,17 @@ export default function Students() {
   // =========================================================
 
   useEffect(() => {
-    fetchStudents(page, limit, classFilter);
-  }, [page, limit, classFilter]);
+    fetchStudents(page, limit, classFilter, debouncedSearch);
+  }, [page, limit, classFilter, debouncedSearch]);
 
   useEffect(() => {
     fetchClasses();
   }, []);
 
+  // Reset ke halaman 1 saat search (setelah debounce) atau filter berubah
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter]);
+  }, [debouncedSearch, statusFilter, classFilter]);
 
   // =========================================================
   // HANDLERS PAGINATION
@@ -280,36 +285,15 @@ export default function Students() {
   // SEARCH + FILTER
   // =========================================================
 
-  const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
-      const keyword = search.toLowerCase().trim();
+  // Filter status dilakukan di sisi frontend karena backend belum support filter status
+  const filteredStudents = students.filter((student) => {
+    const isActive = Number(student.status_aktif ?? 1) === 1;
 
-      const kelasString = `${student.tingkat || ""} ${
-        student.nama_kelas || ""
-      }`.trim();
+    if (statusFilter === "active") return isActive;
+    if (statusFilter === "inactive") return !isActive;
 
-      const matchSearch =
-        !keyword ||
-        String(student.nama_siswa || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        kelasString.toLowerCase().includes(keyword);
-
-      const isActive = Number(student.status_aktif ?? 1) === 1;
-
-      let matchStatus = true;
-
-      if (statusFilter === "active") {
-        matchStatus = isActive;
-      }
-
-      if (statusFilter === "inactive") {
-        matchStatus = !isActive;
-      }
-
-      return matchSearch && matchStatus;
-    });
-  }, [students, search, statusFilter]);
+    return true;
+  });
 
   // OPEN CREATE MODAL
 
@@ -620,6 +604,11 @@ export default function Students() {
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 Menampilkan {filteredStudents.length} dari total{" "}
                 {pagination.totalItems || students.length} siswa
+                {debouncedSearch && (
+                  <span className="ml-1 text-brand-500">
+                    untuk &ldquo;{debouncedSearch}&rdquo;
+                  </span>
+                )}
               </p>
             </div>
 

@@ -82,48 +82,70 @@ export const insertStudents = async ({
   }
 };
 
-export async function findAllStudents({ page = 1, limit = 10, classId } = {}) {
+export async function findAllStudents({
+  page = 1,
+  limit = 10,
+  classId,
+  search,
+} = {}) {
   // sanitasi input suapaya aman dan tidak negatif
   const currentPage = Math.max(parseInt(page, 10) || 1, 1);
   const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
   const offset = (currentPage - 1) * perPage;
+
+  // bangun where dinamis
+  const conditions = [];
+  const params = [];
+
   const selectedClassId = classId ? Number(classId) : null;
-  const classFilter = selectedClassId ? "WHERE s.id_kelas = ?" : "";
-  const classParams = selectedClassId ? [selectedClassId] : [];
+
+  if (selectedClassId) {
+    conditions.push("s.id_kelas = ?");
+    params.push(selectedClassId);
+  }
+
+  const keyword = typeof search === "string" ? search.trim() : "";
+
+  if (keyword) {
+    conditions.push("s.nama_siswa LIKE ? OR u.username LIKE ?");
+    const like = `%${keyword}%`;
+    params.push(like, like);
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
+
+  // const classFilter = selectedClassId ? "WHERE s.id_kelas = ?" : "";
+  // const classParams = selectedClassId ? [selectedClassId] : [];
 
   // Hitung total data
-  const [[{ total }]] = await pool.query(`
+  const [[{ total }]] = await pool.query(
+    `
     SELECT COUNT(*) AS total
     FROM siswa s
     INNER JOIN kelas k
       ON s.id_kelas = k.id_kelas
     INNER JOIN users u
       ON s.id_user = u.id_user
-    ${classFilter}
-  `, classParams);
+    ${whereClause}
+  `,
+    params,
+  );
 
   const [rows] = await pool.query(
     `
     SELECT
-      s.id_siswa,
-      s.id_user,
-      s.nama_siswa,
-      s.jenis_kelamin,
-      s.id_kelas,
-      k.nama_kelas,
-      k.tingkat,
-      s.status_aktif,
-      u.username
+      s.id_siswa, s.id_user, s.nama_siswa, s.jenis_kelamin,
+      s.id_kelas, k.nama_kelas, k.tingkat, s.status_aktif, u.username
     FROM siswa s
-    INNER JOIN kelas k
-      ON s.id_kelas = k.id_kelas
-    INNER JOIN users u
-      ON s.id_user = u.id_user
-    ${classFilter}
+    INNER JOIN kelas k ON s.id_kelas = k.id_kelas
+    INNER JOIN users u ON s.id_user = u.id_user
+    ${whereClause}
     ORDER BY s.nama_siswa ASC, s.id_siswa ASC
     LIMIT ? OFFSET ?
-  `,
-    [...classParams, perPage, offset],
+    `,
+    [...params, perPage, offset],
   );
 
   const totalPages = Math.ceil(total / perPage);

@@ -8,13 +8,26 @@ import {
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
-  const { namaSiswa, nama_siswa, idKelas, id_kelas, username, password, jenis_kelamin } =
-    req.body;
+  const {
+    namaSiswa,
+    nama_siswa,
+    idKelas,
+    id_kelas,
+    username,
+    password,
+    jenis_kelamin,
+  } = req.body;
 
   const finalNamaSiswa = namaSiswa || nama_siswa;
   const finalIdKelas = idKelas || id_kelas;
 
-  if (!finalNamaSiswa || !finalIdKelas || !username || !password || !jenis_kelamin) {
+  if (
+    !finalNamaSiswa ||
+    !finalIdKelas ||
+    !username ||
+    !password ||
+    !jenis_kelamin
+  ) {
     return res.status(400).json({
       success: false,
       message:
@@ -48,8 +61,9 @@ export const createStudent = async (req, res) => {
 
 export async function getStudents(req, res) {
   try {
-    const { page, limit, classId } = req.query;
-    const parsedClassId = classId === undefined || classId === "" ? undefined : Number(classId);
+    const { page, limit, classId, search } = req.query;
+    const parsedClassId =
+      classId === undefined || classId === "" ? undefined : Number(classId);
 
     if (
       parsedClassId !== undefined &&
@@ -65,6 +79,7 @@ export async function getStudents(req, res) {
       page,
       limit,
       classId: parsedClassId,
+      search,
     });
 
     res.json({
@@ -149,7 +164,13 @@ export const editStundent = async (req, res) => {
     finalIdUser = existingStudent.id_user;
   }
 
-  if (!finalIdUser || !username || !finalNamaSiswa || !finalIdKelas || !jenis_kelamin) {
+  if (
+    !finalIdUser ||
+    !username ||
+    !finalNamaSiswa ||
+    !finalIdKelas ||
+    !jenis_kelamin
+  ) {
     return res.status(400).json({
       success: false,
       message: "Semua field (Nama Siswa, Username, Kelas) wajib diisi",
