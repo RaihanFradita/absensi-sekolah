@@ -54,21 +54,14 @@ export const insertStudents = async ({
 
     const idUser = insertUser.insertId;
 
-    /*
-     * Kolom nis tetap ada di database,
-     * tetapi tidak digunakan sebagai input.
-     *
-     * Untuk sementara isi NULL.
-     */
     await connection.query(
       `
       INSERT INTO siswa (
         id_user,
-        nis,
         nama_siswa,
         id_kelas
       )
-      VALUES (?, NULL, ?, ?)
+      VALUES (?, ?, ?)
       `,
       [idUser, namaSiswa, idKelas],
     );
@@ -212,7 +205,7 @@ export const updateStudentById = async ({
       };
     }
 
-    // Update data siswa tanpa NIS
+    // Update data siswa
     const [updateSiswa] = await connection.query(
       `
       UPDATE siswa

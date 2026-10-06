@@ -345,7 +345,6 @@ export const exportKehadiranExcel = async (req, res) => {
     const headers = [
       "No",
       "Nama Siswa",
-      "NIS",
       "Kelas",
       "Waktu Absen",
       "Status",
@@ -364,12 +363,11 @@ export const exportKehadiranExcel = async (req, res) => {
       const row = ws.addRow([
         i + 1,
         r.nama_siswa,
-        r.nis,
         r.kelas,
         r.waktu_scan ?? "-",
         STATUS_LABEL[r.status] ?? r.status,
       ]);
-      row.getCell(6).fill = {
+      row.getCell(5).fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: "FF" + (STATUS_COLOR[r.status] ?? "FFFFFF") },
@@ -378,10 +376,9 @@ export const exportKehadiranExcel = async (req, res) => {
 
     ws.getColumn(1).width = 14;
     ws.getColumn(2).width = 30;
-    ws.getColumn(3).width = 18;
-    ws.getColumn(4).width = 14;
-    ws.getColumn(5).width = 22;
-    ws.getColumn(6).width = 16;
+    ws.getColumn(3).width = 14;
+    ws.getColumn(4).width = 22;
+    ws.getColumn(5).width = 16;
     ws.getCell("E5").alignment = { horizontal: "left" };
     ws.views = [{ state: "frozen", ySplit: HEADER_ROW }];
 

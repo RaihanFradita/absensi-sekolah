@@ -114,9 +114,7 @@ export default function DutyDashboard({ title }) {
       const matchSearch =
         !q ||
         r.student?.name?.toLowerCase().includes(q) ||
-        r.nama_siswa?.toLowerCase().includes(q) ||
-        r.student?.nis?.toLowerCase().includes(q) ||
-        r.nis?.toLowerCase().includes(q);
+        r.nama_siswa?.toLowerCase().includes(q);
 
       const s = (r.status || "").toLowerCase().trim();
       const c = (r.currentStatus || "").toLowerCase().trim();
@@ -429,7 +427,7 @@ export default function DutyDashboard({ title }) {
 
                 <div className="flex flex-wrap items-center gap-2">
                   <Input
-                    placeholder="Cari nama atau NIS siswa..."
+                    placeholder="Cari nama siswa..."
                     value={search}
                     onChange={(e) => {
                       setSearch(e.target.value);
@@ -495,11 +493,6 @@ export default function DutyDashboard({ title }) {
                         </td>
                         <td className="px-5 py-3 font-medium text-slate-900 dark:text-slate-100">
                           <div>{r.student?.name || r.nama_siswa}</div>
-                          {(r.student?.nis || r.nis) && (
-                            <div className="text-xs font-normal text-slate-400">
-                              NIS: {r.student?.nis || r.nis}
-                            </div>
-                          )}
                         </td>
                         <td className="px-5 py-3">
                           <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">

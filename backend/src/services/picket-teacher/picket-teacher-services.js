@@ -19,7 +19,6 @@ export const getDailyRows = async ({ date, className }) => {
     `
     SELECT
       s.id_siswa,
-      s.nis,
       s.nama_siswa,
       kl.id_kelas,
       ${KELAS_LABEL} AS nama_kelas,

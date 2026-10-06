@@ -72,7 +72,6 @@ export function adaptPicketAttendanceRow(row) {
     student: {
       id: row.id_siswa,
       name: row.nama_siswa,
-      nis: row.nis,
       className: row.nama_kelas,
     },
     currentStatus,
@@ -111,7 +110,6 @@ export const picketTeacherService = {
   exportToCsv({ date, className, rows = [] }) {
     const headers = [
       "No",
-      "NIS",
       "Nama Siswa",
       "Kelas",
       "Jam Scan",
@@ -130,7 +128,6 @@ export const picketTeacherService = {
 
     const lines = rows.map((r, i) => [
       i + 1,
-      r.nis || r.student?.nis || "-",
       r.nama_siswa || r.student?.name || "-",
       r.nama_kelas || r.student?.className || "-",
       r.scanTimeLabel || r.waktu_scan || "-",

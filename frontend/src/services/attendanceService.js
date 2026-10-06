@@ -214,7 +214,6 @@ async function exportAttendanceExcel(params = {}) {
     const rows = getMockAttendanceRows(params);
     const header = [
       "No",
-      "NIS/NISN",
       "Nama siswa",
       "Kelas",
       "Tanggal absensi",
@@ -226,7 +225,6 @@ async function exportAttendanceExcel(params = {}) {
     ];
     const body = rows.map((r, i) => [
       i + 1,
-      `${r.student.nis}/${r.student.nisn}`,
       r.student.name,
       r.student.className,
       r.date,

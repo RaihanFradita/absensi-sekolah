@@ -113,7 +113,7 @@ export default function StudentAccounts() {
         <div className="flex flex-col gap-4">
           <Input
             label="Cari siswa"
-            placeholder="Cari nama, username, NIS, atau kelas..."
+            placeholder="Cari nama, username, atau kelas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             icon={Search}
@@ -131,7 +131,6 @@ export default function StudentAccounts() {
                 <tr>
                   <th className="px-4 py-3">Nama Siswa</th>
                   <th className="px-4 py-3">Username</th>
-                  <th className="px-4 py-3">NIS</th>
                   <th className="px-4 py-3">Kelas</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Aksi</th>

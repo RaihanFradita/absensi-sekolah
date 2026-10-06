@@ -143,11 +143,10 @@ export default function AttendanceMonitor() {
 
       setRows(
         list.map((r) => ({
-          id: r.id_siswa ?? r.id_absensi ?? `${r.nis}-${r.nama_siswa}`,
+          id: r.id_siswa ?? r.id_absensi ?? r.nama_siswa,
           studentId: r.id_siswa,
           attendanceId: r.id_absensi || null,
           name: r.nama_siswa || "-",
-          nis: r.nis || "-",
           className: r.nama_kelas || "-",
           time: r.waktu_scan || null,
           status: normalizeStatus(r.status),
@@ -448,7 +447,6 @@ export default function AttendanceMonitor() {
                 <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800">
                   <tr>
                     <th className="px-4 py-3 font-medium">Nama Siswa</th>
-                    <th className="px-4 py-3 font-medium">NIS</th>
                     <th className="px-4 py-3 font-medium">Kelas</th>
                     <th className="px-4 py-3 font-medium">Waktu Absen</th>
                     <th className="px-4 py-3 font-medium">Status</th>
@@ -465,9 +463,6 @@ export default function AttendanceMonitor() {
                       >
                         <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
                           {row.name}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                          {row.nis}
                         </td>
                         <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                           {row.className}

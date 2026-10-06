@@ -34,7 +34,6 @@ const EMPTY_FORM = {
   id_siswa: null,
   id_user: null,
   username: "",
-  nis: "",
   nama_siswa: "",
   id_kelas: "",
   password: "",

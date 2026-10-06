@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import {
   UserCircle,
   BadgeCheck,
-  Hash,
   User,
   ShieldCheck,
   LogOut,
@@ -73,7 +72,6 @@ export default function TeacherProfile() {
   const displayName =
     profile?.nama_guru || user?.name || user?.fullName || "Guru";
   const displayUsername = profile?.username || user?.username || "-";
-  const displayNip = profile?.nip || "-";
   const displayStatus = profile?.status_aktif;
 
   return (
@@ -182,11 +180,6 @@ export default function TeacherProfile() {
                 icon={User}
                 label="Nama Lengkap"
                 value={displayName}
-              />
-              <InfoItem
-                icon={Hash}
-                label="NIP"
-                value={displayNip}
               />
               <InfoItem
                 icon={User}

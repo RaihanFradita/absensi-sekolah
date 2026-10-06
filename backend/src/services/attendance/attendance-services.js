@@ -218,7 +218,6 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
       `
   SELECT
     s.id_siswa,
-    s.nis,
     s.nama_siswa,
     k.tingkat,
     k.nama_kelas
@@ -274,7 +273,6 @@ export const scanQrAbsensi = async ({ id_siswa, kode_qr }) => {
         siswa: {
           id_siswa: siswa.id_siswa,
           nama_siswa: siswa.nama_siswa,
-          nis: siswa.nis,
           kelas: `${siswa.tingkat}${siswa.nama_kelas}`,
         },
       },
@@ -415,7 +413,6 @@ export const getDailyByClass = async ({ kelasId, tanggal }) => {
     SELECT
       s.id_siswa,
       s.nama_siswa,
-      s.nis,
       kl.nama_kelas,
       a.id_absensi,
       a.waktu_scan,
@@ -449,8 +446,7 @@ export const getDailyByClass = async ({ kelasId, tanggal }) => {
 export const getKehadiranKelasTanggal = async ({ id_kelas, tanggal }) => {
   const [rows] = await pool.query(
     `
-    SELECT s.nis,
-            s.nama_siswa,
+    SELECT s.nama_siswa,
             CONCAT(k.tingkat, ' ', k.nama_kelas) AS kelas,
             a.waktu_scan,
             a.keterangan,

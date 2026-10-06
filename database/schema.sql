@@ -46,14 +46,12 @@ CREATE TABLE admin (
 CREATE TABLE guru (
     id_guru INT NOT NULL AUTO_INCREMENT,
     id_user INT NOT NULL,
-    nip VARCHAR(20) NOT NULL,
     nama_guru VARCHAR(100) NOT NULL,
     status_aktif TINYINT(1) NOT NULL DEFAULT 1,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id_guru),
     UNIQUE KEY uq_guru_id_user (id_user),
-    UNIQUE KEY uq_guru_nip (nip),
     CONSTRAINT fk_guru_user FOREIGN KEY (id_user) REFERENCES users(id_user)
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -72,7 +70,6 @@ CREATE TABLE kelas (
 CREATE TABLE siswa (
     id_siswa INT NOT NULL AUTO_INCREMENT,
     id_user INT NOT NULL,
-    nis VARCHAR(20) NOT NULL,
     nama_siswa VARCHAR(100) NOT NULL,
     id_kelas INT NOT NULL,
     status_aktif TINYINT(1) NOT NULL DEFAULT 1,
@@ -80,7 +77,6 @@ CREATE TABLE siswa (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id_siswa),
     UNIQUE KEY uq_siswa_id_user (id_user),
-    UNIQUE KEY uq_siswa_nis (nis),
     KEY idx_siswa_kelas (id_kelas),
     CONSTRAINT fk_siswa_user FOREIGN KEY (id_user) REFERENCES users(id_user)
         ON UPDATE CASCADE ON DELETE CASCADE,
