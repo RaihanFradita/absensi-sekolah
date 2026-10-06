@@ -6,10 +6,13 @@ import { pool } from "../../config/database.js";
  */
 export async function findAllActiveClasses() {
   const [rows] = await pool.query(
-    `SELECT id_kelas, nama_kelas, tingkat
-     FROM kelas
-     WHERE status_aktif = 1
-     ORDER BY nama_kelas ASC`,
+    `SELECT
+      id_kelas,
+      nama_kelas,
+      tingkat
+    FROM kelas
+    WHERE status_aktif = 1
+    ORDER BY tingkat ASC, nama_kelas ASC`,
   );
   return rows;
 }

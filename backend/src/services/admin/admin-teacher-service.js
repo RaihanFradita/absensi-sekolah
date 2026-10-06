@@ -273,8 +273,13 @@ export const softDeleteTeacher = async (data) => {
 export const findAllClass = async () => {
   try {
     const [kelas] = await pool.query(
-      "SELECT * FROM kelas WHERE status_aktif = ?",
-      [1],
+      `SELECT
+      id_kelas,
+      nama_kelas,
+      tingkat
+    FROM kelas
+    WHERE status_aktif = 1
+    ORDER BY tingkat ASC, nama_kelas ASC`,
     );
 
     return {
