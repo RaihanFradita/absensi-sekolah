@@ -87,13 +87,22 @@ export default function Students() {
       if (response?.success && response?.data) {
         setStudents(response.data);
         if (response.pagination) {
-          setPagination(response.pagination);
+          const totalPage =
+            response.pagination.totalPage ||
+            response.pagination.totalPages ||
+            1;
+          setPagination({
+            ...response.pagination,
+            totalPage,
+            totalPages: totalPage,
+          });
         } else {
           setPagination({
             page: targetPage,
             limit: targetLimit,
             totalItems: response.data.length,
             totalPage: 1,
+            totalPages: 1,
             hasNextPage: false,
             hasPrevPage: false,
           });
@@ -101,7 +110,15 @@ export default function Students() {
       } else if (response?.students) {
         setStudents(response.students);
         if (response.pagination) {
-          setPagination(response.pagination);
+          const totalPage =
+            response.pagination.totalPage ||
+            response.pagination.totalPages ||
+            1;
+          setPagination({
+            ...response.pagination,
+            totalPage,
+            totalPages: totalPage,
+          });
         }
       } else if (Array.isArray(response)) {
         setStudents(response);
@@ -165,11 +182,16 @@ export default function Students() {
     fetchClasses();
   }, []);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
   // =========================================================
   // HANDLERS PAGINATION
   // =========================================================
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= (pagination.totalPage || 1)) {
+    const totalPages = pagination.totalPage || pagination.totalPages || 1;
+    if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
   };
@@ -181,7 +203,7 @@ export default function Students() {
   };
 
   const renderPageNumbers = () => {
-    const totalPages = pagination.totalPage || 1;
+    const totalPages = pagination.totalPage || pagination.totalPages || 1;
     const pages = [];
 
     let startPage = Math.max(1, page - 1);
@@ -839,7 +861,7 @@ export default function Students() {
                   onClick={() => handlePageChange(page + 1)}
                   disabled={
                     !pagination.hasNextPage ||
-                    page >= (pagination.totalPage || 1)
+                    page >= (pagination.totalPage || pagination.totalPages || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Selanjutnya"
@@ -849,10 +871,14 @@ export default function Students() {
 
                 <button
                   type="button"
-                  onClick={() => handlePageChange(pagination.totalPage || 1)}
+                  onClick={() =>
+                    handlePageChange(
+                      pagination.totalPage || pagination.totalPages || 1
+                    )
+                  }
                   disabled={
                     !pagination.hasNextPage ||
-                    page >= (pagination.totalPage || 1)
+                    page >= (pagination.totalPage || pagination.totalPages || 1)
                   }
                   className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   title="Halaman Terakhir"

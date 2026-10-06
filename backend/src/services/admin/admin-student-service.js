@@ -126,6 +126,7 @@ export async function findAllStudents({ page = 1, limit = 10 } = {}) {
       page: currentPage,
       limit: perPage,
       totalItems: total,
+      totalPage: totalPages,
       totalPages,
       hasNextPage: currentPage < totalPages,
       hasPrevPage: currentPage > 1,
