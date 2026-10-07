@@ -36,29 +36,20 @@ export const findAllClass = async ({
   limit = 10,
   search,
   tingkat,
-  statusAktif,
 } = {}) => {
   const currentPage = Math.max(parseInt(page, 10) || 1, 1);
   const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
   const offset = (currentPage - 1) * perPage;
 
-  // Bangun WHERE dinamis
+  // Selalu hanya kelas aktif
   const conditions = ["status_aktif = 1"];
   const params = [];
 
-  // Default: hanya kelas aktif (sama seperti logic lama).
-  // Kirim statusAktif="all" kalau ingin menampilkan semua.
-  if (statusAktif !== "all") {
-    conditions.push("status_aktif = ?");
-    params.push(
-      statusAktif === undefined || statusAktif === "" ? 1 : statusAktif,
-    );
-  }
-
   const keyword = typeof search === "string" ? search.trim() : "";
   if (keyword) {
-    conditions.push("nama_kelas LIKE ?");
-    params.push(`%${keyword}%`);
+    conditions.push("(nama_kelas LIKE ? OR tingkat LIKE ?)");
+    const like = `%${keyword}%`;
+    params.push(like, like); // dua placeholder -> dua nilai
   }
 
   // Opsional: filter tingkat (mis. 10, 11, 12)
@@ -67,17 +58,13 @@ export const findAllClass = async ({
     params.push(tingkat);
   }
 
-  const whereClause = conditions.length
-    ? `WHERE ${conditions.join(" AND ")}`
-    : "";
+  const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
-  // Hitung total data (dengan filter yang sama)
   const [[{ total }]] = await pool.query(
     `SELECT COUNT(*) AS total FROM kelas ${whereClause}`,
     params,
   );
 
-  // Ambil data sesuai halaman
   const [rows] = await pool.query(
     `
     SELECT id_kelas, nama_kelas, tingkat, status_aktif
