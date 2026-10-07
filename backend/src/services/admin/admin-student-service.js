@@ -94,7 +94,7 @@ export async function findAllStudents({
   const offset = (currentPage - 1) * perPage;
 
   // bangun where dinamis
-  const conditions = [];
+  const conditions = ["s.status_aktif = 1"];
   const params = [];
 
   const selectedClassId = classId ? Number(classId) : null;
@@ -115,9 +115,6 @@ export async function findAllStudents({
   const whereClause = conditions.length
     ? `WHERE ${conditions.join(" AND ")}`
     : "";
-
-  // const classFilter = selectedClassId ? "WHERE s.id_kelas = ?" : "";
-  // const classParams = selectedClassId ? [selectedClassId] : [];
 
   // Hitung total data
   const [[{ total }]] = await pool.query(
@@ -142,7 +139,11 @@ export async function findAllStudents({
     INNER JOIN kelas k ON s.id_kelas = k.id_kelas
     INNER JOIN users u ON s.id_user = u.id_user
     ${whereClause}
-    ORDER BY s.nama_siswa ASC, s.id_siswa ASC
+    ORDER BY 
+    k.tingkat ASC,
+    k.nama_kelas ASC,
+    s.nama_siswa ASC,
+    s.id_siswa ASC
     LIMIT ? OFFSET ?
     `,
     [...params, perPage, offset],
