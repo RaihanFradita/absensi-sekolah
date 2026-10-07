@@ -782,7 +782,9 @@ export default function Students() {
 
                           {/* JENIS KELAMIN */}
                           <td className="px-4 py-3.5">
-                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            <span
+                              className={`inline-flex items-center rounded-full ${student.jenis_kelamin === "Laki-laki" ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300" : "bg-pink-100 text-pink-700 dark:bg-pink-800 dark:text-pink-300"} px-2.5 py-1 text-xs font-medium`}
+                            >
                               {student.jenis_kelamin
                                 ? student.jenis_kelamin
                                 : "-"}
