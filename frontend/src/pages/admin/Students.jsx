@@ -731,7 +731,7 @@ export default function Students() {
 
                       <th className="px-4 py-3.5">Nama Siswa</th>
 
-                      <th className="px-4 py-3.5">Jenis Kelamin</th>
+                      <th className="px-4 py-3.5">Gender</th>
 
                       <th className="px-4 py-3.5">Username</th>
 

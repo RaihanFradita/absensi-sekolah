@@ -549,6 +549,7 @@ export default function Teachers() {
                     <tr className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
                       <th className="w-12 px-4 py-3.5 text-center">No</th>
                       <th className="px-4 py-3.5">Nama Guru</th>
+                      <th className="px-4 py-3.5">Gender</th>
                       <th className="px-4 py-3.5">Username</th>
                       <th className="px-4 py-3.5 text-center">Status</th>
                       <th className="w-28 px-4 py-3.5 text-right">Aksi</th>
@@ -579,6 +580,17 @@ export default function Teachers() {
                                 {teacher.nama_guru || "-"}
                               </span>
                             </div>
+                          </td>
+
+                          {/* JENIS KELAMIN */}
+                          <td className="px-4 py-3.5">
+                            <span
+                              className={`inline-flex items-center rounded-full ${teacher.jenis_kelamin === "Laki-laki" ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300" : "bg-pink-100 text-pink-700 dark:bg-pink-800 dark:text-pink-300"} px-2.5 py-1 text-xs font-medium`}
+                            >
+                              {teacher.jenis_kelamin
+                                ? teacher.jenis_kelamin
+                                : "-"}
+                            </span>
                           </td>
 
                           <td className="px-4 py-3.5">
