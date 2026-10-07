@@ -107,7 +107,7 @@ export async function findAllStudents({
   const keyword = typeof search === "string" ? search.trim() : "";
 
   if (keyword) {
-    conditions.push("s.nama_siswa LIKE ? OR u.username LIKE ?");
+    conditions.push("(s.nama_siswa LIKE ? OR u.username LIKE ?)");
     const like = `%${keyword}%`;
     params.push(like, like);
   }

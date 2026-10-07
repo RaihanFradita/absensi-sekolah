@@ -85,17 +85,38 @@ export const insertTeacher = async (data) => {
   }
 };
 
-export const findAllTeacher = async ({ page = 1, limit = 10 } = {}) => {
+export const findAllTeacher = async ({ page = 1, limit = 10, search } = {}) => {
   // sanitasi input suapaya aman dan tidak negatif
   const currentPage = Math.max(parseInt(page, 10) || 1, 1);
   const perPage = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
   const offset = (currentPage - 1) * perPage;
 
+  // WHERE dinamis
+  const conditions = ["g.status_aktif = 1"];
+  const params = [];
+
+  const keyword = typeof search === "string" ? search.trim() : "";
+
+  if (keyword) {
+    conditions.push("(g.nama_guru LIKE ? OR u.username LIKE ?)");
+    const like = `%${keyword}%`;
+    params.push(like, like);
+  }
+
+  const whereClause = conditions.length
+    ? `WHERE ${conditions.join(" AND ")}`
+    : "";
+
   // hitung total data
-  const [[{ total }]] = await pool.query(`
-    SELECT COUNT(*) AS total FROM guru g INNER JOIN users u
-    ON u.id_user = g.id_user;
-    `);
+  const [[{ total }]] = await pool.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM guru g
+    INNER JOIN users u ON u.id_user = g.id_user
+    ${whereClause}
+    `,
+    params,
+  );
 
   // ambil data sesuai halaman
   const [teachers] = await pool.query(
@@ -109,12 +130,12 @@ export const findAllTeacher = async ({ page = 1, limit = 10 } = {}) => {
       u.username,
       u.role
     FROM guru g
-    INNER JOIN users u
-      ON u.id_user = g.id_user
+    INNER JOIN users u ON u.id_user = g.id_user
+    ${whereClause}
     ORDER BY g.nama_guru ASC, g.id_guru ASC
     LIMIT ? OFFSET ?
-  `,
-    [perPage, offset],
+    `,
+    [...params, perPage, offset],
   );
 
   const totalPage = Math.ceil(total / perPage);
