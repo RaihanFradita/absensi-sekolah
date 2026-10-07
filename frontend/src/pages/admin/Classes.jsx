@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
 import {
   Plus,
   Search,
@@ -68,13 +69,41 @@ export default function Classes() {
   // ==============================
   // FETCH DATA KELAS
   // ==============================
-  const fetchClasses = async (targetPage = page, targetLimit = limit) => {
+
+  // Debounce search 400ms sebelum dikirim ke server
+  const debouncedSearch = useDebounce(search, 400);
+
+  // Konversi statusFilter frontend ke param statusAktif backend
+  const toStatusAktif = (filter) => {
+    if (filter === "active") return 1;
+    if (filter === "inactive") return 0;
+    return "all";
+  };
+
+  const fetchClasses = async (
+    targetPage = page,
+    targetLimit = limit,
+    targetSearch = debouncedSearch,
+    targetStatusFilter = statusFilter,
+    targetTingkat = tingkatFilter,
+  ) => {
     setLoading(true);
     try {
-      const response = await adminClassServices.getClasses({
+      const params = {
         page: targetPage,
         limit: targetLimit,
-      });
+        statusAktif: toStatusAktif(targetStatusFilter),
+      };
+
+      if (targetSearch && targetSearch.trim()) {
+        params.search = targetSearch.trim();
+      }
+
+      if (targetTingkat && targetTingkat !== "all") {
+        params.tingkat = targetTingkat;
+      }
+
+      const response = await adminClassServices.getClasses(params);
 
       if (response && response.success && response.data) {
         setClasses(response.data);
@@ -119,9 +148,22 @@ export default function Classes() {
     }
   };
 
+  // Fetch ulang saat page atau limit berubah
   useEffect(() => {
-    fetchClasses(page, limit);
+    fetchClasses(page, limit, debouncedSearch, statusFilter, tingkatFilter);
   }, [page, limit]);
+
+  // Reset ke halaman 1 & fetch ulang saat keyword search berubah (setelah debounce)
+  useEffect(() => {
+    setPage(1);
+    fetchClasses(1, limit, debouncedSearch, statusFilter, tingkatFilter);
+  }, [debouncedSearch]);
+
+  // Fetch ulang saat filter status atau tingkat berubah
+  useEffect(() => {
+    setPage(1);
+    fetchClasses(1, limit, debouncedSearch, statusFilter, tingkatFilter);
+  }, [statusFilter, tingkatFilter]);
 
   // ==============================
   // HANDLERS PAGINATION
@@ -207,39 +249,13 @@ export default function Classes() {
   };
 
   // ==============================
-  // FILTER & SEARCH
+  // DATA SIAP RENDER (filtering sudah dilakukan server)
   // ==============================
-  const filteredClasses = useMemo(() => {
-    return classes.filter((cls) => {
-      const keyword = search.toLowerCase().trim();
-      const matchSearch =
-        !keyword ||
-        String(cls.nama_kelas || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        String(cls.tingkat || "").includes(keyword);
+  // classes sudah terfilter dari server; tidak perlu filter client-side
+  const filteredClasses = classes;
 
-      const isActive = Number(cls.status_aktif ?? 1) === 1;
-      let matchStatus = true;
-      if (statusFilter === "active") matchStatus = isActive;
-      if (statusFilter === "inactive") matchStatus = !isActive;
-
-      let matchTingkat = true;
-      if (tingkatFilter !== "all") {
-        matchTingkat = String(cls.tingkat) === String(tingkatFilter);
-      }
-
-      return matchSearch && matchStatus && matchTingkat;
-    });
-  }, [classes, search, statusFilter, tingkatFilter]);
-
-  // Unique list of tingkat for filter select
-  const uniqueTingkatList = useMemo(() => {
-    const list = Array.from(
-      new Set(classes.map((cls) => cls.tingkat).filter(Boolean))
-    );
-    return list.sort((a, b) => Number(a) - Number(b));
-  }, [classes]);
+  // Tingkat yang tersedia (hardcode sesuai jenjang SMP)
+  const uniqueTingkatList = [7, 8, 9];
 
   // ==============================
   // MODAL HANDLERS
@@ -311,7 +327,7 @@ export default function Classes() {
           { tone: "success" }
         );
         handleCloseModal();
-        await fetchClasses(page, limit);
+        await fetchClasses(page, limit, debouncedSearch, statusFilter, tingkatFilter);
       } else {
         setFormError(response?.message || "Terjadi kesalahan!");
       }
@@ -348,7 +364,7 @@ export default function Classes() {
           { tone: "success" }
         );
         setDeleteTarget(null);
-        await fetchClasses(page, limit);
+        await fetchClasses(page, limit, debouncedSearch, statusFilter, tingkatFilter);
       } else {
         showToast(response?.message || "Gagal menonaktifkan kelas.", {
           tone: "error",
@@ -373,7 +389,7 @@ export default function Classes() {
           <Button
             variant="secondary"
             icon={RefreshCw}
-            onClick={() => fetchClasses(page, limit)}
+            onClick={() => fetchClasses(page, limit, debouncedSearch, statusFilter, tingkatFilter)}
             disabled={loading}
           >
             Refresh
@@ -398,7 +414,7 @@ export default function Classes() {
               </h2>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 Menampilkan {filteredClasses.length} dari total{" "}
-                {pagination.totalItems || classes.length} kelas
+                {pagination.totalItems ?? classes.length} kelas
               </p>
             </div>
 
