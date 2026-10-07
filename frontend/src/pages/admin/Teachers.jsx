@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useDebounce } from "../../hooks/useDebounce";
 import {
   Plus,
   Search,
@@ -73,13 +74,22 @@ export default function Teachers() {
   // ==============================
   // FETCH DATA GURU
   // ==============================
-  const fetchTeachers = async (targetPage = page, targetLimit = limit) => {
+  // Debounce search 400ms sebelum dikirim ke server
+  const debouncedSearch = useDebounce(search, 400);
+
+  const fetchTeachers = async (
+    targetPage = page,
+    targetLimit = limit,
+    targetSearch = debouncedSearch,
+  ) => {
     setLoading(true);
     try {
-      const response = await adminTeacherServices.getTeachers({
-        page: targetPage,
-        limit: targetLimit,
-      });
+      const params = { page: targetPage, limit: targetLimit };
+      if (targetSearch && targetSearch.trim()) {
+        params.search = targetSearch.trim();
+      }
+
+      const response = await adminTeacherServices.getTeachers(params);
 
       if (response && response.success && response.data) {
         setTeachers(response.data);
@@ -118,9 +128,16 @@ export default function Teachers() {
     }
   };
 
+  // Fetch ulang saat page atau limit berubah
   useEffect(() => {
-    fetchTeachers(page, limit);
+    fetchTeachers(page, limit, debouncedSearch);
   }, [page, limit]);
+
+  // Reset ke halaman 1 & fetch ulang saat keyword search berubah (setelah debounce)
+  useEffect(() => {
+    setPage(1);
+    fetchTeachers(1, limit, debouncedSearch);
+  }, [debouncedSearch]);
 
   // ==============================
   // HANDLERS PAGINATION
@@ -205,28 +222,14 @@ export default function Teachers() {
   };
 
   // ==============================
-  // FILTER & SEARCH
+  // FILTER STATUS (client-side, search sudah ditangani server)
   // ==============================
-  const filteredTeachers = useMemo(() => {
-    return teachers.filter((teacher) => {
-      const keyword = search.toLowerCase().trim();
-      const matchSearch =
-        !keyword ||
-        String(teacher.nama_guru || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        String(teacher.username || "")
-          .toLowerCase()
-          .includes(keyword);
-
-      const isActive = Number(teacher.status_aktif ?? 1) === 1;
-      let matchStatus = true;
-      if (statusFilter === "active") matchStatus = isActive;
-      if (statusFilter === "inactive") matchStatus = !isActive;
-
-      return matchSearch && matchStatus;
-    });
-  }, [teachers, search, statusFilter]);
+  const filteredTeachers = teachers.filter((teacher) => {
+    const isActive = Number(teacher.status_aktif ?? 1) === 1;
+    if (statusFilter === "active") return isActive;
+    if (statusFilter === "inactive") return !isActive;
+    return true;
+  });
 
   // ==============================
   // MODAL HANDLERS
@@ -380,7 +383,7 @@ export default function Teachers() {
       }
 
       handleCloseModal();
-      await fetchTeachers();
+      await fetchTeachers(page, limit, debouncedSearch);
     } catch (error) {
       console.error("Gagal menyimpan data guru:", error);
       setFormError(
@@ -419,7 +422,7 @@ export default function Teachers() {
         tone: "success",
       });
       setDeleteTarget(null);
-      await fetchTeachers();
+      await fetchTeachers(page, limit, debouncedSearch);
     } catch (error) {
       console.error("Gagal menonaktifkan guru:", error);
       showToast(error?.message || "Gagal menonaktifkan data guru.", {
@@ -439,7 +442,7 @@ export default function Teachers() {
           <Button
             variant="secondary"
             icon={RefreshCw}
-            onClick={() => fetchTeachers(page, limit)}
+            onClick={() => fetchTeachers(page, limit, debouncedSearch)}
             disabled={loading}
           >
             Refresh
@@ -460,7 +463,7 @@ export default function Teachers() {
               </h2>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                 Menampilkan {filteredTeachers.length} dari total{" "}
-                {pagination.totalItems || teachers.length} guru
+                {pagination.totalItems ?? teachers.length} guru
               </p>
             </div>
 
