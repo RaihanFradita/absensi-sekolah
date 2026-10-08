@@ -366,6 +366,7 @@ export const manualAttendance = async ({
 
     // 5. Kalau belum ada → INSERT
     else {
+      const date = new Date();
       await connection.query(
         `
         INSERT INTO absensi (
@@ -375,9 +376,9 @@ export const manualAttendance = async ({
           waktu_scan,
           keterangan
         )
-        VALUES (?, ?, ?, NULL, ?)
+        VALUES (?, ?, ?, ?, ?)
         `,
-        [id_sesi, id_siswa, status, keterangan],
+        [id_sesi, id_siswa, status, date, keterangan],
       );
     }
 
