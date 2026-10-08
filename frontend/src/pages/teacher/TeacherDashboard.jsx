@@ -429,7 +429,7 @@ export default function TeacherDashboard() {
                       <th className="px-5 py-3 font-medium">Nama Siswa</th>
                       <th className="px-5 py-3 font-medium">Jam Scan</th>
                       <th className="px-5 py-3 font-medium">Status</th>
-                      <th className="px-5 py-3 font-medium text-right">Aksi</th>
+                      {/* <th className="px-5 py-3 font-medium text-right">Aksi</th> */}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -460,7 +460,7 @@ export default function TeacherDashboard() {
                           <td className="px-5 py-3">
                             {getStatusBadge(s.status)}
                           </td>
-                          <td className="px-5 py-3 text-right">
+                          {/* <td className="px-5 py-3 text-right">
                             <button
                               onClick={() => {
                                 setEditingStudent(s);
@@ -471,7 +471,7 @@ export default function TeacherDashboard() {
                               <Edit2 className="h-3.5 w-3.5" />
                               <span className="font-medium">Ubah Status</span>
                             </button>
-                          </td>
+                          </td> */}
                         </tr>
                       ))
                     )}
