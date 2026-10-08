@@ -7,6 +7,7 @@ import {
   getDailyByClass,
   manualAttendance,
   getKehadiranKelasTanggal,
+  bulkManualAttendance,
 } from "../../services/attendance/attendance-services.js";
 import { getIO } from "../../socket.js";
 
@@ -266,6 +267,20 @@ export const createManualAttendance = async (req, res) => {
       message: "Terjadi kesalahan server",
     });
   }
+};
+
+// bulk controller
+export const bulkUpdateAttendance = async (req, res) => {
+  const { id_siswa_list, id_kelas, tanggal, status } = req.body;
+
+  const result = await bulkManualAttendance({
+    id_siswa_list,
+    id_kelas,
+    tanggal,
+    status,
+  });
+
+  return res.status(result.success ? 200 : 400).json(result);
 };
 
 const isValidDate = (str) => {

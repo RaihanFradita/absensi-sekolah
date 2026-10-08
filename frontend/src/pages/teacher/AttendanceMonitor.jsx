@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   RefreshCw,
   Pencil,
@@ -12,6 +12,7 @@ import {
   FileText,
   AlertCircle,
   FileSpreadsheet,
+  ListChecks,
 } from "lucide-react";
 import PageContainer from "../../components/layout/PageContainer";
 import Card, { CardHeader } from "../../components/ui/Card";
@@ -99,12 +100,17 @@ export default function AttendanceMonitor() {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState("");
 
-  // state edit status
+  // state edit status (per-baris)
   const [editingId, setEditingId] = useState(null);
   const [draftStatus, setDraftStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // state bulk action
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [isBulkSaving, setIsBulkSaving] = useState(false);
 
   const classList = Array.isArray(classes) ? classes : classes?.data || [];
 
@@ -128,6 +134,8 @@ export default function AttendanceMonitor() {
     if (!classId) return;
     setIsLoading(true);
     setError("");
+    setSelectedIds(new Set());
+    setBulkStatus("");
     try {
       const result = await attendanceService.getDailyByClass(
         classId,
@@ -227,6 +235,73 @@ export default function AttendanceMonitor() {
       setSaveError(err?.message || "Gagal mengubah status absensi.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // --- Bulk action helpers ---
+  const allStudentIds = rows.map((r) => r.id);
+  const isAllSelected =
+    allStudentIds.length > 0 &&
+    allStudentIds.every((id) => selectedIds.has(id));
+  const isIndeterminate =
+    selectedIds.size > 0 && selectedIds.size < allStudentIds.length;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allStudentIds));
+    }
+  };
+
+  const toggleSelectRow = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkSave = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    setIsBulkSaving(true);
+    setSaveError("");
+    setSuccessMessage("");
+    try {
+      const id_siswa_list = rows
+        .filter((r) => selectedIds.has(r.id))
+        .map((r) => r.studentId)
+        .filter(Boolean);
+
+      if (id_siswa_list.length === 0) {
+        throw new Error("Tidak ada siswa valid yang dipilih.");
+      }
+
+      const payload = {
+        id_siswa_list,
+        id_kelas: Number(classId),
+        tanggal: selectedDate,
+        status: bulkStatus,
+      };
+
+      const response = await attendanceService.bulkUpdateAttendance(payload);
+
+      if (response && response.success === false) {
+        throw new Error(response.message || "Gagal mengubah status massal.");
+      }
+
+      setSuccessMessage(
+        response?.message ||
+          `Status ${id_siswa_list.length} siswa berhasil diperbarui.`,
+      );
+      setSelectedIds(new Set());
+      setBulkStatus("");
+      await loadAttendance();
+    } catch (err) {
+      setSaveError(err?.message || "Gagal mengubah status absensi massal.");
+    } finally {
+      setIsBulkSaving(false);
     }
   };
 
@@ -446,7 +521,68 @@ export default function AttendanceMonitor() {
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-slate-200 text-slate-500 dark:border-slate-800">
                   <tr>
-                    <th className="px-4 py-3 font-medium">Nama Siswa</th>
+                    {/* Checkbox select-all */}
+                    <th className="px-4 py-3 font-medium" style={{ width: "2.5rem" }}>
+                      <input
+                        type="checkbox"
+                        id="select-all-checkbox"
+                        checked={isAllSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = isIndeterminate;
+                        }}
+                        onChange={toggleSelectAll}
+                        className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand-600 dark:border-slate-600"
+                        title="Pilih semua siswa"
+                      />
+                    </th>
+                    {/* Kolom nama + bulk action di atasnya */}
+                    <th className="px-4 py-3 font-medium">
+                      <div className="flex flex-col gap-1.5">
+                        <span>Nama Siswa</span>
+                        {selectedIds.size > 0 && (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <select
+                              id="bulk-status-select"
+                              value={bulkStatus}
+                              onChange={(e) => setBulkStatus(e.target.value)}
+                              disabled={isBulkSaving}
+                              className="rounded-md border border-brand-400 bg-white px-2 py-1 text-xs font-normal text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-400 dark:border-brand-600 dark:bg-slate-900 dark:text-slate-200"
+                            >
+                              <option value="">-- Pilih status --</option>
+                              {STATUS_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              id="bulk-save-btn"
+                              onClick={handleBulkSave}
+                              disabled={!bulkStatus || isBulkSaving}
+                              className="inline-flex items-center gap-1 rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-brand-500 dark:hover:bg-brand-400"
+                              title={`Terapkan ke ${selectedIds.size} siswa terpilih`}
+                            >
+                              <ListChecks className="h-3.5 w-3.5" />
+                              {isBulkSaving
+                                ? "Menyimpan..."
+                                : `Terapkan (${selectedIds.size})`}
+                            </button>
+                            <button
+                              id="bulk-cancel-btn"
+                              onClick={() => {
+                                setSelectedIds(new Set());
+                                setBulkStatus("");
+                              }}
+                              disabled={isBulkSaving}
+                              className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                            >
+                              <X className="h-3 w-3" />
+                              Batal
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </th>
                     <th className="px-4 py-3 font-medium">Kelas</th>
                     <th className="px-4 py-3 font-medium">Waktu Absen</th>
                     <th className="px-4 py-3 font-medium">Status</th>
@@ -456,11 +592,24 @@ export default function AttendanceMonitor() {
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {rows.map((row) => {
                     const isEditing = editingId === row.id;
+                    const isChecked = selectedIds.has(row.id);
                     return (
                       <tr
                         key={row.id}
-                        className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40"
+                        className={`transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40 ${
+                          isChecked ? "bg-brand-50/40 dark:bg-brand-950/20" : ""
+                        }`}
                       >
+                        {/* Checkbox di sebelah kiri nama */}
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            id={`row-checkbox-${row.id}`}
+                            checked={isChecked}
+                            onChange={() => toggleSelectRow(row.id)}
+                            className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand-600 dark:border-slate-600"
+                          />
+                        </td>
                         <td className="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
                           {row.name}
                         </td>

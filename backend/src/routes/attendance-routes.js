@@ -12,6 +12,7 @@ import {
   getDaily,
   createManualAttendance,
   exportKehadiranExcel,
+  bulkUpdateAttendance,
 } from "../controllers/attendance/attendance-controllers.js";
 
 export const attandance = express.Router();
@@ -26,3 +27,4 @@ attandance.get("/sessions/active/:kode_qr", getActiveSession);
 attandance.post("/sessions/:id/end", endSession);
 attandance.post("/sessions/scan", scanAbsensi);
 attandance.post("/manual", createManualAttendance);
+attandance.patch("/bulk", bulkUpdateAttendance);
