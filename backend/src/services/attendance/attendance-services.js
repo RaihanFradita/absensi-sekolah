@@ -433,7 +433,7 @@ export const getDailyByClass = async ({ kelasId, tanggal }) => {
       ON a.id_siswa = s.id_siswa
       AND a.id_sesi = sa.id_sesi
 
-    WHERE s.id_kelas = ?
+    WHERE s.id_kelas = ? AND s.status_aktif = 1
 
     ORDER BY s.nama_siswa ASC;
     `,
