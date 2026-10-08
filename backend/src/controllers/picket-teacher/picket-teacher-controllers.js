@@ -8,11 +8,12 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const parseQuery = (req) => {
   const date = req.query.date?.trim() || undefined;
   const className = req.query.className?.trim() || undefined;
+  const { page, limit } = req.query;
 
   if (date && !DATE_RE.test(date)) {
     return { error: "Format tanggal harus YYYY-MM-DD." };
   }
-  return { date, className };
+  return { date, className, page, limit };
 };
 
 export const getDutyDashboard = async (req, res) => {
@@ -33,8 +34,8 @@ export const getDaily = async (req, res) => {
   if (q.error) return res.status(400).json({ message: q.error });
 
   try {
-    const { date, rows } = await getDailyRows(q);
-    res.json({ date, rows });
+    const { date, rows, pagination } = await getDailyRows(q);
+    res.json({ date, rows, pagination });
   } catch (err) {
     console.error("getDaily:", err);
     res.status(500).json({ message: "Gagal memuat data absensi harian." });

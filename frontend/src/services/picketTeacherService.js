@@ -92,7 +92,7 @@ export const picketTeacherService = {
 
   /**
    * Mengambil data rekap kehadiran harian seluruh siswa
-   * @param {{ date?: string, className?: string }} params
+   * @param {{ date?: string, className?: string, page?: number, limit?: number }} params
    */
   async getDaily(params = {}) {
     const response = await api.get("/picket-teacher/daily", { params });
@@ -101,6 +101,7 @@ export const picketTeacherService = {
       date: response.data?.date,
       rows: rawRows.map(adaptPicketAttendanceRow),
       rawRows,
+      pagination: response.data?.pagination || null,
     };
   },
 

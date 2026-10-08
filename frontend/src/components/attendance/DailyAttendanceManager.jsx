@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Download, Search, Save, X, History } from "lucide-react";
+import { Download, Search, Save, X, History, ChevronLeft, ChevronRight } from "lucide-react";
 import Card, { CardHeader } from "../ui/Card";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
@@ -36,6 +36,10 @@ export default function DailyAttendanceManager({
   onExport,
   exporting = false,
   currentUserName,
+  pagination = null,
+  page = 1,
+  onPageChange,
+  loading = false,
 }) {
   const [activeStatus, setActiveStatus] = useState("total");
   const [search, setSearch] = useState("");
@@ -210,7 +214,10 @@ export default function DailyAttendanceManager({
           </h3>
 
           <p className="mt-1 text-xs text-slate-500">
-            {filtered.length} siswa ditampilkan.
+            {filtered.length} siswa ditampilkan
+            {pagination
+              ? ` (halaman ${pagination.page} dari ${pagination.totalPages}, total ${pagination.totalItems} siswa)`
+              : "."}
           </p>
         </div>
 
@@ -362,6 +369,44 @@ export default function DailyAttendanceManager({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination && pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 dark:border-slate-800">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Halaman{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                {pagination.page}
+              </span>{" "}
+              dari{" "}
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                {pagination.totalPages}
+              </span>
+            </p>
+
+            <div className="flex items-center gap-1">
+              <button
+                id="pagination-prev"
+                disabled={!pagination.hasPrevPage || loading}
+                onClick={() => onPageChange?.(page - 1)}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Sebelumnya
+              </button>
+
+              <button
+                id="pagination-next"
+                disabled={!pagination.hasNextPage || loading}
+                onClick={() => onPageChange?.(page + 1)}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Berikutnya
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

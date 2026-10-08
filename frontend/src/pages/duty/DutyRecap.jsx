@@ -23,6 +23,9 @@ export default function DutyRecap({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
+  const LIMIT = 20;
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -31,7 +34,7 @@ export default function DutyRecap({
     try {
       const [dashboardRes, dailyRes] = await Promise.all([
         picketTeacherService.getDashboard({ date, className }),
-        picketTeacherService.getDaily({ date, className }),
+        picketTeacherService.getDaily({ date, className, page, limit: LIMIT }),
       ]);
 
       if (dashboardRes?.allowedClasses) {
@@ -49,17 +52,23 @@ export default function DutyRecap({
       }
 
       setRows(fetchedRows);
+      setPagination(dailyRes?.pagination || null);
     } catch (err) {
       console.error("Gagal memuat rekap piket:", err);
       setError(err?.message || "Gagal memuat rekap kehadiran piket.");
     } finally {
       setLoading(false);
     }
-  }, [date, className, onlyNotScanned]);
+  }, [date, className, page, onlyNotScanned]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Reset ke halaman 1 setiap kali filter utama berubah
+  useEffect(() => {
+    setPage(1);
+  }, [date, className]);
 
   const handleExport = () => {
     setExporting(true);
@@ -111,6 +120,10 @@ export default function DutyRecap({
           onExport={handleExport}
           exporting={exporting}
           currentUserName={user?.name}
+          pagination={pagination}
+          page={page}
+          onPageChange={setPage}
+          loading={loading}
         />
       )}
     </PageContainer>

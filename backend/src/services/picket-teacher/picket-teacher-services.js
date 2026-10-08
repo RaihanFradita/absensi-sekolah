@@ -5,16 +5,41 @@ const getTodayWIB = () =>
 
 const KELAS_LABEL = "CONCAT(kl.tingkat, kl.nama_kelas)";
 
-export const getDailyRows = async ({ date, className }) => {
+export const getDailyRows = async ({
+  date,
+  className,
+  page = 1,
+  limit = 20,
+} = {}) => {
   const tanggal = date || getTodayWIB();
-  const params = [tanggal];
 
+  const currentPage = Math.max(parseInt(page, 10) || 1, 1);
+  const perPage = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+  const offset = (currentPage - 1) * perPage;
+
+  // Filter kelas dipakai di COUNT dan data, jadi disiapkan sekali
   let classFilter = "";
+  const filterParams = [];
   if (className) {
     classFilter = `AND ${KELAS_LABEL} = ?`;
-    params.push(className);
+    filterParams.push(className);
   }
 
+  // 1. Hitung total siswa (tanpa JOIN sesi/absensi, jumlahnya tidak berubah)
+  const [[{ total }]] = await pool.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM siswa s
+    JOIN kelas kl
+      ON kl.id_kelas = s.id_kelas
+      AND kl.status_aktif = 1
+    WHERE s.status_aktif = 1
+      ${classFilter}
+    `,
+    filterParams,
+  );
+
+  // 2. Ambil data sesuai halaman
   const [rows] = await pool.query(
     `
     SELECT
@@ -39,12 +64,26 @@ export const getDailyRows = async ({ date, className }) => {
       AND a.id_sesi = sa.id_sesi
     WHERE s.status_aktif = 1
       ${classFilter}
-    ORDER BY kl.tingkat ASC, kl.nama_kelas ASC, s.nama_siswa ASC
+    ORDER BY kl.tingkat ASC, kl.nama_kelas ASC, s.nama_siswa ASC, s.id_siswa ASC
+    LIMIT ? OFFSET ?
     `,
-    params,
+    [tanggal, ...filterParams, perPage, offset],
   );
 
-  return { date: tanggal, rows };
+  const totalPages = Math.ceil(total / perPage);
+
+  return {
+    date: tanggal,
+    rows,
+    pagination: {
+      page: currentPage,
+      limit: perPage,
+      totalItems: total,
+      totalPages,
+      hasNextPage: currentPage < totalPages,
+      hasPrevPage: currentPage > 1,
+    },
+  };
 };
 
 export const getActiveClassLabels = async () => {
