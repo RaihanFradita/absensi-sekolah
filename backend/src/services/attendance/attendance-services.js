@@ -403,6 +403,134 @@ export const manualAttendance = async ({
   }
 };
 
+// bulk action
+const VALID_STATUS = [
+  "hadir",
+  "terlambat",
+  "sakit",
+  "izin",
+  "tanpa keterangan",
+];
+
+export const bulkManualAttendance = async ({
+  id_siswa_list,
+  id_kelas,
+  tanggal,
+  status,
+}) => {
+  // validasi input
+  if (!Array.isArray(id_siswa_list) || id_siswa_list.length === 0) {
+    return {
+      success: false,
+      message: "Pilih minimal satu siswa",
+    };
+  }
+
+  if (!VALID_STATUS.includes(status)) {
+    return {
+      success: false,
+      message: "Status tidak valid",
+    };
+  }
+
+  // buang duplikat & pastikan semuanya angka
+  const studentsId = [...new Set(id_siswa_list.map(Number))];
+  if (studentsId.some((id) => !Number.isInteger(id) || id <= 0)) {
+    return {
+      success: false,
+      message: "Id siswa tidak valid",
+    };
+  }
+
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // cari sesi absensi
+    const [sessions] = await connection.query(
+      `
+      SELECT id_sesi FROM sesi_absensi WHERE id_kelas = ?
+      AND tanggal = ? AND status != 'batal' LIMIT 1
+      `,
+      [id_kelas, tanggal],
+    );
+
+    if (sessions.length === 0) {
+      throw new Error("Sesi absensi belum dibuka! buka terlebih dahulu");
+    }
+
+    const id_sesi = sessions[0].id_sesi;
+
+    // pastikan semua siswa berada di kelas tersbut
+    const [students] = await connection.query(
+      `
+      SELECT id_siswa FROM siswa WHERE id_kelas = ? AND id_siswa IN(?)
+      `,
+      [id_kelas, studentsId],
+    );
+
+    if (students.length !== studentsId.length) {
+      const found = new Set(students.map((s) => s.id_siswa));
+      const invalid = studentsId.filter((id) => !found.has(id));
+
+      throw new Error(
+        `Siswa tidak terdaftar di kelas ini (ID: ${invalid.join(", ")})`,
+      );
+    }
+
+    // hitung berapa yang sudah punya absensi (untuk pesan hasil)
+    const [existing] = await connection.query(
+      `
+      SELECT id_siswa FROM absensi WHERE id_sesi = ? AND id_siswa IN (?)
+      `,
+      [id_sesi, studentsId],
+    );
+
+    const updatedCount = existing.length;
+    const createdCount = studentsId.length - updatedCount;
+
+    // bulk insert
+    const now = new Date();
+    const rows = studentsId.map((id) => [id_sesi, id, status, now]);
+
+    await connection.query(
+      `
+      INSERT INTO absensi (
+        id_sesi,
+        id_siswa,
+        status,
+        waktu_scan
+      ) VALUES ? AS new_row
+       ON DUPLICATE KEY UPDATE
+        status = new_row.status
+      `,
+      [rows],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: `${studentsId.length} absensi berhasil diproses`,
+      data: {
+        total: studentsId.length,
+        created: createdCount,
+        updated: updatedCount,
+      },
+    };
+  } catch (error) {
+    await connection.rollback();
+
+    return {
+      success: false,
+      message: error.message || "Terjadi kesalahan server",
+    };
+  } finally {
+    connection.release();
+  }
+};
+
 export const getDailyByClass = async ({ kelasId, tanggal }) => {
   const getTodayWIB = () =>
     new Date().toLocaleDateString("en-CA", {

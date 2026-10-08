@@ -32,6 +32,7 @@ const ENDPOINTS = {
   ATTENDANCE_MANUAL: "/attendance/manual",
   UPDATE_STATUS: (id) => `/attendance/${id}/status`,
   EXPORT_EXCEL: "/attendance/export.xlsx",
+  BULK_UPDATE: "/attendance/bulk",
   CREATE_SESSION: "/attendance/sessions/add",
   TODAY_SESSION: "/attendance/sessions/today",
   ACTIVE_SESSION: "/attendance/sessions/active",
@@ -199,6 +200,16 @@ async function manualAttendance(payload) {
     };
   }
   return (await api.post(ENDPOINTS.ATTENDANCE_MANUAL, payload)).data;
+}
+async function bulkUpdateAttendance(payload) {
+  if (isMockMode()) {
+    await mockDelay(300);
+    return {
+      success: true,
+      message: "Bulk absensi berhasil diperbarui (mode mock)",
+    };
+  }
+  return (await api.patch(ENDPOINTS.BULK_UPDATE, payload)).data;
 }
 async function updateAttendanceStatus(id, payload) {
   if (isMockMode()) {
@@ -466,6 +477,7 @@ export default {
   getDailyAttendance,
   getDailyByClass,
   manualAttendance,
+  bulkUpdateAttendance,
   updateAttendanceStatus,
   exportAttendanceExcel,
   downloadBlob,
