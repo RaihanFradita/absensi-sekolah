@@ -5,6 +5,8 @@ import {
   insertStudents,
   updateStudentById,
   softDeleteStudent,
+  bulkChangeStudentClass,
+  bulkSetStudentStatus,
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
@@ -252,3 +254,15 @@ export async function getClasses(req, res) {
     });
   }
 }
+
+export const bulkChangeClass = async (req, res) => {
+  const { id_siswa_list, id_kelas } = req.body;
+  const result = await bulkChangeStudentClass({ id_siswa_list, id_kelas });
+  return res.status(result.success ? 200 : 400).json(result);
+};
+
+export const bulkChangeStatus = async (req, res) => {
+  const { id_siswa_list, status_aktif } = req.body;
+  const result = await bulkSetStudentStatus({ id_siswa_list, status_aktif });
+  return res.status(result.success ? 200 : 400).json(result);
+};
