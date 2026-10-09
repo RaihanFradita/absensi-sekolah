@@ -112,7 +112,7 @@ export const updatePicketTeacherById = async ({
     [username],
   );
 
-  if (existingUser.length === 0) {
+  if (existingUser.length > 0) {
     return {
       success: false,
       message: "Username sudah digunakan",
