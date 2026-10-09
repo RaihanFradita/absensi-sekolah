@@ -56,7 +56,7 @@ export const findAllPicketTeacher = async ({ page = 1, limit = 10 } = {}) => {
   // ambil data sesuai halaman
   const [picketTeacher] = await pool.query(
     `
-        SELECT * FROM users WHERE role = 'guru_piket'
+        SELECT * FROM users WHERE role = 'guru_piket' AND status_aktif = 1
         ORDER BY username ASC LIMIT ? OFFSET ?
         `,
     [perPage, offset],
