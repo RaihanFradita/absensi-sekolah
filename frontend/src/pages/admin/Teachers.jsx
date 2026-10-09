@@ -296,7 +296,10 @@ export default function Teachers() {
     // jika yang diubah adalah nama_guru dan bukan dalam mode edit
     if (name === "nama_guru" && !isEditMode) {
       // genearte username (kecil semua) dan tanpa spasi
-      const generatedUsername = value.toLowerCase().replace(/\s+/g, "");
+      const generatedUsername = value
+        .split(",")[0]
+        .toLowerCase()
+        .replace(/\s+/g, "");
 
       // generate password
       const firstName = value.trim().split(" ")[0].toLowerCase();
