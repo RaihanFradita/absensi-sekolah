@@ -13,6 +13,8 @@ import {
   createStudent,
   editStundent,
   deleteStudent,
+  bulkChangeClass,
+  bulkChangeStatus,
 } from "../controllers/admin/admin-student-controller.js";
 import {
   createClass,
@@ -53,6 +55,8 @@ admin.post("/students/add", createStudent);
 admin.get("/students/", getStudents);
 admin.get("/students/classes/list", getClasses);
 admin.get("/students/:id", getStudent);
+admin.patch("/students/bulk/class", bulkChangeClass);
+admin.patch("/students/bulk/status", bulkChangeStatus);
 admin.put("/students/edit/:id_siswa", editStundent);
 admin.put("/students/:id_siswa", editStundent);
 admin.patch("/students/:id_siswa/deactivate", deleteStudent);

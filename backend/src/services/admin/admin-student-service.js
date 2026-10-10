@@ -329,3 +329,157 @@ export async function findAllClasses() {
 
   return rows;
 }
+
+const normalizedIds = (list) => {
+  if (!Array.isArray(list) || list.length === 0) {
+    return null;
+  }
+
+  const ids = [...new Set(list.map(Number))];
+  if (ids.some((id) => !Number.isInteger(id) || id <= 0)) return null;
+
+  return ids;
+};
+
+// pindah kelas
+export const bulkChangeStudentClass = async ({ id_siswa_list, id_kelas }) => {
+  const studentIds = normalizedIds(id_siswa_list);
+
+  if (!studentIds) {
+    return {
+      success: false,
+      message: "Pilih minimal satu siswa yang valid",
+    };
+  }
+
+  const classId = Number(id_kelas);
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return {
+      success: false,
+      message: "Kelas tujuan tidak valid",
+    };
+  }
+
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Pastikan kelas tujuan ada & aktif
+    const [classes] = await connection.query(
+      `SELECT id_kelas FROM kelas WHERE id_kelas = ? AND status_aktif = 1`,
+      [classId],
+    );
+
+    if (classes.length === 0) {
+      throw new Error("Kelas tujuan tidak ditemukan atau tidak aktif");
+    }
+
+    //  Pastikan semua siswa ada
+    const [students] = await connection.query(
+      `SELECT id_siswa, id_kelas FROM siswa WHERE id_siswa IN (?)`,
+      [studentIds],
+    );
+
+    if (students.length !== studentIds.length) {
+      const found = new Set(students.map((s) => s.id_siswa));
+      const invalid = studentIds.filter((id) => !found.has(id));
+      throw new Error(`Siswa tidak ditemukan (ID: ${invalid.join(", ")})`);
+    }
+
+    // Hanya update yang kelasnya memang berbeda
+    const toMove = students
+      .filter((s) => s.id_kelas !== classId)
+      .map((s) => s.id_siswa);
+
+    if (toMove.length > 0) {
+      await connection.query(
+        `UPDATE siswa SET id_kelas = ? WHERE id_siswa IN (?)`,
+        [classId, toMove],
+      );
+    }
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: `${toMove.length} siswa berhasil dipindahkan`,
+      data: {
+        total: studentIds.length,
+        updated: toMove.length,
+        skipped: studentIds.length - toMove.length, // sudah di kelas tujuan
+      },
+    };
+  } catch (error) {
+    await connection.rollback();
+    return {
+      success: false,
+      message: error.message || "Terjadi kesalahan server",
+    };
+  } finally {
+    connection.release();
+  }
+};
+
+// aktif / non aktif siswa
+export const bulkSetStudentStatus = async ({ id_siswa_list, status_aktif }) => {
+  const studentIds = normalizedIds(id_siswa_list);
+  if (!studentIds) {
+    return { success: false, message: "Pilih minimal satu siswa yang valid" };
+  }
+
+  if (![0, 1].includes(Number(status_aktif))) {
+    return { success: false, message: "Status tidak valid" };
+  }
+
+  const newStatus = Number(status_aktif);
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Ambil siswa + id_user-nya
+    const [students] = await connection.query(
+      `SELECT id_siswa, id_user FROM siswa WHERE id_siswa IN (?)`,
+      [studentIds],
+    );
+
+    if (students.length !== studentIds.length) {
+      const found = new Set(students.map((s) => s.id_siswa));
+      const invalid = studentIds.filter((id) => !found.has(id));
+      throw new Error(`Siswa tidak ditemukan (ID: ${invalid.join(", ")})`);
+    }
+
+    const userIds = students.map((s) => s.id_user);
+
+    // Update tabel siswa
+    await connection.query(
+      `UPDATE siswa SET status_aktif = ? WHERE id_siswa IN (?)`,
+      [newStatus, studentIds],
+    );
+
+    // Update akun login-nya
+    await connection.query(
+      `UPDATE users SET status_aktif = ? WHERE id_user IN (?)`,
+      [newStatus, userIds],
+    );
+
+    await connection.commit();
+
+    return {
+      success: true,
+      message: `${studentIds.length} siswa berhasil ${
+        newStatus ? "diaktifkan" : "dinonaktifkan"
+      }`,
+      data: { total: studentIds.length },
+    };
+  } catch (error) {
+    await connection.rollback();
+    return {
+      success: false,
+      message: error.message || "Terjadi kesalahan server",
+    };
+  } finally {
+    connection.release();
+  }
+};

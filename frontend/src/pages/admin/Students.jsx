@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  CheckSquare,
 } from "lucide-react";
 
 import PageContainer from "../../components/layout/PageContainer";
@@ -84,6 +85,16 @@ export default function Students() {
   // Delete / deactivate
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Bulk action state
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkAction, setBulkAction] = useState("");
+  const [bulkTargetClass, setBulkTargetClass] = useState("");
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [bulkConfirmState, setBulkConfirmState] = useState({
+    open: false,
+    action: null,
+  });
 
   const fetchStudents = async (
     targetPage = page,
@@ -202,6 +213,7 @@ export default function Students() {
   // Reset ke halaman 1 saat search (setelah debounce) atau filter berubah
   useEffect(() => {
     setPage(1);
+    setSelectedIds(new Set());
   }, [debouncedSearch, statusFilter, classFilter]);
 
   // =========================================================
@@ -567,7 +579,171 @@ export default function Students() {
     }
   };
 
-  console.log(students);
+  // =========================================================
+  // BULK ACTION HELPERS & HANDLERS
+  // =========================================================
+  const allCurrentStudentIds = filteredStudents
+    .map((s) => s.id_siswa || s.id)
+    .filter(Boolean);
+
+  const isAllSelected =
+    allCurrentStudentIds.length > 0 &&
+    allCurrentStudentIds.every((id) => selectedIds.has(id));
+
+  const isIndeterminate =
+    allCurrentStudentIds.some((id) => selectedIds.has(id)) && !isAllSelected;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allCurrentStudentIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        allCurrentStudentIds.forEach((id) => next.add(id));
+        return next;
+      });
+    }
+  };
+
+  const toggleSelectRow = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkActionClick = () => {
+    if (selectedIds.size === 0) {
+      showToast("Pilih minimal satu siswa terlebih dahulu.", {
+        tone: "error",
+      });
+      return;
+    }
+
+    if (!bulkAction) {
+      showToast("Pilih jenis aksi massal terlebih dahulu.", {
+        tone: "error",
+      });
+      return;
+    }
+
+    if (bulkAction === "change_class") {
+      if (!bulkTargetClass) {
+        showToast("Pilih kelas tujuan terlebih dahulu.", {
+          tone: "error",
+        });
+        return;
+      }
+      setBulkConfirmState({ open: true, action: "change_class" });
+    } else if (bulkAction === "deactivate") {
+      setBulkConfirmState({ open: true, action: "deactivate" });
+    } else if (bulkAction === "activate") {
+      setBulkConfirmState({ open: true, action: "activate" });
+    }
+  };
+
+  const submitBulkChangeClass = async () => {
+    setIsBulkProcessing(true);
+    try {
+      const studentIds = Array.from(selectedIds);
+      const response = await studentService.bulkChangeClass(
+        studentIds,
+        Number(bulkTargetClass),
+      );
+
+      if (response && response.success === false) {
+        showToast(response.message || "Gagal memindahkan kelas siswa.", {
+          tone: "error",
+        });
+        return;
+      }
+
+      showToast(
+        response?.message ||
+          `${studentIds.length} siswa berhasil dipindahkan ke kelas baru!`,
+        { tone: "success" },
+      );
+
+      setSelectedIds(new Set());
+      setBulkAction("");
+      setBulkTargetClass("");
+      setBulkConfirmState({ open: false, action: null });
+
+      await fetchStudents();
+    } catch (error) {
+      console.error("Gagal memindahkan kelas siswa:", error);
+      showToast(
+        error?.message || "Terjadi kesalahan saat memindahkan kelas siswa.",
+        { tone: "error" },
+      );
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const submitBulkChangeStatus = async (statusValue) => {
+    setIsBulkProcessing(true);
+    try {
+      const studentIds = Array.from(selectedIds);
+      const response = await studentService.bulkChangeStatus(
+        studentIds,
+        statusValue,
+      );
+
+      if (response && response.success === false) {
+        showToast(
+          response.message ||
+            `Gagal ${
+              statusValue === 1 ? "mengaktifkan" : "menonaktifkan"
+            } siswa.`,
+          { tone: "error" },
+        );
+        return;
+      }
+
+      showToast(
+        response?.message ||
+          `${studentIds.length} siswa berhasil ${
+            statusValue === 1 ? "diaktifkan" : "dinonaktifkan"
+          }!`,
+        { tone: "success" },
+      );
+
+      setSelectedIds(new Set());
+      setBulkAction("");
+      setBulkTargetClass("");
+      setBulkConfirmState({ open: false, action: null });
+
+      await fetchStudents();
+    } catch (error) {
+      console.error("Gagal mengubah status siswa:", error);
+      showToast(
+        error?.message || "Terjadi kesalahan saat mengubah status siswa.",
+        { tone: "error" },
+      );
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleConfirmBulkAction = async () => {
+    if (bulkConfirmState.action === "change_class") {
+      await submitBulkChangeClass();
+    } else if (bulkConfirmState.action === "deactivate") {
+      await submitBulkChangeStatus(0);
+    } else if (bulkConfirmState.action === "activate") {
+      await submitBulkChangeStatus(1);
+    }
+  };
 
   // =========================================================
   // RENDER
@@ -694,6 +870,102 @@ export default function Students() {
           </div>
 
           {/* =================================================
+              BULK ACTION TOOLBAR (DI ATAS TABEL SISWA)
+          ================================================= */}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 transition-colors dark:border-slate-800 dark:bg-slate-800/40">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Aksi Massal:
+              </span>
+
+              {/* SELECT OPTION AKSI */}
+              <select
+                id="bulk-action-select"
+                value={bulkAction}
+                onChange={(e) => {
+                  setBulkAction(e.target.value);
+                  if (e.target.value !== "change_class") {
+                    setBulkTargetClass("");
+                  }
+                }}
+                disabled={isBulkProcessing}
+                aria-label="Pilih aksi massal"
+                className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              >
+                <option value="">-- Pilih Aksi Massal --</option>
+                <option value="change_class">Ganti / Pindah Kelas</option>
+                <option value="deactivate">Nonaktifkan Siswa</option>
+                <option value="activate">Aktifkan Siswa</option>
+              </select>
+
+              {/* SELECT OPTION KELAS TUJUAN (JIKA GANTI KELAS) */}
+              {bulkAction === "change_class" && (
+                <select
+                  id="bulk-target-class-select"
+                  value={bulkTargetClass}
+                  onChange={(e) => setBulkTargetClass(e.target.value)}
+                  disabled={isBulkProcessing || loadingClasses}
+                  aria-label="Pilih kelas tujuan"
+                  className="h-9 rounded-lg border border-brand-300 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm outline-none transition-colors focus:border-brand-500 focus:ring-1 focus:ring-brand-500 dark:border-brand-700 dark:bg-slate-900 dark:text-slate-200"
+                >
+                  <option value="">-- Pilih Kelas Tujuan --</option>
+                  {classes.map((c) => (
+                    <option key={c.id_kelas} value={c.id_kelas}>
+                      {formatClassOption(c)}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {/* TOMBOL TERAPKAN */}
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={
+                  selectedIds.size === 0 ||
+                  !bulkAction ||
+                  (bulkAction === "change_class" && !bulkTargetClass) ||
+                  isBulkProcessing
+                }
+                isLoading={isBulkProcessing}
+                onClick={handleBulkActionClick}
+              >
+                Terapkan {selectedIds.size > 0 ? `(${selectedIds.size})` : ""}
+              </Button>
+
+              {/* TOMBOL BATAL PILIH */}
+              {selectedIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedIds(new Set());
+                    setBulkAction("");
+                    setBulkTargetClass("");
+                  }}
+                  disabled={isBulkProcessing}
+                  className="rounded-lg px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-200/60 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-slate-200"
+                >
+                  Batal Pilih
+                </button>
+              )}
+            </div>
+
+            {/* STATUS PILIHAN */}
+            <div className="flex items-center gap-2">
+              {selectedIds.size > 0 ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-600 dark:bg-brand-400"></span>
+                  {selectedIds.size} siswa dipilih
+                </span>
+              ) : (
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  Centang checkbox di sebelah kiri kolom nomor untuk memilih siswa
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* =================================================
               TABLE
           ================================================= */}
 
@@ -727,6 +999,21 @@ export default function Students() {
                   {/* TABLE HEADER */}
                   <thead>
                     <tr className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+                      {/* CHECKBOX (SEBELAH KIRI KOLOM NOMOR) */}
+                      <th className="w-10 px-3 py-3.5 text-center">
+                        <input
+                          type="checkbox"
+                          aria-label="Pilih semua siswa di halaman ini"
+                          title="Pilih semua siswa di halaman ini"
+                          checked={isAllSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = isIndeterminate;
+                          }}
+                          onChange={toggleSelectAll}
+                          className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand-600 transition-all dark:border-slate-600"
+                        />
+                      </th>
+
                       <th className="w-12 px-4 py-3.5 text-center">No</th>
 
                       <th className="px-4 py-3.5">Nama Siswa</th>
@@ -746,6 +1033,8 @@ export default function Students() {
                   {/* TABLE BODY */}
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filteredStudents.map((student, index) => {
+                      const studentId = student.id_siswa || student.id;
+                      const isSelected = selectedIds.has(studentId);
                       const isActive = Number(student.status_aktif ?? 1) === 1;
 
                       const kelasDisplay = student.tingkat
@@ -759,9 +1048,24 @@ export default function Students() {
 
                       return (
                         <tr
-                          key={student.id_siswa || index}
-                          className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"
+                          key={studentId || index}
+                          className={`transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30 ${
+                            isSelected
+                              ? "bg-brand-50/50 dark:bg-brand-950/25"
+                              : ""
+                          }`}
                         >
+                          {/* CHECKBOX (SEBELAH KIRI KOLOM NOMOR) */}
+                          <td className="w-10 px-3 py-3.5 text-center">
+                            <input
+                              type="checkbox"
+                              aria-label={`Pilih ${studentName}`}
+                              checked={isSelected}
+                              onChange={() => toggleSelectRow(studentId)}
+                              className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-brand-600 transition-all dark:border-slate-600"
+                            />
+                          </td>
+
                           {/* NO */}
                           <td className="px-4 py-3.5 text-center font-medium text-slate-400">
                             {(page - 1) * limit + index + 1}
@@ -1147,6 +1451,48 @@ export default function Students() {
         isLoading={isDeleting}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      {/* =====================================================
+          CONFIRM BULK ACTION
+      ===================================================== */}
+      <ConfirmDialog
+        open={Boolean(bulkConfirmState.open)}
+        title={
+          bulkConfirmState.action === "deactivate"
+            ? `Nonaktifkan ${selectedIds.size} Siswa?`
+            : bulkConfirmState.action === "activate"
+            ? `Aktifkan ${selectedIds.size} Siswa?`
+            : "Pindahkan Kelas Siswa?"
+        }
+        description={
+          bulkConfirmState.action === "deactivate"
+            ? `Apakah Anda yakin ingin menonaktifkan ${selectedIds.size} siswa yang dipilih? Siswa yang dinonaktifkan tidak akan bisa login ke sistem.`
+            : bulkConfirmState.action === "activate"
+            ? `Apakah Anda yakin ingin mengaktifkan kembali ${selectedIds.size} siswa yang dipilih?`
+            : `Apakah Anda yakin ingin memindahkan ${selectedIds.size} siswa yang dipilih ke ${
+                (() => {
+                  const targetCls = classes.find(
+                    (c) => String(c.id_kelas) === String(bulkTargetClass)
+                  );
+                  return targetCls
+                    ? formatClassOption(targetCls)
+                    : "kelas tujuan";
+                })()
+              }?`
+        }
+        confirmLabel={
+          bulkConfirmState.action === "deactivate"
+            ? "Ya, Nonaktifkan Semua"
+            : bulkConfirmState.action === "activate"
+            ? "Ya, Aktifkan Semua"
+            : "Ya, Pindahkan Kelas"
+        }
+        cancelLabel="Batal"
+        tone={bulkConfirmState.action === "deactivate" ? "danger" : "primary"}
+        isLoading={isBulkProcessing}
+        onConfirm={handleConfirmBulkAction}
+        onCancel={() => setBulkConfirmState({ open: false, action: null })}
       />
     </PageContainer>
   );

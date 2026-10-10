@@ -39,6 +39,22 @@ const studentService = {
     });
     return response.data;
   },
+
+  async bulkChangeClass(studentIds, classId) {
+    const response = await api.patch("/admin/students/bulk/class", {
+      id_siswa_list: studentIds,
+      id_kelas: classId,
+    });
+    return response.data;
+  },
+
+  async bulkChangeStatus(studentIds, status) {
+    const response = await api.patch("/admin/students/bulk/status", {
+      id_siswa_list: studentIds,
+      status_aktif: status,
+    });
+    return response.data;
+  },
 };
 
 export default studentService;
