@@ -55,6 +55,13 @@ const studentService = {
     });
     return response.data;
   },
+
+  async resetPassword(id, customPassword) {
+    const response = await api.post(`/admin/students/${id}/reset-password`, {
+      customPassword,
+    });
+    return response.data;
+  },
 };
 
 export default studentService;

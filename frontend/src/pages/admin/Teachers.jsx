@@ -17,6 +17,9 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  KeyRound,
+  Copy,
+  Check,
 } from "lucide-react";
 
 import PageContainer from "../../components/layout/PageContainer";
@@ -70,6 +73,13 @@ export default function Teachers() {
   // Soft delete / deactivate confirm dialog state
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Reset password states
+  const [resetTarget, setResetTarget] = useState(null);
+  const [customResetPassword, setCustomResetPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetResult, setResetResult] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   // ==============================
   // FETCH DATA GURU
@@ -436,6 +446,56 @@ export default function Teachers() {
     }
   };
 
+  // ==============================
+  // RESET PASSWORD GURU
+  // ==============================
+  const handleOpenResetModal = (teacher) => {
+    setResetTarget(teacher);
+    setCustomResetPassword("");
+  };
+
+  const handleConfirmReset = async () => {
+    if (!resetTarget) return;
+    const teacherId = resetTarget.id_guru || resetTarget.id;
+    const teacherName = resetTarget.nama_guru || "Guru";
+    const username = resetTarget.username || "-";
+
+    setIsResetting(true);
+    try {
+      const res = await adminTeacherServices.resetPassword(
+        teacherId,
+        customResetPassword.trim() || undefined,
+      );
+
+      const tempPassword = res.data?.tempPassword || res.tempPassword;
+      setResetTarget(null);
+      setCustomResetPassword("");
+      setResetResult({
+        name: teacherName,
+        username: username,
+        tempPassword: tempPassword,
+      });
+      showToast(`Password untuk "${teacherName}" berhasil direset!`, {
+        tone: "success",
+      });
+    } catch (err) {
+      console.error("Gagal mereset password guru:", err);
+      showToast(
+        err.response?.data?.message || "Gagal mereset password guru.",
+        { tone: "error" },
+      );
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const handleCopyPassword = () => {
+    if (!resetResult?.tempPassword) return;
+    navigator.clipboard.writeText(resetResult.tempPassword);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <PageContainer
       title="Data Guru"
@@ -627,6 +687,26 @@ export default function Teachers() {
                                 aria-label={`Edit ${teacher.nama_guru}`}
                               >
                                 <Pencil className="h-3.5 w-3.5" />
+                              </button>
+
+                              {/* Tombol Reset Password */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenResetModal(teacher)}
+                                disabled={!isActive}
+                                title={
+                                  isActive
+                                    ? "Reset Password Guru"
+                                    : "Guru sudah dinonaktifkan"
+                                }
+                                className={`group relative inline-flex h-8 w-8 items-center justify-center rounded-lg border shadow-sm transition-all active:scale-95 ${
+                                  isActive
+                                    ? "border-slate-200 bg-white text-amber-600 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-amber-400 dark:hover:border-amber-700 dark:hover:bg-amber-950/60 dark:hover:text-amber-300"
+                                    : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-300 opacity-60 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-600"
+                                }`}
+                                aria-label={`Reset password ${teacher.nama_guru}`}
+                              >
+                                <KeyRound className="h-3.5 w-3.5" />
                               </button>
 
                               {/* Tombol Delete / Soft Delete Icon */}
@@ -888,6 +968,149 @@ export default function Teachers() {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* =====================================================
+          MODAL RESET PASSWORD GURU (KONFIRMASI)
+      ===================================================== */}
+      {resetTarget && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-4 backdrop-blur-sm sm:items-center animate-fade-in">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl animate-slide-up dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:ring-amber-900">
+                <KeyRound className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Reset Password Guru
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Reset password akun guru{" "}
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {resetTarget.nama_guru}
+                  </span>{" "}
+                  (@{resetTarget.username || "-"}).
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-amber-50/70 p-3 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+              Guru akan menerima password sementara dan wajib menggantinya saat pertama kali login.
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-1.5 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                Password Sementara (Opsional)
+              </label>
+              <Input
+                type="text"
+                value={customResetPassword}
+                onChange={(e) => setCustomResetPassword(e.target.value)}
+                placeholder="Kosongkan untuk otomatis (cth: smp4#siti)"
+                icon={Lock}
+              />
+              <p className="mt-1 text-[11px] text-slate-400">
+                Jika diisi, minimal 6 karakter. Jika dikosongkan, default: smp4#(nama depan).
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2.5">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setResetTarget(null);
+                  setCustomResetPassword("");
+                }}
+                disabled={isResetting}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleConfirmReset}
+                isLoading={isResetting}
+              >
+                Reset Password
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          MODAL HASIL RESET PASSWORD GURU
+      ===================================================== */}
+      {resetResult && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-4 backdrop-blur-sm sm:items-center animate-fade-in">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl animate-slide-up dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:ring-emerald-900">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                  Password Berhasil Direset!
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Password untuk{" "}
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {resetResult.name}
+                  </span>{" "}
+                  telah direset. Berikan informasi login ini kepada guru yang bersangkutan:
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 dark:text-slate-400">Username:</span>
+                <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">
+                  @{resetResult.username}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-t border-slate-200/80 pt-3 dark:border-slate-700/60">
+                <div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">Password Sementara:</div>
+                  <div className="mt-0.5 font-mono text-base font-bold tracking-wider text-brand-600 dark:text-brand-400 select-all">
+                    {resetResult.tempPassword}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant={copied ? "primary" : "secondary"}
+                  icon={copied ? Check : Copy}
+                  onClick={handleCopyPassword}
+                >
+                  {copied ? "Tersalin!" : "Salin"}
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-blue-50/70 p-3 text-xs text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
+              💡 Guru akan diminta langsung mengganti password ini setelah berhasil login.
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setResetResult(null);
+                  setCopied(false);
+                }}
+              >
+                Selesai
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 }

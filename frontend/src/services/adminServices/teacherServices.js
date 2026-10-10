@@ -27,4 +27,11 @@ export const adminTeacherServices = {
     });
     return response.data;
   },
+
+  async resetPassword(id, customPassword) {
+    const response = await api.post(`/admin/teacher/${id}/reset-password`, {
+      customPassword,
+    });
+    return response.data;
+  },
 };
