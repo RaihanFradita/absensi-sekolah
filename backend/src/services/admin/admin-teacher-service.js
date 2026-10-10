@@ -364,3 +364,51 @@ export const findTeacherProfile = async (idUser) => {
     },
   };
 };
+
+export const adminResetTeacherPassword = async (id_guru, customPassword) => {
+  const teacherResult = await findTeacherById(id_guru);
+  if (!teacherResult.success || !teacherResult.data) {
+    return {
+      success: false,
+      message: "Data guru tidak ditemukan",
+    };
+  }
+
+  const teacher = teacherResult.data;
+
+  const cleanName = (teacher.nama_guru || "guru")
+    .replace(/^(drs\.|dra\.|dr\.|prof\.|h\.|hj\.|ust\.|ustadz\.)\s+/i, "")
+    .trim();
+
+  const firstName =
+    cleanName.split(/\s+/)[0].toLowerCase().replace(/[^a-zA-Z0-9]/g, "") ||
+    "guru";
+
+  const tempPassword =
+    typeof customPassword === "string" && customPassword.trim().length >= 6
+      ? customPassword.trim()
+      : `smp4#${firstName}`;
+
+  const hashPassword = await bcrypt.hash(tempPassword, 10);
+
+  await pool.query(
+    `
+    UPDATE users 
+    SET password = ?, must_change_password = 1 
+    WHERE id_user = ?
+    `,
+    [hashPassword, teacher.id_user]
+  );
+
+  return {
+    success: true,
+    message: "Password guru berhasil direset",
+    data: {
+      id_guru: teacher.id_guru,
+      nama_guru: teacher.nama_guru,
+      username: teacher.username,
+      tempPassword,
+    },
+  };
+};
+

@@ -4,6 +4,7 @@ import {
   insertTeacher,
   softDeleteTeacher,
   updateTeacherById,
+  adminResetTeacherPassword,
 } from "../../services/admin/admin-teacher-service.js";
 
 export const createTeacher = async (req, res) => {
@@ -150,3 +151,36 @@ export const deleteTeacher = async (req, res) => {
     });
   }
 };
+
+export const resetTeacherPassword = async (req, res) => {
+  const { id, id_guru } = req.params;
+  const targetId = id || id_guru;
+  const { password, customPassword } = req.body;
+
+  if (!targetId) {
+    return res.status(400).json({
+      success: false,
+      message: "ID guru tidak valid",
+    });
+  }
+
+  try {
+    const result = await adminResetTeacherPassword(
+      targetId,
+      password || customPassword,
+    );
+
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("resetTeacherPassword:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Terjadi kesalahan server",
+    });
+  }
+};
+

@@ -7,6 +7,7 @@ import {
   softDeleteStudent,
   bulkChangeStudentClass,
   bulkSetStudentStatus,
+  adminResetStudentPassword,
 } from "../../services/admin/admin-student-service.js";
 
 export const createStudent = async (req, res) => {
@@ -266,3 +267,36 @@ export const bulkChangeStatus = async (req, res) => {
   const result = await bulkSetStudentStatus({ id_siswa_list, status_aktif });
   return res.status(result.success ? 200 : 400).json(result);
 };
+
+export const resetStudentPassword = async (req, res) => {
+  const { id, id_siswa } = req.params;
+  const targetId = id || id_siswa;
+  const { password, customPassword } = req.body;
+
+  if (!targetId) {
+    return res.status(400).json({
+      success: false,
+      message: "ID siswa tidak valid",
+    });
+  }
+
+  try {
+    const result = await adminResetStudentPassword(
+      targetId,
+      password || customPassword,
+    );
+
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("resetStudentPassword:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Terjadi kesalahan server",
+    });
+  }
+};
+

@@ -5,6 +5,7 @@ import {
   editTeacher,
   getAllTeachers,
   getTeacherById,
+  resetTeacherPassword,
 } from "../controllers/admin/admin-teacher-controller.js";
 import {
   getStudents,
@@ -15,6 +16,7 @@ import {
   deleteStudent,
   bulkChangeClass,
   bulkChangeStatus,
+  resetStudentPassword,
 } from "../controllers/admin/admin-student-controller.js";
 import {
   createClass,
@@ -42,6 +44,8 @@ admin.get("/teacher/:id_guru", getTeacherById);
 admin.post("/teacher/add", createTeacher);
 admin.put("/teacher/edit/:id_guru", editTeacher);
 admin.patch("/teacher/:id_guru/deactivate", deleteTeacher);
+admin.post("/teacher/:id/reset-password", resetTeacherPassword);
+admin.post("/teachers/:id/reset-password", resetTeacherPassword);
 
 // guru piket
 admin.post("/picket-teacher/add", createPicketTeacher);
@@ -60,6 +64,8 @@ admin.patch("/students/bulk/status", bulkChangeStatus);
 admin.put("/students/edit/:id_siswa", editStundent);
 admin.put("/students/:id_siswa", editStundent);
 admin.patch("/students/:id_siswa/deactivate", deleteStudent);
+admin.post("/students/:id/reset-password", resetStudentPassword);
+
 
 // route kelas
 admin.post("/class/add", createClass);

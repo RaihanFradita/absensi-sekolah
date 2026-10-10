@@ -483,3 +483,47 @@ export const bulkSetStudentStatus = async ({ id_siswa_list, status_aktif }) => {
     connection.release();
   }
 };
+
+export const adminResetStudentPassword = async (id_siswa, customPassword) => {
+  const student = await findStudentById(id_siswa);
+  if (!student) {
+    return {
+      success: false,
+      message: "Data siswa tidak ditemukan",
+    };
+  }
+
+  const firstName =
+    (student.nama_siswa || "siswa")
+      .trim()
+      .split(/\s+/)[0]
+      .toLowerCase()
+      .replace(/[^a-zA-Z0-9]/g, "") || "siswa";
+
+  const tempPassword =
+    typeof customPassword === "string" && customPassword.trim().length >= 6
+      ? customPassword.trim()
+      : `smp4#${firstName}`;
+
+  const hashPassword = await bcrypt.hash(tempPassword, 10);
+
+  await pool.query(
+    `
+    UPDATE users 
+    SET password = ?, must_change_password = 1 
+    WHERE id_user = ?
+    `,
+    [hashPassword, student.id_user]
+  );
+
+  return {
+    success: true,
+    message: "Password siswa berhasil direset",
+    data: {
+      id_siswa: student.id_siswa,
+      nama_siswa: student.nama_siswa,
+      username: student.username,
+      tempPassword,
+    },
+  };
+};
