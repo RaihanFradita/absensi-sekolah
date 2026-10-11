@@ -128,15 +128,16 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
-          Lupa password atau tidak bisa masuk?{" "}
-          <a
-            href="mailto:admin@sekolah.sch.id"
-            className="font-medium text-brand-600 hover:underline dark:text-brand-400"
-          >
-            Hubungi admin sekolah
-          </a>
-        </p>
+        <div className="mt-5 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p>Lupa password atau tidak bisa masuk?</p>
+          <p className="mt-1">
+            Silakan{" "}
+            <span className="font-medium text-brand-600 dark:text-brand-400">
+              hubungi admin sekolah
+            </span>{" "}
+            untuk mendapatkan password sementara.
+          </p>
+        </div>
       </div>
     </div>
   );
