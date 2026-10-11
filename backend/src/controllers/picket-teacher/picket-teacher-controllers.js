@@ -8,12 +8,15 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const parseQuery = (req) => {
   const date = req.query.date?.trim() || undefined;
   const className = req.query.className?.trim() || undefined;
+  const status = req.query.status?.trim() || undefined;
+  const search = req.query.search?.trim() || undefined;
+  const all = req.query.all === "true" || req.query.all === "1";
   const { page, limit } = req.query;
 
   if (date && !DATE_RE.test(date)) {
     return { error: "Format tanggal harus YYYY-MM-DD." };
   }
-  return { date, className, page, limit };
+  return { date, className, status, search, all, page, limit };
 };
 
 export const getDutyDashboard = async (req, res) => {
