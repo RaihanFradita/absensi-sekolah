@@ -157,6 +157,24 @@ export const picketTeacherService = {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   },
+
+  /**
+   * Mengambil semua data dari server dan mengekspor ke CSV
+   */
+  async exportDailyCsv({ date, className, status, search, rows } = {}) {
+    let rowsToExport = rows;
+    if (!rowsToExport || rowsToExport.length === 0) {
+      const res = await this.getDaily({
+        date,
+        className,
+        status,
+        search,
+        all: true,
+      });
+      rowsToExport = res?.rows || [];
+    }
+    this.exportToCsv({ date, className, rows: rowsToExport });
+  },
 };
 
 export default picketTeacherService;
