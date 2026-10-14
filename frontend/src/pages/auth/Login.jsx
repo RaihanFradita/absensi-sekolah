@@ -5,6 +5,7 @@ import { Eye, EyeOff, IdCard, Lock, AlertCircle } from "lucide-react";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import useAuth from "../../hooks/useAuth";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import { APP_FULL_NAME, ROLES } from "../../utils/constants";
 import schoolLogo from "../../assets/logo-sekolah.png";
 
@@ -16,6 +17,7 @@ const ROLE_HOME = {
 };
 
 export default function Login() {
+  usePageTitle("Login", "Absensi Siswa — SMP Muhammadiyah 4 Cipondoh");
   const { login, isAuthenticating } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

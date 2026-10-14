@@ -24,12 +24,14 @@ import Card, { CardHeader } from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import AttendanceStatus from "../../components/attendance/AttendanceStatus";
 import useAuth from "../../hooks/useAuth";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import picketTeacherService from "../../services/picketTeacherService";
 
 const getTodayWIB = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
 
 export default function DutyDashboard({ title }) {
+  usePageTitle("Dashboard Piket");
   const { user } = useAuth();
   const navigate = useNavigate();
 

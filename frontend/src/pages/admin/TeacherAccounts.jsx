@@ -6,6 +6,7 @@ import PageContainer from "../../components/layout/PageContainer";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const previewTeachers = [
   {
@@ -25,6 +26,7 @@ const previewTeachers = [
 ];
 
 export default function TeacherAccounts() {
+  usePageTitle("Akun Guru");
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");

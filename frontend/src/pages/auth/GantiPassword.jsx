@@ -15,6 +15,7 @@ import {
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import useAuth from "../../hooks/useAuth";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import { APP_FULL_NAME, ROLES, ROLE_LABEL } from "../../utils/constants";
 import schoolLogo from "../../assets/logo-sekolah.png";
 
@@ -30,6 +31,7 @@ const ROLE_HOME = {
 };
 
 export default function GantiPassword() {
+  usePageTitle("Ganti Password");
   const { user, changePassword, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

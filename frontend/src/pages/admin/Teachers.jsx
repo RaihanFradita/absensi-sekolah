@@ -32,6 +32,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/Toast";
 import { adminTeacherServices } from "../../services/adminServices/teacherServices";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const EMPTY_FORM = {
   id_guru: null,
@@ -43,6 +44,7 @@ const EMPTY_FORM = {
 };
 
 export default function Teachers() {
+  usePageTitle("Manajemen Guru");
   const { showToast } = useToast();
 
   const [teachers, setTeachers] = useState([]);

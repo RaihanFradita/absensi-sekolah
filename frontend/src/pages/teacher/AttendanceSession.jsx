@@ -29,6 +29,7 @@ import {
   getSecondsUntil,
 } from "../../utils/formatTime";
 import useSocket from "../../hooks/useSocket";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import toast from "react-hot-toast";
 
 function renderStatusBadge(status) {
@@ -71,6 +72,7 @@ function displayScanTime(value) {
 
 // Satu sesi = QR kehadiran harian sekolah. Tidak terkait mata pelajaran.
 export default function AttendanceSession() {
+  usePageTitle("Sesi Absensi");
   // Route menyediakan :sessionId agar URL sesi bisa dibagikan/di-bookmark,
   // namun data diambil lewat getActiveSession() (endpoint di services spec)
   // yang mengembalikan sesi aktif milik guru yang sedang login.

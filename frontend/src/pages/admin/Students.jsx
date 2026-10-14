@@ -34,6 +34,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/Toast";
 import studentService from "../../services/studentService";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const EMPTY_FORM = {
   id_siswa: null,
@@ -52,6 +53,7 @@ const formatClassOption = ({ tingkat, nama_kelas }) => {
 };
 
 export default function Students() {
+  usePageTitle("Manajemen Siswa");
   const { showToast } = useToast();
 
   const [students, setStudents] = useState([]);

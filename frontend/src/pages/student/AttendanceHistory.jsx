@@ -8,10 +8,12 @@ import Loading from '../../components/ui/Loading';
 import EmptyState from '../../components/ui/EmptyState';
 import AttendanceTable from '../../components/attendance/AttendanceTable';
 import useAttendance from '../../hooks/useAttendance';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import attendanceService from '../../services/attendanceService';
 import { ATTENDANCE_STATUS, ATTENDANCE_STATUS_LABEL, DEFAULT_PAGE_SIZE } from '../../utils/constants';
 
 export default function AttendanceHistory() {
+  usePageTitle('Riwayat Absensi');
   const [filters, setFilters] = useState({ date: '', status: '' });
   const [page, setPage] = useState(1);
 

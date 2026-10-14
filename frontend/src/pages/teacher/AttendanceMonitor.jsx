@@ -22,6 +22,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import useAttendance from "../../hooks/useAttendance";
 import attendanceService from "../../services/attendanceService";
 import { teacherServices } from "../../services/teacher/teacherService";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const STATUS_OPTIONS = [
   { value: "hadir", label: "Hadir" },
@@ -85,6 +86,7 @@ const getTodayDateString = () => {
 };
 
 export default function AttendanceMonitor() {
+  usePageTitle("Monitor Kehadiran");
   // daftar kelas untuk filter dari API
   const fetchClasses = useCallback(() => teacherServices.getAllClass(), []);
   const {

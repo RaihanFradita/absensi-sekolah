@@ -9,6 +9,7 @@ import {
 
 import PageContainer from '../../components/layout/PageContainer';
 import Card from '../../components/ui/Card';
+import { usePageTitle } from '../../hooks/usePageTitle';
 
 const items = [
   {
@@ -38,6 +39,7 @@ const items = [
 ];
 
 export default function AdminDashboard() {
+  usePageTitle('Dashboard Admin');
   return (
     <PageContainer
       title="Beranda Admin"

@@ -14,6 +14,7 @@ import Card, { CardHeader } from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import useAuth from "../../hooks/useAuth";
 import { teacherServices } from "../../services/teacher/teacherService";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 function InfoItem({ icon: Icon, label, value, accent }) {
   return (
@@ -32,6 +33,7 @@ function InfoItem({ icon: Icon, label, value, accent }) {
 }
 
 export default function TeacherProfile() {
+  usePageTitle("Profil Guru");
   const { user, logout } = useAuth();
 
   const [profile, setProfile] = useState(null);

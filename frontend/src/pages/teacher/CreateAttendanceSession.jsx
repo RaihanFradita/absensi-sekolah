@@ -8,8 +8,10 @@ import Input from "../../components/ui/Input";
 import Loading from "../../components/ui/Loading";
 import attendanceService from "../../services/attendanceService";
 import { teacherServices } from "../../services/teacher/teacherService";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 export default function CreateAttendanceSession() {
+  usePageTitle("Buat Sesi Absensi");
   const navigate = useNavigate();
   const [isCheckingActiveSession, setIsCheckingActiveSession] = useState(true);
   const [form, setForm] = useState({

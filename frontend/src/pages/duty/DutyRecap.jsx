@@ -6,6 +6,7 @@ import Button from "../../components/ui/Button";
 import DailyAttendanceManager from "../../components/attendance/DailyAttendanceManager";
 import useAuth from "../../hooks/useAuth";
 import { useDebounce } from "../../hooks/useDebounce";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import picketTeacherService from "../../services/picketTeacherService";
 
 const getTodayWIB = () =>
@@ -15,6 +16,7 @@ export default function DutyRecap({
   onlyNotScanned = false,
   title = "Rekap Kehadiran Harian",
 }) {
+  usePageTitle(title);
   const { user } = useAuth();
 
   const [date, setDate] = useState(getTodayWIB());

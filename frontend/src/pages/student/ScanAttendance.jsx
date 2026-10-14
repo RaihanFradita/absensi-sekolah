@@ -15,6 +15,7 @@ import Button from "../../components/ui/Button";
 import Loading from "../../components/ui/Loading";
 import AttendanceStatus from "../../components/attendance/AttendanceStatus";
 import useAuth from "../../hooks/useAuth";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const QRScanner = lazy(() => import("../../components/attendance/QRScanner"));
 import attendanceService from "../../services/attendanceService";
@@ -30,6 +31,7 @@ const ERROR_MESSAGES = {
 };
 
 export default function ScanAttendance() {
+  usePageTitle("Scan Absensi");
   const { user } = useAuth();
   const [phase, setPhase] = useState("scanning");
   const [result, setResult] = useState(null);

@@ -17,6 +17,7 @@ import PageContainer from "../../components/layout/PageContainer";
 import Button from "../../components/ui/Button";
 import attendanceService from "../../services/attendanceService";
 import useAuth from "../../hooks/useAuth";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 function getStatusLabel(status) {
   const value = String(status || "")
@@ -178,6 +179,7 @@ function StatCard({ icon: Icon, label, value, description, iconClassName }) {
 }
 
 export default function StudentDashboard() {
+  usePageTitle("Dashboard Siswa");
   const navigate = useNavigate();
   const { user } = useAuth();
 

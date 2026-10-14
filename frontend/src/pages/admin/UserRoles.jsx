@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import PageContainer from "../../components/layout/PageContainer";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 export default function UserRoles() {
+  usePageTitle("Hak Akses Pengguna");
   const navigate = useNavigate();
 
   return (

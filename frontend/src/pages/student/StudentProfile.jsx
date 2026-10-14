@@ -18,6 +18,7 @@ import EmptyState from "../../components/ui/EmptyState";
 
 import useAttendance from "../../hooks/useAttendance";
 import useAuth from "../../hooks/useAuth";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import attendanceService from "../../services/attendanceService";
 
 function InfoItem({ icon: Icon, label, value }) {
@@ -36,6 +37,7 @@ function InfoItem({ icon: Icon, label, value }) {
 }
 
 export default function StudentProfile() {
+  usePageTitle("Profil Siswa");
   const { user, logout } = useAuth();
 
   const fetchProfile = useCallback(

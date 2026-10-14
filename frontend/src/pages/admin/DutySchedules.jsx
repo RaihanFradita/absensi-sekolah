@@ -30,6 +30,7 @@ import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/Toast";
 import { adminPicketTeacherServices } from "../../services/adminServices/picketTeacherServices";
 import { formatDate } from "../../utils/formatDate";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const EMPTY_FORM = {
   id_user: null,
@@ -38,6 +39,7 @@ const EMPTY_FORM = {
 };
 
 export default function DutySchedules() {
+  usePageTitle("Jadwal Piket");
   const { showToast } = useToast();
 
   const [picketTeachers, setPicketTeachers] = useState([]);

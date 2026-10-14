@@ -6,8 +6,10 @@ import Button from '../../components/ui/Button';
 import DailyAttendanceManager from '../../components/attendance/DailyAttendanceManager';
 import attendanceService from '../../services/attendanceService';
 import useAuth from '../../hooks/useAuth';
+import { usePageTitle } from '../../hooks/usePageTitle';
 
 export default function AttendanceReports(){
+  usePageTitle("Laporan Absensi");
   const {user}=useAuth(); const [date,setDate]=useState(new Date().toISOString().slice(0,10)); const [className,setClassName]=useState(''); const [rows,setRows]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[exporting,setExporting]=useState(false);
   const classes=['VIII-A','VIII-B','IX-A'];
   const load=useCallback(async()=>{setLoading(true);setError('');try{const d=await attendanceService.getDailyAttendance({date,className});setRows(d.rows||[]);}catch(e){setError(e.message||'Gagal memuat data.');}finally{setLoading(false);}},[date,className]);

@@ -27,6 +27,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/Toast";
 import { adminClassServices } from "../../services/adminServices/classServices";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const EMPTY_FORM = {
   id_kelas: null,
@@ -35,6 +36,7 @@ const EMPTY_FORM = {
 };
 
 export default function Classes() {
+  usePageTitle("Manajemen Kelas");
   const { showToast } = useToast();
 
   const [classes, setClasses] = useState([]);

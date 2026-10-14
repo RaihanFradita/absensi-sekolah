@@ -22,12 +22,14 @@ import Button from "../../components/ui/Button";
 import Card, { CardHeader } from "../../components/ui/Card";
 import Input from "../../components/ui/Input";
 import useAuth from "../../hooks/useAuth";
+import { usePageTitle } from "../../hooks/usePageTitle";
 import attendanceService from "../../services/attendanceService";
 
 const getTodayWIB = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
 
 export default function TeacherDashboard() {
+  usePageTitle("Dashboard Guru");
   const { user } = useAuth();
   const navigate = useNavigate();
 

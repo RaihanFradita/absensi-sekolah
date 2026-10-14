@@ -5,6 +5,7 @@ import PageContainer from "../../components/layout/PageContainer";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
+import { usePageTitle } from "../../hooks/usePageTitle";
 
 const previewStudents = [
   {
@@ -58,6 +59,7 @@ const previewStudents = [
 ];
 
 export default function StudentAccounts() {
+  usePageTitle("Akun Siswa");
   const navigate = useNavigate();
 
   const [students, setStudents] = useState([]);
