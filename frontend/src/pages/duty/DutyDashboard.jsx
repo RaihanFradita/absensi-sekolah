@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDebounce } from "../../hooks/useDebounce";
 import {
   Users,
   CheckCircle,
@@ -51,41 +52,67 @@ export default function DutyDashboard({ title }) {
 
   // Table filter & pagination
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 350);
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState(null);
   const itemsPerPage = 10;
 
-  const loadData = useCallback(async () => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const reloadData = () => {
     setLoading(true);
     setError("");
-
-    try {
-      const [dashboardRes, dailyRes] = await Promise.all([
-        picketTeacherService.getDashboard({ date, className }),
-        picketTeacherService.getDaily({ date, className }),
-      ]);
-
-      if (dashboardRes) {
-        setAllowedClasses(dashboardRes.allowedClasses || []);
-        if (dashboardRes.summary) {
-          setSummary(dashboardRes.summary);
-        }
-      }
-
-      if (dailyRes && Array.isArray(dailyRes.rows)) {
-        setRows(dailyRes.rows);
-      }
-    } catch (err) {
-      console.error("Gagal memuat data piket:", err);
-      setError(err?.message || "Gagal memuat data dashboard piket.");
-    } finally {
-      setLoading(false);
-    }
-  }, [date, className]);
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    let isCancelled = false;
+
+    async function fetchData() {
+      try {
+        const [dashboardRes, dailyRes] = await Promise.all([
+          picketTeacherService.getDashboard({ date, className }),
+          picketTeacherService.getDaily({
+            date,
+            className,
+            status: statusFilter,
+            search: debouncedSearch,
+            page,
+            limit: itemsPerPage,
+          }),
+        ]);
+
+        if (isCancelled) return;
+
+        if (dashboardRes) {
+          setAllowedClasses(dashboardRes.allowedClasses || []);
+          if (dashboardRes.summary) {
+            setSummary(dashboardRes.summary);
+          }
+        }
+
+        if (dailyRes && Array.isArray(dailyRes.rows)) {
+          setRows(dailyRes.rows);
+          setPagination(dailyRes.pagination || null);
+        }
+      } catch (err) {
+        if (isCancelled) return;
+        console.error("Gagal memuat data piket:", err);
+        setError(err?.message || "Gagal memuat data dashboard piket.");
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchData();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [date, className, statusFilter, debouncedSearch, page, refreshTrigger]);
 
   // Date label formatting
   const formattedDate = useMemo(() => {
@@ -107,39 +134,14 @@ export default function DutyDashboard({ title }) {
   const persentase =
     total > 0 ? ((hadirDanTerlambat / total) * 100).toFixed(1) : "0.0";
 
-  // Filtered rows for the quick overview table
-  const filteredRows = useMemo(() => {
-    return rows.filter((r) => {
-      const q = search.trim().toLowerCase();
-      const matchSearch =
-        !q ||
-        r.student?.name?.toLowerCase().includes(q) ||
-        r.nama_siswa?.toLowerCase().includes(q);
-
-      const s = (r.status || "").toLowerCase().trim();
-      const c = (r.currentStatus || "").toLowerCase().trim();
-      const matchStatus =
-        !statusFilter ||
-        s === statusFilter.toLowerCase() ||
-        c === statusFilter.toLowerCase();
-
-      return matchSearch && matchStatus;
-    });
-  }, [rows, search, statusFilter]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / itemsPerPage));
-  const paginatedRows = useMemo(() => {
-    const start = (page - 1) * itemsPerPage;
-    return filteredRows.slice(start, start + itemsPerPage);
-  }, [filteredRows, page, itemsPerPage]);
-
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       setExporting(true);
-      picketTeacherService.exportToCsv({
+      await picketTeacherService.exportDailyCsv({
         date,
         className,
-        rows: filteredRows.length > 0 ? filteredRows : rows,
+        status: statusFilter,
+        search: debouncedSearch,
       });
     } catch (e) {
       alert("Gagal mengekspor data: " + (e?.message || "Terjadi kesalahan"));
@@ -195,7 +197,7 @@ export default function DutyDashboard({ title }) {
               variant="secondary"
               size="md"
               icon={RefreshCw}
-              onClick={loadData}
+              onClick={reloadData}
               isLoading={loading}
               title="Perbarui Data"
             >
@@ -213,7 +215,7 @@ export default function DutyDashboard({ title }) {
         <EmptyState
           title="Gagal memuat data piket"
           description={error}
-          action={<Button onClick={loadData}>Coba Lagi</Button>}
+          action={<Button onClick={reloadData}>Coba Lagi</Button>}
         />
       )}
 
@@ -421,7 +423,7 @@ export default function DutyDashboard({ title }) {
                     Daftar Absensi Siswa
                   </h3>
                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    Menampilkan {filteredRows.length} dari {rows.length} siswa
+                    Menampilkan {rows.length} dari {pagination?.totalItems ?? rows.length} siswa
                   </p>
                 </div>
 
@@ -473,7 +475,7 @@ export default function DutyDashboard({ title }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                  {paginatedRows.length === 0 ? (
+                  {rows.length === 0 ? (
                     <tr>
                       <td
                         colSpan="6"
@@ -483,7 +485,7 @@ export default function DutyDashboard({ title }) {
                       </td>
                     </tr>
                   ) : (
-                    paginatedRows.map((r, idx) => (
+                    rows.map((r, idx) => (
                       <tr
                         key={r.id || `row-${idx}`}
                         className="transition hover:bg-slate-50 dark:hover:bg-slate-800/40"
@@ -518,17 +520,17 @@ export default function DutyDashboard({ title }) {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {pagination && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between border-t border-slate-200 px-5 py-3 dark:border-slate-800">
                 <p className="text-xs text-slate-500">
-                  Halaman {page} dari {totalPages}
+                  Halaman {page} dari {pagination.totalPages}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
+                    disabled={!pagination.hasPrevPage || loading}
                     icon={ChevronLeft}
                   >
                     Sebelumnya
@@ -536,8 +538,8 @@ export default function DutyDashboard({ title }) {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
+                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                    disabled={!pagination.hasNextPage || loading}
                   >
                     Selanjutnya <ChevronRight className="ml-1 h-3.5 w-3.5" />
                   </Button>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Download, Search, Save, X, History, ChevronLeft, ChevronRight } from "lucide-react";
 import Card, { CardHeader } from "../ui/Card";
 import Button from "../ui/Button";
@@ -40,35 +40,74 @@ export default function DailyAttendanceManager({
   page = 1,
   onPageChange,
   loading = false,
+  summary = null,
+  activeStatus: controlledActiveStatus,
+  onStatusChange,
+  search: controlledSearch,
+  onSearchChange,
+  showStats = true,
 }) {
-  const [activeStatus, setActiveStatus] = useState("total");
-  const [search, setSearch] = useState("");
+  const [internalActiveStatus, setInternalActiveStatus] = useState("total");
+  const activeStatus =
+    controlledActiveStatus !== undefined
+      ? controlledActiveStatus
+      : internalActiveStatus;
+
+  const handleStatusClick = (newStatus) => {
+    if (controlledActiveStatus === undefined) {
+      setInternalActiveStatus(newStatus);
+    }
+    onStatusChange?.(newStatus);
+  };
+
+  const [internalSearch, setInternalSearch] = useState("");
+  const search =
+    controlledSearch !== undefined ? controlledSearch : internalSearch;
+
+  const handleSearchChange = (val) => {
+    if (controlledSearch === undefined) {
+      setInternalSearch(val);
+    }
+    onSearchChange?.(val);
+  };
+
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({
     status: "",
     note: "",
   });
 
-  const filtered = useMemo(
-    () =>
-      rows.filter((r) => {
-        const statusOk =
-          activeStatus === "total" || r.currentStatus === activeStatus;
+  const filtered = useMemo(() => {
+    // Jika data sudah dipaginasi dan difilter oleh server melalui onSearchChange/onStatusChange
+    if (pagination && (onSearchChange || onStatusChange)) {
+      return rows;
+    }
 
-        const q = search.trim().toLowerCase();
-        const name = (r.student?.name || r.nama_siswa || "").toLowerCase();
-        const nis = (r.student?.nis || r.nis || "").toLowerCase();
-        const searchOk = !q || name.includes(q) || nis.includes(q);
+    return rows.filter((r) => {
+      const statusOk =
+        activeStatus === "total" || r.currentStatus === activeStatus;
 
-        const rowClass = (r.student?.className || r.nama_kelas || "").trim();
-        const classOk = !className || rowClass === className.trim();
+      const q = search.trim().toLowerCase();
+      const name = (r.student?.name || r.nama_siswa || "").toLowerCase();
+      const nis = (r.student?.nis || r.nis || "").toLowerCase();
+      const searchOk = !q || name.includes(q) || nis.includes(q);
 
-        return statusOk && searchOk && classOk;
-      }),
-    [rows, activeStatus, search, className],
-  );
+      const rowClass = (r.student?.className || r.nama_kelas || "").trim();
+      const classOk = !className || rowClass === className.trim();
 
-  // Rows setelah filter kelas (untuk stat count agar sinkron dgn filter kelas)
+      return statusOk && searchOk && classOk;
+    });
+  }, [
+    rows,
+    activeStatus,
+    search,
+    className,
+    pagination,
+    onSearchChange,
+    onStatusChange,
+  ]);
+
+  // Rows setelah filter kelas (untuk stat count agar sinkron dgn filter kelas jika client-side)
   const classFilteredRows = useMemo(() => {
     if (!className) return rows;
     return rows.filter((r) => {
@@ -77,46 +116,91 @@ export default function DailyAttendanceManager({
     });
   }, [rows, className]);
 
-  const count = (status) =>
-    classFilteredRows.filter((r) => r.currentStatus === status).length;
+  const count = useCallback(
+    (status) =>
+      classFilteredRows.filter((r) => r.currentStatus === status).length,
+    [classFilteredRows],
+  );
 
-  const stats = [
-    {
-      key: "total",
-      label: "Total Siswa",
-      value: classFilteredRows.length,
-    },
-    {
-      key: "present",
-      label: "Hadir",
-      value: count(ATTENDANCE_STATUS.PRESENT),
-    },
-    {
-      key: "absent",
-      label: "Tidak Hadir",
-      value: count(ATTENDANCE_STATUS.ABSENT),
-    },
-    {
-      key: "late",
-      label: "Terlambat",
-      value: count(ATTENDANCE_STATUS.LATE),
-    },
-    {
-      key: "excused",
-      label: "Izin",
-      value: count(ATTENDANCE_STATUS.EXCUSED),
-    },
-    {
-      key: "sick",
-      label: "Sakit",
-      value: count(ATTENDANCE_STATUS.SICK),
-    },
-    {
-      key: "not_yet",
-      label: "Belum Absen",
-      value: count(ATTENDANCE_STATUS.NOT_YET),
-    },
-  ];
+  const stats = useMemo(() => {
+    if (summary) {
+      return [
+        {
+          key: "total",
+          label: "Total Siswa",
+          value: summary.total ?? 0,
+        },
+        {
+          key: "present",
+          label: "Hadir",
+          value: summary.hadir ?? 0,
+        },
+        {
+          key: "absent",
+          label: "Tidak Hadir",
+          value: summary.tanpaKeterangan ?? 0,
+        },
+        {
+          key: "late",
+          label: "Terlambat",
+          value: summary.terlambat ?? 0,
+        },
+        {
+          key: "excused",
+          label: "Izin",
+          value: summary.izin ?? 0,
+        },
+        {
+          key: "sick",
+          label: "Sakit",
+          value: summary.sakit ?? 0,
+        },
+        {
+          key: "not_yet",
+          label: "Belum Absen",
+          value: summary.belumAbsen ?? 0,
+        },
+      ];
+    }
+
+    return [
+      {
+        key: "total",
+        label: "Total Siswa",
+        value: classFilteredRows.length,
+      },
+      {
+        key: "present",
+        label: "Hadir",
+        value: count(ATTENDANCE_STATUS.PRESENT),
+      },
+      {
+        key: "absent",
+        label: "Tidak Hadir",
+        value: count(ATTENDANCE_STATUS.ABSENT),
+      },
+      {
+        key: "late",
+        label: "Terlambat",
+        value: count(ATTENDANCE_STATUS.LATE),
+      },
+      {
+        key: "excused",
+        label: "Izin",
+        value: count(ATTENDANCE_STATUS.EXCUSED),
+      },
+      {
+        key: "sick",
+        label: "Sakit",
+        value: count(ATTENDANCE_STATUS.SICK),
+      },
+      {
+        key: "not_yet",
+        label: "Belum Absen",
+        value: count(ATTENDANCE_STATUS.NOT_YET),
+      },
+    ];
+  }, [summary, classFilteredRows, count]);
 
   function startEdit(row) {
     setEditingId(row.id);
@@ -189,7 +273,7 @@ export default function DailyAttendanceManager({
           <Input
             label="Cari siswa"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Nama Siswa"
             startAdornment={<Search className="h-4 w-4" />}
           />
@@ -197,11 +281,13 @@ export default function DailyAttendanceManager({
       </Card>
 
       {/* Statistik */}
-      <AttendanceStats
-        items={stats}
-        onItemClick={setActiveStatus}
-        activeKey={activeStatus}
-      />
+      {showStats && (
+        <AttendanceStats
+          items={stats}
+          onItemClick={handleStatusClick}
+          activeKey={activeStatus}
+        />
+      )}
 
       {/* Tabel */}
       <Card padding="p-0">
