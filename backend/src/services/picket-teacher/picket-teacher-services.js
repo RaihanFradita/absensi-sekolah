@@ -1,4 +1,5 @@
 import { pool } from "../../config/database.js";
+import ExcelJS from "exceljs";
 
 const getTodayWIB = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
@@ -233,4 +234,95 @@ export const getDutyDashboardData = async ({ date, className }) => {
   };
 
   return { date: tanggal, allowedClasses, summary };
+};
+
+export const exportDailyExcel = async ({ date, className, status, search } = {}) => {
+  const { rows, date: tanggal } = await getDailyRows({
+    date,
+    className,
+    status,
+    search,
+    all: true,
+  });
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Sistem Absensi Sekolah";
+  workbook.created = new Date();
+
+  const sheet = workbook.addWorksheet("Rekap Kehadiran");
+
+  sheet.columns = [
+    { header: "No", key: "no", width: 6 },
+    { header: "Nama Siswa", key: "nama", width: 30 },
+    { header: "Kelas", key: "kelas", width: 14 },
+    { header: "Jam Scan", key: "scan", width: 14 },
+    { header: "Status Kehadiran", key: "status", width: 20 },
+    { header: "Keterangan", key: "ket", width: 30 },
+  ];
+
+  const headerRow = sheet.getRow(1);
+  headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+  headerRow.fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF1F3864" },
+  };
+  headerRow.alignment = { vertical: "middle", horizontal: "center" };
+  headerRow.height = 24;
+
+  const STATUS_LABEL = {
+    hadir: "Hadir",
+    terlambat: "Terlambat",
+    sakit: "Sakit",
+    izin: "Izin",
+    "tanpa keterangan": "Tanpa Keterangan",
+    "tidak hadir": "Tanpa Keterangan",
+    alpa: "Tanpa Keterangan",
+    "belum absen": "Belum Absen",
+  };
+
+  rows.forEach((r, i) => {
+    const rawStatus = (r.status || "").toLowerCase().trim();
+    const displayStatus = STATUS_LABEL[rawStatus] || r.status || "Belum Absen";
+    let formattedScan = "-";
+    if (r.waktu_scan) {
+      if (
+        typeof r.waktu_scan === "string" &&
+        (r.waktu_scan.includes("T") || r.waktu_scan.includes("-"))
+      ) {
+        const d = new Date(r.waktu_scan);
+        if (!Number.isNaN(d.getTime())) {
+          formattedScan = d.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Asia/Jakarta",
+          });
+        } else {
+          formattedScan = String(r.waktu_scan).slice(0, 5);
+        }
+      } else if (typeof r.waktu_scan === "string" && r.waktu_scan.length >= 5) {
+        formattedScan = r.waktu_scan.slice(0, 5);
+      } else {
+        formattedScan = String(r.waktu_scan);
+      }
+    }
+
+    const row = sheet.addRow({
+      no: i + 1,
+      nama: r.nama_siswa || "-",
+      kelas: r.nama_kelas || "-",
+      scan: formattedScan,
+      status: displayStatus,
+      ket: r.keterangan || "-",
+    });
+
+    row.getCell(1).alignment = { horizontal: "center" };
+    row.getCell(3).alignment = { horizontal: "center" };
+    row.getCell(4).alignment = { horizontal: "center" };
+    row.getCell(5).alignment = { horizontal: "center" };
+  });
+
+  sheet.views = [{ state: "frozen", ySplit: 1 }];
+
+  return { workbook, tanggal };
 };

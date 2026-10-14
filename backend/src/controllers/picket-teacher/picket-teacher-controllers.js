@@ -1,6 +1,7 @@
 import {
   getDailyRows,
   getDutyDashboardData,
+  exportDailyExcel,
 } from "../../services/picket-teacher/picket-teacher-services.js";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -42,5 +43,32 @@ export const getDaily = async (req, res) => {
   } catch (err) {
     console.error("getDaily:", err);
     res.status(500).json({ message: "Gagal memuat data absensi harian." });
+  }
+};
+
+export const exportDaily = async (req, res) => {
+  const q = parseQuery(req);
+  if (q.error) return res.status(400).json({ message: q.error });
+
+  try {
+    const { workbook, tanggal } = await exportDailyExcel(q);
+
+    const classSuffix = q.className ? `_Kelas_${q.className.replace(/\s+/g, "_")}` : "_Semua_Kelas";
+    const filename = `Rekap_Piket_${tanggal}${classSuffix}.xlsx`;
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${encodeURIComponent(filename)}"`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error("exportDaily:", err);
+    res.status(500).json({ message: "Gagal mengekspor data absensi." });
   }
 };

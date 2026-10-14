@@ -137,7 +137,7 @@ export default function DutyDashboard({ title }) {
   const handleExport = async () => {
     try {
       setExporting(true);
-      await picketTeacherService.exportDailyCsv({
+      await picketTeacherService.exportDailyExcel({
         date,
         className,
         status: statusFilter,

@@ -106,52 +106,41 @@ export const picketTeacherService = {
   },
 
   /**
-   * Ekspor rekap kehadiran siswa ke CSV format Excel (dengan BOM UTF-8)
+   * Download rekap kehadiran siswa sebagai file Excel (.xlsx) dari server
+   * @param {{ date?: string, className?: string, status?: string, search?: string }} params
    */
-  exportToCsv({ date, className, rows = [] }) {
-    const headers = [
-      "No",
-      "Nama Siswa",
-      "Kelas",
-      "Jam Scan",
-      "Status Kehadiran",
-      "Keterangan",
-    ];
+  async exportDailyExcel({ date, className, status, search } = {}) {
+    const params = {};
+    if (date) params.date = date;
+    if (className) params.className = className;
+    if (status) params.status = status;
+    if (search) params.search = search;
 
-    const STATUS_TEXT = {
-      present: "Hadir",
-      late: "Terlambat",
-      sick: "Sakit",
-      excused: "Izin",
-      absent: "Tanpa Keterangan",
-      not_yet: "Belum Absen",
-    };
+    const response = await api.get("/picket-teacher/export", {
+      params,
+      responseType: "blob",
+    });
 
-    const lines = rows.map((r, i) => [
-      i + 1,
-      r.nama_siswa || r.student?.name || "-",
-      r.nama_kelas || r.student?.className || "-",
-      r.scanTimeLabel || r.waktu_scan || "-",
-      STATUS_TEXT[r.currentStatus] || r.status || "Belum Absen",
-      r.note || r.keterangan || "-",
-    ]);
+    const disposition =
+      response.headers?.get?.("content-disposition") ||
+      response.headers?.["content-disposition"] ||
+      "";
+    const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+    const classSuffix = className ? `_Kelas_${className}` : "_Semua_Kelas";
+    const fallbackFilename = `Rekap_Piket_${date || new Date().toISOString().slice(0, 10)}${classSuffix}.xlsx`;
+    const filename = match?.[1] ? decodeURIComponent(match[1]) : fallbackFilename;
 
-    const csvContent =
-      "\ufeff" +
-      [headers, ...lines]
-        .map((row) =>
-          row
-            .map((val) => `"${String(val ?? "").replace(/"/g, '""')}"`)
-            .join(",")
-        )
-        .join("\r\n");
+    const blob =
+      response.data instanceof Blob
+        ? response.data
+        : new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    const classSuffix = className ? `_Kelas_${className}` : "_Semua_Kelas";
     link.href = url;
-    link.download = `Rekap_Piket_${date || new Date().toISOString().slice(0, 10)}${classSuffix}.csv`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -159,21 +148,10 @@ export const picketTeacherService = {
   },
 
   /**
-   * Mengambil semua data dari server dan mengekspor ke CSV
+   * Alias kompatibilitas mundur
    */
-  async exportDailyCsv({ date, className, status, search, rows } = {}) {
-    let rowsToExport = rows;
-    if (!rowsToExport || rowsToExport.length === 0) {
-      const res = await this.getDaily({
-        date,
-        className,
-        status,
-        search,
-        all: true,
-      });
-      rowsToExport = res?.rows || [];
-    }
-    this.exportToCsv({ date, className, rows: rowsToExport });
+  async exportDailyCsv(params = {}) {
+    return this.exportDailyExcel(params);
   },
 };
 

@@ -112,14 +112,14 @@ export default function DutyRecap({
           ? undefined
           : activeStatus;
 
-      await picketTeacherService.exportDailyCsv({
+      await picketTeacherService.exportDailyExcel({
         date,
         className,
         status: statusToQuery,
         search: debouncedSearch,
       });
     } catch (err) {
-      setError(err?.message || "Gagal mengekspor data ke Excel/CSV.");
+      setError(err?.message || "Gagal mengekspor data ke Excel.");
     } finally {
       setExporting(false);
     }
