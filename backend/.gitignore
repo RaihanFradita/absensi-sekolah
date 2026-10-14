@@ -2,5 +2,6 @@ node_modules
 
 .env
 
+hash-password.cjs
 hash.js
 MIDDLEWARE_ANALYSIS.md
