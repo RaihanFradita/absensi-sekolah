@@ -1,13 +1,13 @@
-import { Calendar, Clock, FileText } from 'lucide-react';
-import AttendanceStatus from './AttendanceStatus';
-import { formatDateShort } from '../../utils/formatDate';
+import { Calendar, Clock, FileText } from "lucide-react";
+import AttendanceStatus from "./AttendanceStatus";
+import { formatDateShort } from "../../utils/formatDate";
 
 function formatDisplayTime(timeValue) {
-  if (!timeValue) return '-';
-  if (typeof timeValue === 'string') {
+  if (!timeValue) return "-";
+  if (typeof timeValue === "string") {
     const trimmed = timeValue.trim();
     if (/^\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) {
-      return trimmed.slice(0, 5).replace(':', '.');
+      return trimmed.slice(0, 5).replace(":", ".");
     }
   }
   const date = new Date(timeValue);
@@ -15,11 +15,11 @@ function formatDisplayTime(timeValue) {
     return String(timeValue);
   }
   return date
-    .toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
+    .toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
     })
-    .replace(':', '.');
+    .replace(":", ".");
 }
 
 /**
@@ -36,7 +36,6 @@ export default function AttendanceTable({ rows = [] }) {
               <th className="px-4 py-3">Tanggal</th>
               <th className="px-4 py-3">Waktu Masuk</th>
               <th className="px-4 py-3">Status Kehadiran</th>
-              <th className="px-4 py-3">Keterangan</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -45,7 +44,7 @@ export default function AttendanceTable({ rows = [] }) {
               const date = row.tanggal || row.date;
               const time = row.waktu_scan || row.waktu_catat || row.time;
               const status = row.status || row.status_kehadiran;
-              const note = row.keterangan || row.note || '-';
+              const note = row.keterangan || row.note || "-";
 
               return (
                 <tr
@@ -56,13 +55,10 @@ export default function AttendanceTable({ rows = [] }) {
                     {formatDateShort(date)}
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                    {time ? formatDisplayTime(time) : '-'}
+                    {time ? formatDisplayTime(time) : "-"}
                   </td>
                   <td className="px-4 py-3">
                     <AttendanceStatus status={status} />
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 max-w-[200px] truncate">
-                    {note}
                   </td>
                 </tr>
               );
@@ -86,7 +82,10 @@ export default function AttendanceTable({ rows = [] }) {
             >
               <div className="mb-2 flex items-start justify-between gap-2">
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  <Calendar className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                  <Calendar
+                    className="h-4 w-4 text-slate-400"
+                    aria-hidden="true"
+                  />
                   {formatDateShort(date)}
                 </div>
                 <AttendanceStatus status={status} />
@@ -94,7 +93,7 @@ export default function AttendanceTable({ rows = [] }) {
               <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                  Masuk: {time ? formatDisplayTime(time) : '-'}
+                  Masuk: {time ? formatDisplayTime(time) : "-"}
                 </div>
                 {note && (
                   <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 italic">
