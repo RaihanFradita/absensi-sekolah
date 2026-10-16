@@ -133,7 +133,8 @@ export default function AttendanceSession() {
     sessionId: sessionIdValue,
     enabled: Boolean(sessionIdValue),
     onEvent: (payload) => {
-      const isLate = payload.status === "terlambat" || payload.status === "late";
+      const isLate =
+        payload.status === "terlambat" || payload.status === "late";
       if (payload.nama_siswa) {
         toast.success(
           `${payload.nama_siswa} (${payload.nama_kelas || ""}) telah absen [${isLate ? "Terlambat" : "Hadir"}]`,
@@ -153,13 +154,15 @@ export default function AttendanceSession() {
       setScannedStudents((prev) => {
         const exists = prev.some(
           (s) =>
-            (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
+            (payload.id_siswa &&
+              String(s.id_siswa) === String(payload.id_siswa)) ||
             (!payload.id_siswa && s.nama_siswa === payload.nama_siswa),
         );
 
         if (exists) {
           return prev.map((s) =>
-            (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
+            (payload.id_siswa &&
+              String(s.id_siswa) === String(payload.id_siswa)) ||
             (!payload.id_siswa && s.nama_siswa === payload.nama_siswa)
               ? newItem
               : s,
@@ -174,12 +177,14 @@ export default function AttendanceSession() {
         const prevAttendees = prev.attendees || [];
         const exists = prevAttendees.some(
           (s) =>
-            (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
+            (payload.id_siswa &&
+              String(s.id_siswa) === String(payload.id_siswa)) ||
             (!payload.id_siswa && s.nama_siswa === payload.nama_siswa),
         );
         const nextAttendees = exists
           ? prevAttendees.map((s) =>
-              (payload.id_siswa && String(s.id_siswa) === String(payload.id_siswa)) ||
+              (payload.id_siswa &&
+                String(s.id_siswa) === String(payload.id_siswa)) ||
               (!payload.id_siswa && s.nama_siswa === payload.nama_siswa)
                 ? newItem
                 : s,
@@ -355,9 +360,7 @@ export default function AttendanceSession() {
                 Siswa Berhasil Scan
               </h3>
             </div>
-            <Badge tone="brand">
-              {scannedStudents.length} Siswa
-            </Badge>
+            <Badge tone="brand">{scannedStudents.length} Siswa</Badge>
           </div>
 
           <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
