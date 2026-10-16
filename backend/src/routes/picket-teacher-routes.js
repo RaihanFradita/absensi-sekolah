@@ -1,6 +1,6 @@
 import express from "express";
 
-import { verifyToken } from "../middleware/auth-middleware.js";
+import { requireRole, verifyToken } from "../middleware/auth-middleware.js";
 import {
   getDaily,
   getDutyDashboard,
@@ -10,6 +10,7 @@ import {
 export const picketTeacher = express.Router();
 
 picketTeacher.use(verifyToken);
+picketTeacher.use(requireRole("guru_piket"));
 
 picketTeacher.get("/dashboard", getDutyDashboard);
 picketTeacher.get("/daily", getDaily);

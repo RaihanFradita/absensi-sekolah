@@ -1,6 +1,7 @@
 import express from "express";
 import {
   requirePasswordChange,
+  requireRole,
   verifyToken,
 } from "../middleware/auth-middleware.js";
 import {
@@ -13,6 +14,7 @@ export const student = express.Router();
 
 student.use(verifyToken);
 student.use(requirePasswordChange);
+student.use(requireRole("siswa"));
 
 student.get("/profile", getStudentProfile);
 student.get("/dashboard", getStudentDashboard);

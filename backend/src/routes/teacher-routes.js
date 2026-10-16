@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   requirePasswordChange,
+  requireRole,
   verifyToken,
 } from "../middleware/auth-middleware.js";
 
@@ -15,6 +16,7 @@ export const teacher = express.Router();
 
 teacher.use(verifyToken);
 teacher.use(requirePasswordChange);
+teacher.use(requireRole("guru"));
 
 teacher.get("/class", getAllClass);
 teacher.get("/dashboard", getTeacherDashboard);

@@ -32,11 +32,11 @@ import {
   getAllPicketTeachers,
   getPicketTeacherById,
 } from "../controllers/admin/admin-picket-teacher-controller.js";
-import { verifyToken } from "../middleware/auth-middleware.js";
+import { requireRole, verifyToken } from "../middleware/auth-middleware.js";
 
 export const admin = express.Router();
 
-admin.use(verifyToken);
+admin.use(verifyToken, requireRole("admin"));
 
 // route guru
 admin.get("/teacher/", getAllTeachers);
@@ -65,7 +65,6 @@ admin.put("/students/edit/:id_siswa", editStundent);
 admin.put("/students/:id_siswa", editStundent);
 admin.patch("/students/:id_siswa/deactivate", deleteStudent);
 admin.post("/students/:id/reset-password", resetStudentPassword);
-
 
 // route kelas
 admin.post("/class/add", createClass);
